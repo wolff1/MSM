@@ -1,0 +1,5 @@
+The lib folder should hold binary (compiled) library files.
+
+This file is here as a place holder.
+
+Have a nice day!

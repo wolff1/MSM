@@ -1,0 +1,5 @@
+The bin folder should hold binary (compiled) executable files.
+
+This file is here as a place holder.
+
+Have a nice day!
