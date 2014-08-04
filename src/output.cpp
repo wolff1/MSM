@@ -18,25 +18,39 @@ Display 2D data only
 void plot2d(int data_points, double* x, double* f)
 {
 	// Temporary data file name
-	char* tmp_file = "tmp_data.dat";
+	char* tmp_data_file = NULL;
+	char* tmp_cmd_file = NULL;
 
 	// Make sure incoming pointers are valid
 	assert(data_points > 0);
 	assert(x != NULL);
 	assert(f != NULL);
 
+	// Allocate memory for file name(s)
+	tmp_data_file = (char*) dynvec(strlen(GP_DATA_DIR)+strlen(GP_DATA_TMP)+1,
+									sizeof(char));
+	tmp_cmd_file = (char*) dynvec(strlen(GP_CMD_DIR)+strlen(GP_CMD_TEMPLATE)+1,
+									sizeof(char));
+
+	// Set file name(s)
+	sprintf(tmp_data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
+	sprintf(tmp_cmd_file, "%s%s", GP_CMD_DIR, GP_CMD_TEMPLATE);
+
 	// Save data to file
-	save2d(data_points, x, f, tmp_file);
+	save2d(data_points, x, f, tmp_data_file);
 
 	// Call plotf
-	plotf2d("tmp_data_template.txt", tmp_file);
+	plotf2d(tmp_cmd_file, tmp_data_file);
 
 	// delete temporary data file
-	if (remove(tmp_file))
+	if (remove(tmp_data_file))
 	{
-		printf("Error removing temporary file <%s> in plot\n", tmp_file);
-		return;
+		printf("Error removing temporary file <%s> in plot\n", tmp_data_file);
 	}
+
+	// Free dynamically allocated memory
+	dynfree(tmp_data_file);
+	dynfree(tmp_cmd_file);
 }
 
 /*
@@ -44,17 +58,30 @@ Save 2D data and display 2D plot
 */
 void plots2d(int data_points, double* x, double* f, char* save_file)
 {
+	// Command file name
+	char* tmp_cmd_file = NULL;
+
 	// Make sure incoming pointers are valid
 	assert(save_file != NULL);
 	assert(data_points > 0);
 	assert(x != NULL);
 	assert(f != NULL);
 
+	// Allocate memory for file name(s)
+	tmp_cmd_file = (char*) dynvec(strlen(GP_CMD_DIR)+strlen(GP_CMD_TEMPLATE)+1,
+									sizeof(char));
+
+	// Set file name(s)
+	sprintf(tmp_cmd_file, "%s%s", GP_CMD_DIR, GP_CMD_TEMPLATE);
+
 	// Save data to file
 	save2d(data_points, x, f, save_file);
 
 	// Call plotf
-	plotf2d("tmp_data_template.txt", save_file);
+	plotf2d(tmp_cmd_file, save_file);
+
+	// Free dynamically allocated memory
+	dynfree(tmp_cmd_file);
 }
 
 /*

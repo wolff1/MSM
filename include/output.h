@@ -3,6 +3,40 @@
 program output functions
 */
 
+#define GP_DATA_DIR			"../../../data/"
+#define GP_CMD_DIR			"../../../gnuplot/"
+#define GP_DATA_TMP			"tmp_data.dat"
+
+/*
+The follwoing preprocessor logic came from:
+http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-linux-windows-in-c-preprocessor
+*/
+#ifdef _WIN32
+	//define something for Windows (32-bit and 64-bit, this part is common)
+	#define GP_CMD_TEMPLATE		"tmp_data_template_win.txt"
+	#ifdef _WIN64
+		//define something for Windows (64-bit only)
+	#endif
+#elif __APPLE__
+	#include "TargetConditionals.h"
+	#if TARGET_IPHONE_SIMULATOR
+		// iOS Simulator
+	#elif TARGET_OS_IPHONE
+		// iOS device
+	#elif TARGET_OS_MAC
+		// Other kinds of Mac OS
+		#define GP_CMD_TEMPLATE		"tmp_data_template_aqua.txt"
+	#else
+		// Unsupported platform
+	#endif
+#elif __linux
+	// linux
+#elif __unix // all unices not caught above
+	// Unix
+#elif __posix
+	// POSIX
+#endif
+
 /*
 Display 2D data only
 	(uses auxiliary tmp file w/ standard I/O routines)

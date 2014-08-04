@@ -3,6 +3,8 @@
 centered b-spline phi
 */
 
+#define PHI_DATA	"phi.dat"
+
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant
 	x is the independent variable

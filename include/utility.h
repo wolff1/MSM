@@ -3,6 +3,8 @@
 utility functions
 */
 
+#define MAX(x,y) ((x > y) ? (x) : (y))
+
 /*
 Allocate and zero memory for 2D array of type double
 */
