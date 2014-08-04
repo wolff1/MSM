@@ -243,13 +243,14 @@ void splitting_test(void)
 
 	// Get a where a is cut-off distance
 	printf("Please enter cut-off parameter a = ");
-	scanf("%f", &a);
+	scanf("%lf", &a);
+    printf("a = %f\n", a);
 	assert(a > 0.0);
 	one_over_a = 1.0/a;
 
 	// Get d where d is domain
 	printf("Please enter domain parameter d = ");
-	scanf("%f", &d);
+	scanf("%lf", &d);
 	assert(d > 0.0);
 
 	// Dynamically allocate memory
