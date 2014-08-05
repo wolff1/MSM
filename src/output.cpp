@@ -27,9 +27,9 @@ void plot2d(int data_points, double* x, double* f)
 	assert(f != NULL);
 
 	// Allocate memory for file name(s)
-	tmp_data_file = (char*) dynvec(strlen(GP_DATA_DIR)+strlen(GP_DATA_TMP)+1,
+	tmp_data_file = (char*) dynvec(GP_DATA_DIR_LEN+GP_DATA_TMP_LEN+1,
 									sizeof(char));
-	tmp_cmd_file = (char*) dynvec(strlen(GP_CMD_DIR)+strlen(GP_CMD_TEMPLATE)+1,
+	tmp_cmd_file = (char*) dynvec(GP_CMD_DIR_LEN+GP_CMD_TEMPLATE_LEN+1,
 									sizeof(char));
 
 	// Set file name(s)
@@ -68,7 +68,7 @@ void plots2d(int data_points, double* x, double* f, char* save_file)
 	assert(f != NULL);
 
 	// Allocate memory for file name(s)
-	tmp_cmd_file = (char*) dynvec(strlen(GP_CMD_DIR)+strlen(GP_CMD_TEMPLATE)+1,
+	tmp_cmd_file = (char*) dynvec(GP_CMD_DIR_LEN+GP_CMD_TEMPLATE_LEN+1,
 									sizeof(char));
 
 	// Set file name(s)

@@ -3,7 +3,9 @@
 centered b-spline phi
 */
 
-#define PHI_DATA	"phi.dat"
+#define PHI_DATA		"phi.dat"
+
+#define PHI_DATA_LEN	strlen(PHI_DATA)
 
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant

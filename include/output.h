@@ -3,8 +3,6 @@
 program output functions
 */
 
-#define GP_DATA_DIR			"../../../data/"
-#define GP_CMD_DIR			"../../../gnuplot/"
 #define GP_DATA_TMP			"tmp_data.dat"
 
 /*
@@ -13,7 +11,10 @@ http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-l
 */
 #ifdef _WIN32
 	//define something for Windows (32-bit and 64-bit, this part is common)
-	#define GP_CMD_TEMPLATE		"tmp_data_template_win.txt"
+	#define GP_DATA_DIR			"../../../data/"
+	#define GP_CMD_DIR			"../../../gnuplot/"
+	#define GP_CMD_TEMPLATE		"tmp_data_template_windows.txt"
+	#define GP_TERM				"windows"
 	#ifdef _WIN64
 		//define something for Windows (64-bit only)
 	#endif
@@ -25,7 +26,10 @@ http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-l
 		// iOS device
 	#elif TARGET_OS_MAC
 		// Other kinds of Mac OS
+		#define GP_DATA_DIR			"../data/"
+		#define GP_CMD_DIR			"../gnuplot/"
 		#define GP_CMD_TEMPLATE		"tmp_data_template_aqua.txt"
+		#define GP_TERM				"aqua"
 	#else
 		// Unsupported platform
 	#endif
@@ -36,6 +40,12 @@ http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-l
 #elif __posix
 	// POSIX
 #endif
+
+#define	GP_DATA_TMP_LEN			strlen(GP_DATA_TMP)
+#define	GP_CMD_TEMPLATE_LEN		strlen(GP_CMD_TEMPLATE)
+#define	GP_DATA_DIR_LEN			strlen(GP_DATA_DIR)
+#define	GP_CMD_DIR_LEN			strlen(GP_CMD_DIR)
+#define	GP_TERM_LEN				strlen(GP_TERM)
 
 /*
 Display 2D data only

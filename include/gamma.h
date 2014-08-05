@@ -3,8 +3,11 @@
 gamma.h - the softening function used to split the kernel
 */
 
-#define GAMMA_DATA	"gamma.dat"
-#define THETA_DATA	"theta.dat"
+#define GAMMA_DATA			"gamma.dat"
+#define THETA_DATA			"theta.dat"
+
+#define GAMMA_DATA_LEN		strlen(GAMMA_DATA)
+#define THETA_DATA_LEN		strlen(THETA_DATA)
 
 /*
 Solves for coefficients of gamma
