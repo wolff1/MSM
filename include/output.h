@@ -26,8 +26,8 @@ http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-l
 		// iOS device
 	#elif TARGET_OS_MAC
 		// Other kinds of Mac OS
-		#define GP_DATA_DIR			"../data/"
-		#define GP_CMD_DIR			"../gnuplot/"
+		#define GP_DATA_DIR			"data/"
+		#define GP_CMD_DIR			"gnuplot/"
 		#define GP_CMD_TEMPLATE		"tmp_data_template_aqua.txt"
 		#define GP_TERM				"aqua"
 	#else

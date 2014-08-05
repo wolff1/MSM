@@ -14,6 +14,7 @@ int main(int argc, char* argv[])
 	int			N_AllocatedBuffers;
 
 	splitting_test();
+
 #if 0
 	int			i = 0;
 	int			samples = 0;
@@ -56,7 +57,7 @@ int main(int argc, char* argv[])
 	DF = (double*) dynvec(samples+1, sizeof(double));
 	c = (double*) dynvec(k+1,sizeof(double));
 	data_file = (char*) dynvec(GP_DATA_DIR_LEN +
-							   MAX(PHI_DATA_len,GAMMA_DATA_len) + 1,
+							   MAX(PHI_DATA_LEN,GAMMA_DATA_LEN) + 1,
 							   sizeof(char));
 	/**************************************************************************/
 	// Test centered B-spline where p must be even
@@ -228,7 +229,7 @@ void splitting_test(void)
 
 	double		f = 0.0;
 	double		df = 0.0;
-	double		tol = pow(0.1,13);
+	double		tol = pow(0.1,15);
 
 	// Get number of data points to record
 	printf("Please enter the number of samples = ");
@@ -236,7 +237,7 @@ void splitting_test(void)
 	assert(samples > 0);
 
 	// Get k where k is degree of continuity of the softener
-	printf("Please enter leves parameter nlev = ");
+	printf("Please enter levels parameter nlev = ");
 	scanf("%d", &nlev);
 	assert(nlev > 1);
 
@@ -272,6 +273,7 @@ void splitting_test(void)
 f = 0.0;	// sanity check
 df = 0.0;	// sanity check
 		X[i] = (d*(double)i/(double)samples);
+
 		// Theta* - Short range part of splitting (finite)
 		a1 = one_over_a;
 		F[0][i] = theta(c, k, a1*X[i], &DF[0][i], 0);
@@ -279,6 +281,7 @@ df = 0.0;	// sanity check
 		DF[0][i] = a1*a1*DF[0][i];
 f += F[0][i];
 df += DF[0][i];
+
 		for (l = 1; l < nlev - 1; l++)
 		{
 			// Theta - Intermediate long range part(s) of splitting (finite)
@@ -287,26 +290,27 @@ df += DF[0][i];
 			DF[l][i] = a1*a1*DF[l][i];
 f += F[l][i];
 df += DF[l][i];
-			a1 = a1*one_over_a;
+
+			a1 = 0.5*one_over_a;
 		}
 		// Gamma - Top level long range part of splitting (infinit)
-		a1 = a1*one_over_a;
 		F[l][i] = gamma(c, k, a1*X[i], &DF[l][i]);
 		F[l][i] = a1*F[l][i];
 		DF[l][i] = a1*a1*DF[l][i];
 f += F[l][i];
 df += DF[l][i];
+
 		// Kernel: 1/X and Kernel' = -1/X^2
 		F[nlev][i] = 1.0/X[i];
 		DF[nlev][i] = -F[nlev][i]*F[nlev][i];
 if (i > 0)
 {
-	if (fabs(F[nlev][i] - f) >= tol)
-		printf("F = %f, f = %f, |.| = %e\n", F[nlev][i], f, fabs(F[nlev][i] - f));
-	if (fabs(DF[nlev][i] - df) >= tol)
-		printf("DF = %f, df = %f, |.| = %e\n", DF[nlev][i], df, fabs(DF[nlev][i] - df));
-	assert(fabs(F[nlev][i] - f) < tol);
-	assert(fabs(DF[nlev][i] - df) < tol);
+	if (fabs(F[nlev][i] - f)/fabs(F[nlev][i]) >= tol)
+		printf("F = %f, f = %f, |.| = %e\n", F[nlev][i], f, fabs(F[nlev][i] - f)/fabs(F[nlev][i]));
+	if (fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]) >= tol)
+		printf("DF = %f, df = %f, |.| = %e\n", DF[nlev][i], df, fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]));
+	assert(fabs(F[nlev][i] - f)/fabs(F[nlev][i]) < tol);
+	assert(fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]) < tol);
 }
 	}
 
@@ -373,8 +377,8 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	bufmax = 64*(nlev+2);	// nlev + 2 columns, each a max of 64 chars wide 
 	buf = (char*) dynvec(bufmax+1,sizeof(char));	// + 1 for NULL
 	// Adjust F[0][0] and F[nlev][0] to be large number
-	F[0][0] = 1000.0;
-	F[nlev][0] = 1000.0;
+//	F[0][0] = 1000.0;
+//	F[nlev][0] = 1000.0;
 	for (i = 0; i <= samples; i++)
 	{
 // FIXME - There is probably a better way to format this file... binary data would be most accurate, right?
@@ -425,10 +429,10 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		"set title 'Splitting for %d-level MSM'\n"
 		"set grid\n"
 		"set style data lines\n"
-		"set yrange [ -1.0 : %d ]\n"
+		"set yrange [ -1.0 : %f ]\n"
 		"plot "
-		, GP_TERM, nlev, 10);//ceil(1.5*F[1][1]));
-printf("|buf2| = %d\n", buflen);
+//		, GP_TERM, nlev, ceil(1.5*F[1][0]));
+		, GP_TERM, nlev, 10.0);
 	assert(buf2max - buflen > 0);
 
 	// Plot a line for each level (columns 1 -> nlev+1)
@@ -437,7 +441,6 @@ printf("|buf2| = %d\n", buflen);
 		buflen += sprintf(&buf2[buflen],
 			"data_file using 1:%d,",
 			i+2);
-printf("|buf2| = %d\n", buflen);
 		assert(buf2max - buflen > 0);
 	}
 
@@ -447,7 +450,6 @@ printf("|buf2| = %d\n", buflen);
 		"pause -1\n"
 		"quit\n",
 		nlev+2);
-printf("|buf2| = %d\n", buflen);
 	assert(buf2max - buflen > 0);
 
 	// Write buffer to file
@@ -466,13 +468,13 @@ printf("|buf2| = %d\n", buflen);
 	// Call gnuplot to plot DATA file using COMMAND file
 	plotf2d(cmd_file, data_file);
 
+/*
 	// Delete data file
 	if (remove(data_file))
 	{
 		printf("Error removing DATA file <%s>.\n", data_file);
 	}
 
-/*
 	// Delete command data file
 	if (remove(cmd_file))
 	{

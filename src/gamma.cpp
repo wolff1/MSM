@@ -145,7 +145,7 @@ double theta(double *c, int k, double x, double* dtheta, int long_range)
 	// Compute theta(x)
 	f = (double)(long_range)*(f - f2) +					// theta
 		(double)(1 - long_range)*(-f + 1.0/x);			// theta*
-
+//FIXME -> when x == 0.0, f is still nan
 	// Compute theta'(x)
 	df = (double)(long_range)*(df - 0.25*df2) +			// theta
 		 (double)(1 - long_range)*(-df - 1.0/(x*x));	// theta*
