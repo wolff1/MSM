@@ -438,7 +438,6 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		"set style data linespoints\n"
 		"set yrange [ 0.0 : %f ]\n"
 		"plot "
-//		, "pngcairo\nset output \"kernel_split.png", nlev, 1.33*F[1][0]);
 		, GP_TERM, nlev, 1.33*F[1][0]);
 	assert(buf2max - buflen > 0);
 
