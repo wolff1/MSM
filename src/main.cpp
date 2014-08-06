@@ -418,19 +418,27 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	cmd = fopen(cmd_file, "w");
 	assert(cmd != NULL);
 
-	// Write CMD file
+// Write CMD file
 	buf2max = 256 + 32*nlev;
 	buf2 = (char*) dynvec(buf2max+1,sizeof(char));
 	// Create COMMAND file buffer
+// To use LaTeX in plots: (use latex terminal?)
+//http://tex.stackexchange.com/questions/119518/how-can-add-some-latex-eq-or-symbol-in-gnuplot
 	buflen = sprintf(buf2,
 		"set term %s\n"
-		"set xlabel 'x'\n"
-		"set ylabel 'f(x)'\n"
-		"set title 'Splitting for %d-level MSM'\n"
+		"set xlabel 'r'\n"
+//		"set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
+        "set lmargin 10\n"
+        "set label 1 'g_l(r)' at graph -0.1, graph 0.5\n"
+        "set label 2 '(a)' at graph 0.39, graph -0.08\n"
+        "set label 3 '(2a)' at graph 0.785, graph -0.08\n"
+		"set title 'Kernel Splitting for %d-level MSM'\n"
 		"set grid\n"
-		"set style data lines\n"
+//		"set style data lines\n"
+		"set style data linespoints\n"
 		"set yrange [ 0.0 : %f ]\n"
 		"plot "
+//		, "pngcairo\nset output \"kernel_split.png", nlev, 1.33*F[1][0]);
 		, GP_TERM, nlev, 1.33*F[1][0]);
 	assert(buf2max - buflen > 0);
 
@@ -438,18 +446,19 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	for (i = 0; i < nlev; i++)
 	{
 		buflen += sprintf(&buf2[buflen],
-			"data_file using 1:%d,",
-			i+2);
+			"data_file using 1:%d title \"g_%d\" lc rgb \"black\",",
+			i+2, i);
 		assert(buf2max - buflen > 0);
 	}
 
 	// Plot line for 1/r (column nlev+2) and finish file
 	buflen += sprintf(&buf2[buflen],
-		"data_file using 1:%d\n"
+		"data_file using 1:%d title \"1/r\" lc rgb \"black\"\n"
 		"pause -1\n"
 		"quit\n",
 		nlev+2);
 	assert(buf2max - buflen > 0);
+// Write CMD file
 
 	// Write buffer to file
 	bytes = fwrite(buf2, sizeof(char), buflen, cmd);
