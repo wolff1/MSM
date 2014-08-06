@@ -106,49 +106,36 @@ double gamma(double *c, int k, double x, double* dgamma)
 }
 
 /*
+Evaluate theta* and theta*' at position x
+c is coefficient vector for gamma
+k is degree of continuity of gamma
+*/
+double theta_star(double *c, int k, double x, double* dtheta_star)
+{
+    double f = 0.0;
+    double df = 0.0;
+
+    f = 1.0/x - gamma(c, k, x, &df);
+    df = -1.0/(x*x) - df;
+
+    if (dtheta_star != NULL)
+        *dtheta_star = df;
+    return f;
+}
+
+/*
 Evaluate theta and theta' at position x
 c is coefficient vector for gamma
 k is degree of continuity of gamma
-long_range is flag to designate short (theta*) or long (theta) range 
 */
-double theta(double *c, int k, double x, double* dtheta, int long_range)
+double theta(double *c, int k, double x, double* dtheta)
 {
 	double f = 0.0;
 	double df = 0.0;
-	double f2 = 0.0;
 	double df2 = 0.0;
 
-/*
-	f = gamma(c, k, x, &df);
-
-	if (long_range == 0)
-	{
-		//f = 1.0/x - f;
-		//df = -1.0/(x*x) - df;
-		f = -f + 1.0/x;
-		df = -df - 1.0/(x*x);
-	}
-	else
-	{
-		f2 = 0.5*gamma(c, k, 0.5*x, &df2);
-		df2 = 0.25*df2;
-
-		f = f - f2;
-		df = df - df2;
-	}
-*/
-
-	// Below should be the same as above, but without conditionals
-	f = gamma(c, k, x, &df);
-	f2 = 0.5*gamma(c, k, 0.5*x, &df2);
-
-	// Compute theta(x)
-	f = (double)(long_range)*(f - f2) +					// theta
-		(double)(1 - long_range)*(-f + 1.0/x);			// theta*
-//FIXME -> when x == 0.0, f is still nan
-	// Compute theta'(x)
-	df = (double)(long_range)*(df - 0.25*df2) +			// theta
-		 (double)(1 - long_range)*(-df - 1.0/(x*x));	// theta*
+    f = gamma(c, k, x, &df) - 0.5*gamma(c, k, 0.5*x, &df2);
+    df = df - 0.25*df2;
 
 	if (dtheta != NULL)
 		*dtheta = df;

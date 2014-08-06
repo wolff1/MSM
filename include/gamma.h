@@ -23,11 +23,17 @@ c is coefficient vector for gamma
 double gamma(double *c, int k, double x, double* dgamma);
 
 /*
+Evaluate theta* and theta*' at position x
+c is coefficient vector for gamma
+k is degree of continuity of gamma
+*/
+double theta_star(double *c, int k, double x, double* dtheta_star);
+
+/*
 Evaluate theta and theta' at position x
 c is coefficient vector for gamma
 k is degree of continuity of gamma
-top_level is flag for intermediate or top level calculation
 */
-double theta(double *c, int k, double x, double* dtheta, int long_range);
+double theta(double *c, int k, double x, double* dtheta);
 
 // End of file

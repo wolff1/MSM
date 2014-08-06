@@ -217,7 +217,7 @@ void splitting_test(void)
 	int			k = 0;
 	double		a = 0.0;
 	double		one_over_a = 0.0;
-	double		a1 = 0.0;
+	double		al = 0.0;
 	int			nlev = 0;
 	int			l = 0;
 	double		d = 0.0;
@@ -275,28 +275,26 @@ df = 0.0;	// sanity check
 		X[i] = (d*(double)i/(double)samples);
 
 		// Theta* - Short range part of splitting (finite)
-		a1 = one_over_a;
-		F[0][i] = theta(c, k, a1*X[i], &DF[0][i], 0);
-		F[0][i] = a1*F[0][i];
-		DF[0][i] = a1*a1*DF[0][i];
+		al = one_over_a;
+		F[0][i] = al*theta_star(c, k, al*X[i], &DF[0][i]);
+		DF[0][i] = al*al*DF[0][i];
 f += F[0][i];
 df += DF[0][i];
 
 		for (l = 1; l < nlev - 1; l++)
 		{
 			// Theta - Intermediate long range part(s) of splitting (finite)
-			F[l][i] = theta(c, k, a1*X[i], &DF[l][i], 1);
-			F[l][i] = a1*F[l][i];
-			DF[l][i] = a1*a1*DF[l][i];
+			F[l][i] = al*theta(c, k, al*X[i], &DF[l][i]);
+			DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
 df += DF[l][i];
 
-			a1 = 0.5*one_over_a;
+			al = 0.5*al;
 		}
 		// Gamma - Top level long range part of splitting (infinit)
-		F[l][i] = gamma(c, k, a1*X[i], &DF[l][i]);
-		F[l][i] = a1*F[l][i];
-		DF[l][i] = a1*a1*DF[l][i];
+		F[l][i] = gamma(c, k, al*X[i], &DF[l][i]);
+		F[l][i] = al*F[l][i];
+		DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
 df += DF[l][i];
 
@@ -305,12 +303,14 @@ df += DF[l][i];
 		DF[nlev][i] = -F[nlev][i]*F[nlev][i];
 if (i > 0)
 {
-	if (fabs(F[nlev][i] - f)/fabs(F[nlev][i]) >= tol)
-		printf("F = %f, f = %f, |.| = %e\n", F[nlev][i], f, fabs(F[nlev][i] - f)/fabs(F[nlev][i]));
-	if (fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]) >= tol)
-		printf("DF = %f, df = %f, |.| = %e\n", DF[nlev][i], df, fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]));
-	assert(fabs(F[nlev][i] - f)/fabs(F[nlev][i]) < tol);
-	assert(fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]) < tol);
+    double Frel = fabs(F[nlev][i] - f)/fabs(F[nlev][i]);
+    double DFrel = fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]);
+	if (Frel >= tol)
+		printf("i = %d, X = %f, F = %f, f = %f, |.| = %e\n", i, X[i], F[nlev][i], f, Frel);
+	if (DFrel >= tol)
+		printf("i = %d, X = %f, DF = %f, df = %f, |.| = %e\n", i, X[i], DF[nlev][i], df, DFrel);
+	assert(Frel < tol);
+	assert(DFrel < tol);
 }
 	}
 
@@ -376,7 +376,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	// Write DATA file
 	bufmax = 64*(nlev+2);	// nlev + 2 columns, each a max of 64 chars wide 
 	buf = (char*) dynvec(bufmax+1,sizeof(char));	// + 1 for NULL
-	// Adjust F[0][0] and F[nlev][0] to be large number
+	// Adjust F[0][0] and F[nlev][0] to be large number (Not necessary on OSX)
 //	F[0][0] = 1000.0;
 //	F[nlev][0] = 1000.0;
 	for (i = 0; i <= samples; i++)
@@ -429,10 +429,9 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		"set title 'Splitting for %d-level MSM'\n"
 		"set grid\n"
 		"set style data lines\n"
-		"set yrange [ -1.0 : %f ]\n"
+		"set yrange [ 0.0 : %f ]\n"
 		"plot "
-//		, GP_TERM, nlev, ceil(1.5*F[1][0]));
-		, GP_TERM, nlev, 10.0);
+		, GP_TERM, nlev, 1.33*F[1][0]);
 	assert(buf2max - buflen > 0);
 
 	// Plot a line for each level (columns 1 -> nlev+1)
@@ -468,7 +467,6 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	// Call gnuplot to plot DATA file using COMMAND file
 	plotf2d(cmd_file, data_file);
 
-/*
 	// Delete data file
 	if (remove(data_file))
 	{
@@ -480,7 +478,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	{
 		printf("Error removing COMMAND file <%s>.\n", cmd_file);
 	}
-*/
+
 	// Free dynamically allocated memory
 	dynfree(data_file);
 	dynfree(cmd_file);
