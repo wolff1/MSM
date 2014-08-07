@@ -211,9 +211,9 @@ int main(int argc, char* argv[])
 
 void splitting_test(void)
 {
+	// Static memory variables
 	int			i = 0;
 	int			samples = 0;
-	double*		c = NULL;	// Gamma
 	int			k = 0;
 	double		a = 0.0;
 	double		one_over_a = 0.0;
@@ -221,15 +221,15 @@ void splitting_test(void)
 	int			nlev = 0;
 	int			l = 0;
 	double		d = 0.0;
-
+	double		f = 0.0;
+	double		df = 0.0;
+	double		tol = pow(0.1,15);
+	// Dynamic memory variables
+	double*		c = NULL;	// Gamma
 	double*		X = NULL;
 	double**	F = NULL;
 	double**	DF = NULL;
 	char*		data_file = NULL;
-
-	double		f = 0.0;
-	double		df = 0.0;
-	double		tol = pow(0.1,15);
 
 	// Get number of data points to record
 	printf("Please enter the number of samples = ");
@@ -340,23 +340,24 @@ NOTE:		Ignore first sample becuase f(0) = 1/0 is undefined!
 */
 void plot_splittings(int samples, int nlev, int k, double a, double d, double* X, double** F)
 {
-	FILE*	data = NULL;
-	FILE*	cmd = NULL;
-	char*	data_file = NULL;
-	char*	cmd_file = NULL;
+	// Static memory variables
 	char*	cmd_file_name = "splitting_";
 	char*	cmd_file_extension = ".txt";
 	int		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
-
 	// File stuff
-	char* buf = NULL;
-	size_t bufmax = 0;
-	char* buf2 = NULL;
-	size_t buf2max = 0;
-	size_t buflen = 0;
-	size_t bytes = 0;
-	int i = 0;
-	int l = 0;
+	size_t	bufmax = 0;
+	size_t	buf2max = 0;
+	size_t	buflen = 0;
+	size_t	bytes = 0;
+	int		i = 0;
+	int		l = 0;
+	// Dynamic memory variables
+	FILE*	data = NULL;		// freed by fclose
+	FILE*	cmd = NULL;			// freed by fclose
+	char*	data_file = NULL;
+	char*	cmd_file = NULL;
+	char*	buf = NULL;
+	char*	buf2 = NULL;
 
 	assert(X != NULL);
 	assert(F != NULL);
@@ -439,7 +440,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		"set yrange [ 0.0 : %f ]\n"
 		"plot "
 		, GP_TERM, nlev, 1.33*F[1][0]);
-	assert(buf2max - buflen > 0);
+	assert((buf2max - buflen) > 0);
 
 	// Plot a line for each level (columns 1 -> nlev+1)
 	for (i = 0; i < nlev; i++)
@@ -447,7 +448,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		buflen += sprintf(&buf2[buflen],
 			"data_file using 1:%d title \"g_%d\" lc rgb \"black\",",
 			i+2, i);
-		assert(buf2max - buflen > 0);
+		assert((buf2max - buflen) > 0);
 	}
 
 	// Plot line for 1/r (column nlev+2) and finish file
@@ -456,7 +457,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		"pause -1\n"
 		"quit\n",
 		nlev+2);
-	assert(buf2max - buflen > 0);
+	assert((buf2max - buflen) > 0);
 // Write CMD file
 
 	// Write buffer to file
