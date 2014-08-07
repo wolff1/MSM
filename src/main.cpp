@@ -343,12 +343,12 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	// Static memory variables
 	char*	cmd_file_name = "splitting_";
 	char*	cmd_file_extension = ".txt";
-	int		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
+	size_t	cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
 	// File stuff
-	size_t	bufmax = 0;
-	size_t	buf2max = 0;
-	size_t	buflen = 0;
-	size_t	bytes = 0;
+	size_t  bufmax = 0;
+	size_t  buf2max = 0;
+	size_t  buflen = 0;
+	size_t  bytes = 0;
 	int		i = 0;
 	int		l = 0;
 	// Dynamic memory variables
@@ -358,6 +358,23 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	char*	cmd_file = NULL;
 	char*	buf = NULL;
 	char*	buf2 = NULL;
+    char*   buf2_1 =    "set term %s\n"
+                        "set xlabel 'r'\n"
+//                      "set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
+                        "set lmargin 10\n"
+                        "set label 1 'g_l(r)' at graph -0.1, graph 0.5\n"
+                        "set label 2 '(a)' at graph 0.39, graph -0.08\n"
+                        "set label 3 '(2a)' at graph 0.785, graph -0.08\n"
+                        "set title 'Kernel Splitting for %d-level MSM'\n"
+                        "set grid\n"
+//                      "set style data lines\n"
+                        "set style data linespoints\n"
+                        "set yrange [ 0.0 : %7.3f ]\n"
+                        "plot ";
+    char*   buf2_2 =    "data_file using 1:%d title \"g_%d\" lc rgb \"black\",";
+    char*   buf2_3 =    "data_file using 1:%d title \"1/r\" lc rgb \"black\"\n"
+                        "pause -1\n"
+                        "quit\n";
 
 	assert(X != NULL);
 	assert(F != NULL);
@@ -385,23 +402,23 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 // FIXME - There is probably a better way to format this file... binary data would be most accurate, right?
 		// Add X to buffer
 		buflen = sprintf(buf, "%.32f", X[i]);
-		assert(bufmax - buflen > 0);
+		assert(bufmax > buflen);
 
 		for (l = 0; l < nlev; l++)
 		{
 			// Add F[l][i] to buffer
 			buflen += sprintf(&buf[buflen], " %.32f", F[l][i]);
-			assert(bufmax - buflen > 0);
+			assert(bufmax > buflen);
 		}
 		// Add F[nlev][i] to buffer
 		buflen += sprintf(&buf[buflen], " %.32f\n", F[nlev][i]);
-		assert(bufmax - buflen > 0);
+		assert(bufmax > buflen);
 
 		// Write buffer to file
 		bytes = fwrite(buf, sizeof(char), buflen, data);
 		if (bytes < buflen)
 		{
-			printf("<%d> bytes written to temporary file <%s> instead of <%d>\n", bytes, data_file, buflen);
+			printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, data_file, buflen);
 			break;
 		}
 
@@ -409,7 +426,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 		memset(buf, 0, bufmax+1);
 	}
 
-	// Close DATA file
+	// Close DATA file (ensure buffer is flushed to disk)
 	if (fclose(data))
 	{
 		printf("Error closing DATA file.\n");
@@ -420,54 +437,32 @@ void plot_splittings(int samples, int nlev, int k, double a, double d, double* X
 	assert(cmd != NULL);
 
 // Write CMD file
-	buf2max = 256 + 32*nlev;
+	buf2max = strlen(buf2_1) + nlev*strlen(buf2_2) + strlen(buf2_3) + 64;
 	buf2 = (char*) dynvec(buf2max+1,sizeof(char));
+
 	// Create COMMAND file buffer
-// To use LaTeX in plots: (use latex terminal?)
-//http://tex.stackexchange.com/questions/119518/how-can-add-some-latex-eq-or-symbol-in-gnuplot
-	buflen = sprintf(buf2,
-		"set term %s\n"
-		"set xlabel 'r'\n"
-//		"set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
-        "set lmargin 10\n"
-        "set label 1 'g_l(r)' at graph -0.1, graph 0.5\n"
-        "set label 2 '(a)' at graph 0.39, graph -0.08\n"
-        "set label 3 '(2a)' at graph 0.785, graph -0.08\n"
-		"set title 'Kernel Splitting for %d-level MSM'\n"
-		"set grid\n"
-//		"set style data lines\n"
-		"set style data linespoints\n"
-		"set yrange [ 0.0 : %f ]\n"
-		"plot "
-		, GP_TERM, nlev, 1.33*F[1][0]);
-	assert((buf2max - buflen) > 0);
+	buflen = sprintf(buf2, buf2_1, GP_TERM, nlev, 1.33*F[1][0]);
+	assert(buf2max > buflen);
 
 	// Plot a line for each level (columns 1 -> nlev+1)
 	for (i = 0; i < nlev; i++)
 	{
-		buflen += sprintf(&buf2[buflen],
-			"data_file using 1:%d title \"g_%d\" lc rgb \"black\",",
-			i+2, i);
-		assert((buf2max - buflen) > 0);
+		buflen += sprintf(&buf2[buflen], buf2_2, i+2, i);
+		assert(buf2max > buflen);
 	}
 
 	// Plot line for 1/r (column nlev+2) and finish file
-	buflen += sprintf(&buf2[buflen],
-		"data_file using 1:%d title \"1/r\" lc rgb \"black\"\n"
-		"pause -1\n"
-		"quit\n",
-		nlev+2);
-	assert((buf2max - buflen) > 0);
-// Write CMD file
+	buflen += sprintf(&buf2[buflen], buf2_3, nlev+2);
+	assert(buf2max > buflen);
 
 	// Write buffer to file
 	bytes = fwrite(buf2, sizeof(char), buflen, cmd);
 	if (bytes < buflen)
 	{
-		printf("<%d> bytes written to temporary file <%s> instead of <%d>\n", bytes, cmd_file, buflen);
+		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, cmd_file, buflen);
 	}
 
-	// Close CMD file
+	// Close CMD file (ensure buffer is flushed to disk)
 	if (fclose(cmd))
 	{
 		printf("Error closing DATA file.\n");
