@@ -60,4 +60,62 @@ double phi(int p, double x, double* dphi)
 	return f;
 }
 
+/*
+Tests phi and phi' without regard to method or scaling.
+*/
+void phi_test_all(void)
+{
+	int			i = 0;
+	int			samples = 0;
+	int			p = 0;
+	double*		X = NULL;
+	double*		F = NULL;
+	double*		DF = NULL;
+	char*		data_file = NULL;
+
+	/**************************************************************************/
+	// Get number of data points to record
+	printf("Please enter the number of samples = ");
+	scanf("%d", &samples);
+	assert(samples > 0);
+
+	// Get p where p-1 is degree of interpolant
+	printf("Please enter accuracy parameter p = ");
+	scanf("%d", &p);
+	assert(p % 2 == 0);
+
+	// Create arrays for dependent and independent variables
+	X = (double*) dynvec(samples+1, sizeof(double));
+	F = (double*) dynvec(samples+1, sizeof(double));
+	DF = (double*) dynvec(samples+1, sizeof(double));
+	data_file = (char*) dynvec(GP_DATA_DIR_LEN + PHI_DATA_LEN + 1,
+							   sizeof(char));
+
+	/**************************************************************************/
+	// Test centered B-spline where p must be even
+	for (i = 0; i <= samples; i++)
+	{
+		X[i] = (double)(-p/2.0) + ((double)i/(double)samples)*((double)p);
+		F[i] = phi(p, X[i], &DF[i]);
+/*
+		printf("%02d:\tphi(%f) = %f\tphi'(%f) = %f\n",
+				i, X[i], F[i], X[i], DF[i]);
+*/
+	}
+	//	Show Phi(x)
+	sprintf(data_file, "%s%s", GP_DATA_DIR, PHI_DATA);
+	printf("Plotting Phi(x)  for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
+	plots2d(samples, X, F, data_file);
+	//	Show Phi'(x)
+	printf("Plotting Phi'(x) for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
+	plot2d(samples, X, DF);
+
+	/**************************************************************************/
+	// Free allocated memory
+	dynfree(X);
+	dynfree(F);
+	dynfree(DF);
+	dynfree(data_file);
+}
+
 //	End of file

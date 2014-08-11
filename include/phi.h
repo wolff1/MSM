@@ -14,4 +14,9 @@ centered b-spline phi
 */
 double phi(int p, double x, double* dphi);
 
+/*
+Tests phi and phi' without regard to method or scaling.
+*/
+void phi_test_all(void);
+
 // End of file
