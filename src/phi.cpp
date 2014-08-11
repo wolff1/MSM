@@ -71,7 +71,6 @@ void phi_test_all(void)
 	double*		X = NULL;
 	double*		F = NULL;
 	double*		DF = NULL;
-	char*		data_file = NULL;
 
 	/**************************************************************************/
 	// Get number of data points to record
@@ -88,8 +87,6 @@ void phi_test_all(void)
 	X = (double*) dynvec(samples+1, sizeof(double));
 	F = (double*) dynvec(samples+1, sizeof(double));
 	DF = (double*) dynvec(samples+1, sizeof(double));
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN + PHI_DATA_LEN + 1,
-							   sizeof(char));
 
 	/**************************************************************************/
 	// Test centered B-spline where p must be even
@@ -103,9 +100,8 @@ void phi_test_all(void)
 */
 	}
 	//	Show Phi(x)
-	sprintf(data_file, "%s%s", GP_DATA_DIR, PHI_DATA);
 	printf("Plotting Phi(x)  for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
-	plots2d(samples, X, F, data_file);
+	plot2d(samples, X, F);
 	//	Show Phi'(x)
 	printf("Plotting Phi'(x) for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
 	plot2d(samples, X, DF);
@@ -115,7 +111,6 @@ void phi_test_all(void)
 	dynfree(X);
 	dynfree(F);
 	dynfree(DF);
-	dynfree(data_file);
 }
 
 //	End of file

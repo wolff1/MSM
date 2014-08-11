@@ -442,7 +442,6 @@ void gamma_test_all(void)
 	double*		X = NULL;
 	double*		F = NULL;
 	double*		DF = NULL;
-	char*		data_file = NULL;
 	double*		c = NULL;
 
 	/**************************************************************************/
@@ -461,8 +460,6 @@ void gamma_test_all(void)
 	F = (double*) dynvec(samples+1, sizeof(double));
 	DF = (double*) dynvec(samples+1, sizeof(double));
 	c = (double*) dynvec(k+1,sizeof(double));
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN + GAMMA_DATA_LEN + 1,
-							   sizeof(char));
 
 	/**************************************************************************/
 	// Test softener
@@ -477,9 +474,8 @@ void gamma_test_all(void)
 */
 	}
 	//	Show Gamma(x)
-	sprintf(data_file, "%s%s", GP_DATA_DIR, GAMMA_DATA);
 	printf("Plotting gamma(x)  for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
-	plots2d(samples, X, F, data_file);
+	plot2d(samples, X, F);
 	//	Show Gamma'(x)
 	printf("Plotting gamma'(x) for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
 	plot2d(samples, X, DF);
@@ -496,9 +492,8 @@ void gamma_test_all(void)
 */
 	}
 	//	Show Theta*(x)
-	sprintf(data_file, "%s%s%s", GP_DATA_DIR, "star_", THETA_DATA);
 	printf("Plotting theta*(x)  for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
-	plots2d(samples-1, &X[1], &F[1], data_file);
+	plot2d(samples-1, &X[1], &F[1]);
 	//	Show Theta*'(x)
 	printf("Plotting theta*'(x) for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
 	plot2d(samples-1, &X[1], &DF[1]);
@@ -514,9 +509,8 @@ void gamma_test_all(void)
 */
 	}
 	//	Show Theta(x)
-	sprintf(data_file, "%s%s", GP_DATA_DIR, THETA_DATA);
 	printf("Plotting theta(x)  for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
-	plots2d(samples-1, &X[1], &F[1], data_file);
+	plot2d(samples-1, &X[1], &F[1]);
 	//	Show Theta'(x)
 	printf("Plotting theta'(x) for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
 	plot2d(samples-1, &X[1], &DF[1]);
@@ -532,9 +526,8 @@ void gamma_test_all(void)
 */
 	}
 	//	Show gamma(x)
-	sprintf(data_file, "%s%s", GP_DATA_DIR, GAMMA_DATA);
 	printf("Plotting gamma(x)  for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
-	plots2d(samples-1, &X[1], &F[1], data_file);
+	plot2d(samples-1, &X[1], &F[1]);
 	//	Show gamma'(x)
 	printf("Plotting gamma'(x) for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
 	plot2d(samples-1, &X[1], &DF[1]);
@@ -545,7 +538,6 @@ void gamma_test_all(void)
 	dynfree(X);
 	dynfree(F);
 	dynfree(DF);
-	dynfree(data_file);
 }
 
 // End of file
