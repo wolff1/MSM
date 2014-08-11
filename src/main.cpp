@@ -14,43 +14,44 @@ int main(int argc, char* argv[])
 
 	while (choice > 0)
 	{
-		printf("********** MENU ***********\n");
-		printf("* 1 - Display Phi Test    *\n");
-		printf("* 2 - Test MKL MMM        *\n");
-		printf("* 3 - Display Gamma Tests *\n");
-		printf("* 4 - Produce Figure 1    *\n");
-		printf("* 0 - Exit                *\n");
-		printf("***************************\n");
+		printf("************** MENU **************\n");
+		printf("* 1 - Display Phi Test           *\n");
+		printf("* 2 - Test MKL MMM               *\n");
+		printf("* 3 - Display Gamma Tests        *\n");
+		printf("* 4 - Produce Figure 1           *\n");
+		printf("* 5 - Print nesting coefficients *\n");
+		printf("* 0 - Exit                       *\n");
+		printf("**********************************\n");
 		printf("Your selection: ");
 		scanf("%d", &choice);
 
 		// Give them what they want.
 		switch (choice)
 		{
-			case 1:
-				// Test phi and phi'
+			case 1:	// Test phi and phi'
 				phi_test_all();
 				break;
 
-			case 2:
-				// Test matrix multiplication in MKL library
+			case 2:	// Test matrix multiplication in MKL library
 				test_mkl_MMM();
 				break;
 
-			case 3:
-				// Test each smoothing function independent of method scaling
+			case 3:	// Test each smoothing function independent of scaling
 				gamma_test_all();
 				break;
 
-			case 4:
-				// This will produce plot (use OSX) for smoothing
+			case 4:	// This will produce plot (use OSX) for smoothing
 				splitting_test();
 				break;
 
-			case 0:
+			case 5:
+				print_nesting_coefficients();
 				break;
 
-			default:
+			case 0:	// Exit
+				break;
+
+			default:	// Invalid
 				printf("You selected <%d> which is INVALID\n", choice);
 				choice = 1;
 		}

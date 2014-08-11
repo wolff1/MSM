@@ -61,6 +61,45 @@ double phi(int p, double x, double* dphi)
 }
 
 /*
+Compute the coefficients for the B-spines which allow them to be
+nested from a grid to a finer grid.
+
+p such that p-1 is degree of B-spline
+g2fg is (p/2 + 1)-vector
+*/
+void compute_g2fg(short p, double* g2fg)
+{
+	short		n = 0;
+	short		p_2 = (short)p/2;
+	long		num = p;			// numerator
+	long		den = p_2;			// denominator
+
+	assert(g2fg != NULL);
+
+	// Account for 2^(1-p) in denominator once
+	for (n = 1; n < p; n++)
+	{
+		den *= 2;
+	}
+
+	// Build initial state of "p choose p/2"
+	for (n = 1; n < p_2; n++) // exclude p_2 b/c it is in num and den
+	{
+		num *= (p-n);	// [(p)(p-1)(p-2)...(p-p/2)]
+		den *= n;		// [(p/2)(p/2-1)...(2)(1)]*[2^(p-1)]
+	}
+	g2fg[0] = (double) num / (double) den;
+
+	// Compute [p choose p/2 + n] with 1 <= n <= p/2
+	for (n = 1; n <= p_2; n++)
+	{
+		g2fg[n] = (g2fg[n-1]*(double)(p_2-n+1)) / (double)(p_2+n);
+	}
+}
+
+/*** DRIVER FUNCTIONS BELOW ***/
+
+/*
 Tests phi and phi' without regard to method or scaling.
 */
 void phi_test_all(void)
@@ -111,6 +150,34 @@ void phi_test_all(void)
 	dynfree(X);
 	dynfree(F);
 	dynfree(DF);
+}
+
+/*
+Simple interface to output nesting coefficients to user.
+*/
+void print_nesting_coefficients(void)
+{
+	short		p = 0;
+	double*		J = NULL;
+
+	// Get p where p-1 is degree of interpolant
+	printf("Please enter accuracy parameter p = ");
+	scanf("%hd", &p);
+	assert(p % 2 == 0);
+
+	J = (double*) dynvec(p/2+1,sizeof(double));
+	assert(J != NULL);
+
+	// Calculate the coefficients to display
+	compute_g2fg(p, J);
+
+	for (short i = 0; i <= p/2; i++)
+	{
+		printf("J[%hd] = %lf\n", i, J[i]);
+	}
+
+	// Free dynamically allocated memory
+	dynfree(J);
 }
 
 //	End of file
