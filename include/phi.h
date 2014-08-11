@@ -35,4 +35,8 @@ Simple interface to output nesting coefficients to user.
 */
 void print_nesting_coefficients(void);
 
+/*
+*/
+void phi_nesting_test(void);
+
 // End of file

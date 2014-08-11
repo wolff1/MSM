@@ -204,6 +204,11 @@ void splitting_test(void)
 	DF = (double**) dynarr_d(nlev+1,samples+1);
 	c = (double*) dynvec(k+1,sizeof(double));
 	data_file = (char*) dynvec(GP_DATA_DIR_LEN + MAX(PHI_DATA_LEN,GAMMA_DATA_LEN) + 1, sizeof(char));
+	assert(X != NULL);
+	assert(F != NULL);
+	assert(DF != NULL);
+	assert(c != NULL);
+	assert(data_file != NULL);
 
 	// Initialize gamma coefficients
 	gamma_init(k, c);
@@ -460,6 +465,10 @@ void gamma_test_all(void)
 	F = (double*) dynvec(samples+1, sizeof(double));
 	DF = (double*) dynvec(samples+1, sizeof(double));
 	c = (double*) dynvec(k+1,sizeof(double));
+	assert(X != NULL);
+	assert(F != NULL);
+	assert(DF != NULL);
+	assert(c != NULL);
 
 	/**************************************************************************/
 	// Test softener

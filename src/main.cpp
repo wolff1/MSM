@@ -20,6 +20,8 @@ int main(int argc, char* argv[])
 		printf("* 3 - Display Gamma Tests        *\n");
 		printf("* 4 - Produce Figure 1           *\n");
 		printf("* 5 - Print nesting coefficients *\n");
+		printf("* 6 - Produce Figure 4 (B-spline)*\n");
+		printf("* 7 - Produce Figure 5 (C1)      *\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
 		printf("Your selection: ");
@@ -44,8 +46,16 @@ int main(int argc, char* argv[])
 				splitting_test();
 				break;
 
-			case 5:
+			case 5:	// This will produce numerical values for J_n
 				print_nesting_coefficients();
+				break;
+
+			case 6:	// This will produce plot (use OSX) for nesting
+				phi_nesting_test();
+				break;
+
+			case 7:
+				// FIXME
 				break;
 
 			case 0:	// Exit
