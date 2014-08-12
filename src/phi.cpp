@@ -193,7 +193,7 @@ void phi_nesting_test(void)
 	int			samples = 0;
 	int			p = 0;
 	char*		cmd_file_name = "nesting_";
-	char*		cmd_file_extension = ".txt";
+	char*		cmd_file_extension = ".gp";
 	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
 	size_t		bufmax = 0;
 	size_t		buflen = 0;

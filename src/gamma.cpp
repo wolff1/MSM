@@ -288,7 +288,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 {
 	// Static memory variables
 	char*	cmd_file_name = "splitting_";
-	char*	cmd_file_extension = ".txt";
+	char*	cmd_file_extension = ".gp";
 	size_t	cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
 	// File stuff
 	size_t  bufmax = 0;

@@ -13,7 +13,7 @@ http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-l
 	//define something for Windows (32-bit and 64-bit, this part is common)
 	#define GP_DATA_DIR			"../../../data/"
 	#define GP_CMD_DIR			"../../../gnuplot/"
-	#define GP_CMD_TEMPLATE		"tmp_data_template_windows.txt"
+	#define GP_CMD_TEMPLATE		"tmp_data_template_windows.gp"
 	#define GP_TERM				"windows"
 	#ifdef _WIN64
 		//define something for Windows (64-bit only)
@@ -28,7 +28,7 @@ http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-l
 		// Other kinds of Mac OS
 		#define GP_DATA_DIR			"data/"
 		#define GP_CMD_DIR			"gnuplot/"
-		#define GP_CMD_TEMPLATE		"tmp_data_template_aqua.txt"
+		#define GP_CMD_TEMPLATE		"tmp_data_template_aqua.gp"
 		#define GP_TERM				"aqua"
 	#else
 		// Unsupported platform

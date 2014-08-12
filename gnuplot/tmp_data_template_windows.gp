@@ -1,7 +1,7 @@
-# tmp_data_template.txt (Created 07/31/2014 - MAW)
+# tmp_data_template.gp (Created 07/31/2014 - MAW)
 #
 # Usage:
-#  gnuplot < tmp_data_template.txt
+#  gnuplot < tmp_data_template.gp
 #
 #set term pngcairo
 #set output "damped_sine.png"
