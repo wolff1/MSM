@@ -142,7 +142,89 @@ double theta(double *c, int k, double x, double* dtheta)
 	return f;
 }
 
+/*
+Evaluate theta and theta' at position x as single polynomial
+c is coefficient vector for gamma
+k is degree of continuity of gamma
+*/
+double thetap(double *c, int k, double x, double* dtheta)
+{
+	double	f = 0.0;
+	double	df = 0.0;
+	double	exp2 = 0.0;
+	double	xx = x*x;
+	short	i = 0;
+
+	if (x <= 1.0)
+	{
+		exp2 = pow(2.0,2*k+1);
+		// Use Horner's rule to evaluate polynomial
+		f = ((exp2-1.0)/exp2)*c[k];			// Even powers
+		df = ((exp2-1.0)/exp2)*c[k]*(2*k);	// Odd powers
+		for (i = k-1; i >= 1; i--)
+		{
+			exp2 *= 0.25;//exp2 = pow(2.0,2*i+1);
+			f = f*xx + ((exp2-1.0)/exp2)*c[i];
+			df = df*xx + ((exp2-1.0)/exp2)*c[i]*(2*i);
+		}
+		f = f*xx + (0.5)*c[0];
+		df = df*x;
+	}
+	else if (x < 2.0)
+	{
+		f = 1.0/x - 0.5*gamma(c,k,0.5*x,&df);
+		df = -1.0/xx - 0.25*df;
+	}
+
+	if (dtheta != NULL)
+		*dtheta = df;
+	return f;
+}
+
 /*** DRIVER FUNCTIONS BELOW ***/
+
+/*
+Compare theta and thetap
+*/
+void test_thetas(void)
+{
+	int		i = 0;
+	int		samples = 1000;
+	double	t1 = 0.0;
+	double	dt1 = 0.0;
+	double	t2 = 0.0;
+	double	dt2 = 0.0;
+	double	e = 0.0;
+	double	de = 0.0;
+	int		k = 0;
+	double*	c = NULL;
+	double	x = 0.0;
+
+	printf("Enter samples: ");
+	scanf("%d", &samples);
+
+	printf("Enter k: ");
+	scanf("%d", &k);
+
+	c = (double*) dynvec(k+1,sizeof(double));
+
+	// Get gamma coefficients
+	gamma_init(k, c);
+
+	for (i = 0; i <= samples; i++)
+	{
+		x = ((double)i/(double)samples)*2.5;
+		t1 = theta(c,k,x,&dt1);
+		t2 = thetap(c,k,x,&dt2);
+
+		e = fabs(t1 - t2);
+		de = fabs(dt1 - dt2);
+
+		printf("%f: Error = %e, dError = %e\n", x, e, de);
+	}
+
+	dynfree(c);
+}
 
 /*
 Prompts user for samples, number of levels, degree of continuity for smoothing,

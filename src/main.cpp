@@ -23,6 +23,7 @@ int main(int argc, char* argv[])
 		printf("* 5 - Print nesting coefficients *\n");
 		printf("* 6 - Produce Figure 4 (B-spline)*\n");
 		printf("* 7 - Produce Figure 5 (C1)      *\n");
+		printf("* 8 - Test theta and thetap      *\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
 		printf("Your selection: ");
@@ -57,6 +58,10 @@ int main(int argc, char* argv[])
 
 			case 7:	// This will produce plots for C1 testing
 				driverC1();
+				break;
+
+			case 8:	// test theta functions
+				test_thetas();
 				break;
 
 			case 0:	// Exit

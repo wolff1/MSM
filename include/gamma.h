@@ -36,7 +36,19 @@ k is degree of continuity of gamma
 */
 double theta(double *c, int k, double x, double* dtheta);
 
+/*
+Evaluate theta and theta' at position x as single polynomial
+c is coefficient vector for gamma
+k is degree of continuity of gamma
+*/
+double thetap(double *c, int k, double x, double* dtheta);
+
 /*** DRIVER FUNCTIONS BELOW ***/
+
+/*
+Compare theta and thetap
+*/
+void test_thetas(void);
 
 /*
 Prompts user for samples, number of levels, degree of continuity for smoothing,
