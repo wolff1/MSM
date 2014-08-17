@@ -4,6 +4,7 @@ Defines the entry point for the console application.
 */
 
 #include "stdafx.h"
+#include "phiC1.h"	// Remove eventually
 
 void test_mkl_MMM(void);
 void mkl_memory_check(void);
@@ -54,8 +55,8 @@ int main(int argc, char* argv[])
 				phi_nesting_test();
 				break;
 
-			case 7:
-				// FIXME
+			case 7:	// This will produce plots for C1 testing
+				driverC1();
 				break;
 
 			case 0:	// Exit

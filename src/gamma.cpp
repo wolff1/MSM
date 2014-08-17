@@ -306,9 +306,9 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	char*	buf2 = NULL;
     char*   buf2_1 =    "set term %s\n"
                         "set xlabel 'r'\n"
-//                      "set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
-                        "set lmargin 10\n"
-                        "set label 1 'g_l(r)' at graph -0.1, graph 0.5\n"
+						"set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
+                        //"set lmargin 10\n"
+                        //"set label 1 'g_l(r)' at graph -0.1, graph 0.5\n"
                         "set label 2 '(a)' at graph 0.39, graph -0.08\n"
                         "set label 3 '(2a)' at graph 0.785, graph -0.08\n"
                         "set title 'Kernel Splitting for %d-level MSM'\n"
@@ -316,6 +316,7 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 //                      "set style data lines\n"
                         "set style data linespoints\n"
                         "set yrange [ 0.0 : %7.3f ]\n"
+						"set key box\n"
                         "plot ";
     char*   buf2_2 =    "data_file using 1:%d title \"g_%d\" lc rgb \"black\",";
     char*   buf2_3 =    "data_file using 1:%d title \"1/r\" lc rgb \"black\"\n"
@@ -341,8 +342,8 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	bufmax = 64*(nlev+2);	// nlev + 2 columns, each a max of 64 chars wide 
 	buf = (char*) dynvec(bufmax+1,sizeof(char));	// + 1 for NULL
 	// Adjust F[0][0] and F[nlev][0] to be large number (Not necessary on OSX)
-//	F[0][0] = 1000.0;
-//	F[nlev][0] = 1000.0;
+	F[0][0] = 1000.0;
+	F[nlev][0] = 1000.0;
 	for (i = 0; i <= samples; i++)
 	{
 // FIXME - There is probably a better way to format this file... binary data would be most accurate, right?

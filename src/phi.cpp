@@ -203,30 +203,26 @@ void phi_nesting_test(void)
 	double		fc = 0.0;	// Function value on course grid
 	double		f = 0.0;	// Sum of fine grid contributions
 	double		maxf = 0.0;
+	double		minf = 0.0;
 	double		tol = pow(0.1,15);
     char*		buf2_1 =    "set term %s\n"
 							"set termoption dash\n"
 		                    "set xlabel 'u'\n"
-//			                "set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
-							"set lmargin 10\n"
-							"set label 1 'f(u)' at graph -0.1, graph 0.5\n"
+			                "set ylabel 'f(u)'\n" // below two lines rotates by -90 degrees
+							//"set lmargin 10\n"
+							//"set label 1 'f(u)' at graph -0.1, graph 0.5\n"
 							"set title 'Nesting of Spline Function Spaces'\n"
 							"set grid\n"
-							"set style line 1 lc rgb \"cyan\"\n"
-							"set style line 2 lc rgb \"blue\"\n"
-							"set style line 3 lc rgb \"red\"\n"
-//							"set style data lines\n"
-//							"set style data linespoints\n"
-							"set yrange [ 0.0 : %7.3f ]\n"
+							//"set style line 1 lc rgb \"cyan\"\n"
+							//"set style line 2 lc rgb \"blue\"\n"
+							//"set style line 3 lc rgb \"red\"\n"
+							"set style data lines\n"
+							"set yrange [ %7.3f : %7.3f ]\n"
+							"set key box\n"
 							"plot ";
-    //char*		buf2_2 =    "data_file using 1:%d title \"Phi(2u%+d)\" lc rgb \"black\",";
-    //char*		buf2_3 =    "data_file using 1:%d title \"Sum of fine grids\" lc rgb \"black\","
-				//			"data_file using 1:%d title \"Phi(u)\" lc rgb \"black\"\n"
-				//			"pause -1\n"
-				//			"quit\n";
-    char*		buf2_2 =    "data_file using 1:%d with lines title \"Phi(2u%+d)\" ls 1,";
-    char*		buf2_3 =    "data_file using 1:%d with lines title \"Sum of fine grids\" ls 2,"
-							"data_file using 1:%d with lines title \"Phi(u)\" ls 3\n"
+    char*		buf2_2 =    "data_file using 1:%d with lines title \"Phi(2u%+d)\",";
+    char*		buf2_3 =    "data_file using 1:%d with lines title \"Sum of fine grids\","
+							"data_file using 1:%d with lines title \"Phi(u)\"\n"
 							"pause -1\n"
 							"quit\n";
 	// Dynamically allocated memory variables
@@ -280,7 +276,7 @@ void phi_nesting_test(void)
 f = 0.0;
 
 		//	Columns 2 to p+2 (fine grid interpolant values)
-		for (j = 1; j <= p/2; j++)
+		for (j = p/2; j >= 1; j--)
 		{
 			ff = g2fg[j]*phi(p, 2.0*x-j, NULL);
 f += ff;
@@ -312,6 +308,10 @@ f += ff;
 		if (fc > maxf)
 		{
 			maxf = fc;
+		}
+		if (fc < minf)
+		{
+			minf = fc;
 		}
 if (fabs(f - fc) >= tol)
 {
@@ -347,7 +347,7 @@ assert(fabs(f - fc) < tol);
 	assert(fp != NULL);
 
 	// Create COMMAND file buffer
-	buflen = sprintf(buf, buf2_1, GP_TERM, 1.25*maxf);
+	buflen = sprintf(buf, buf2_1, GP_TERM, 1.25*minf, 1.25*maxf);
 	assert(bufmax > buflen);
 
 	// Plot a line for each fine grid b-spline (p+1 fine grids, 1 sum of fine grids)
