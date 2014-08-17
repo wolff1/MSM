@@ -85,7 +85,7 @@ void compute_g2fg(short p, double* g2fg)
 	// Build initial state of "p choose p/2"
 	for (n = 1; n < p_2; n++) // exclude p_2 b/c it is in num and den
 	{
-		num *= (p-n);	// [(p)(p-1)(p-2)...(p-p/2)]
+		num *= (p-n);	// [(p)(p-1)(p-2)...(p/2+1)]
 		den *= n;		// [(p/2)(p/2-1)...(2)(1)]*[2^(p-1)]
 	}
 	g2fg[0] = (double) num / (double) den;
