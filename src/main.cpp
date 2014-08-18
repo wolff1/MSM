@@ -24,6 +24,8 @@ int main(int argc, char* argv[])
 		printf("* 6 - Produce Figure 4 (B-spline)*\n");
 		printf("* 7 - Produce Figure 5 (C1)      *\n");
 		printf("* 8 - Test theta and thetap      *\n");
+		printf("* 9 - Test blurring operator     *\n");
+		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
 		printf("Your selection: ");
@@ -62,6 +64,10 @@ int main(int argc, char* argv[])
 
 			case 8:	// test theta functions
 				test_thetas();
+				break;
+
+			case 9:	// test blurring operator
+				test_blurring_operator();
 				break;
 
 			case 0:	// Exit

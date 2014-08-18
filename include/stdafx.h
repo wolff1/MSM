@@ -20,6 +20,7 @@
 #include "phi.h"
 #include "gamma.h"
 #include "output.h"
+#include "operator.h"
 
 // Global constant(s):
 #define MEM_ALIGN	64
