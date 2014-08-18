@@ -34,36 +34,6 @@ void compute_blurring_operator(short degree, double* B)
 	short		i = 0;
 
 	assert(B != NULL);
-/*
-	//	Allocate memory dynamically for computation
-	a = (double*) dynvec(degree+1,sizeof(double));
-	c = (double**) dynarr_d(degree+1,degree+1);
-
-	a[0] = 1.0;
-	c[0][0] = 1.0;			// b_0 / a_0
-	for (n = 1; n <= degree; n++)
-	{
-		a[n] = -1.0 / (n*f);
-		f = (2.0*n+1.0)*(2.0*n)*f;	// Keep running factorial
-		c[n][n] = 1.0 / f;			// b_n
-		for (k = 1; k <= n; k++)
-		{
-			for (i = 0; i <= n-k; i++)
-			{
-				c[n][i+k-1] = c[n][i+k-1] - a[k]*c[n-k][i];
-			}
-		}
-	}
-
-	// Finally, copy coefficients to output buffer
-	for (n = 0; n <= degree; n++)
-		B[n] = c[degree][n];
-
-	//	Free dynamically allocated memory
-	dynfree(a);
-	dynfree(c[0]);
-	dynfree(c);
-*/
 
 	//	Allocate memory dynamically for computation
 	a = (double*) dynvec(degree+1,sizeof(double));
