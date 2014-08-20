@@ -154,6 +154,8 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	double*		B = NULL;
 	double*		B2 = NULL;
 	double*		A2 = NULL; // A^2 ~= B^{-2}
+	double*		Ctmp = NULL;
+	double*		C = NULL;
 
 	assert(p%2 == 0);
 	assert(mu >= 0);
@@ -163,6 +165,8 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	B = (double*) dynvec(p_2, sizeof(double));
 	B2 = (double*) dynvec(p-1, sizeof(double));
 	A2 = (double*) dynvec(p_2, sizeof(double));
+	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
+	C = (double*) dynvec(p-2, sizeof(double));
 
 	//	Compute B_p
 	compute_blurring_operator(p_2-1, B);
@@ -194,10 +198,22 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	}
 	printf("\n");
 */
+	//	compute (A^2)(B^2) in order to get -C
+	mpoly(p-2, B2, p_2-1, A2, Ctmp);
+	//	keep only (delta^2)^{p/2} and higher
+	for (i = p_2; i <= p+p_2-3; i++)
+	{
+		C[i-p_2] = -Ctmp[i];
+	}
+
+	//	convert C(delta^2) to C(E)
+
 	// Free dynamically allocated memory
 	dynfree(B);
 	dynfree(B2);
 	dynfree(A2);
+	dynfree(Ctmp);
+	dynfree(C);
 }
 
 /*

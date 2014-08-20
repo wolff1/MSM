@@ -118,7 +118,7 @@ void mpoly(short a_degree, double* a, short b_degree, double* b, double* c)
 	assert(c != NULL);
 
 	// Ensure memory for c polynomial is clean before we use += operator
-	for (i = 0; i < a_degree+b_degree+1; i++)
+	for (i = 0; i <= a_degree+b_degree; i++)
 	{
 		c[i] = 0.0;
 	}
