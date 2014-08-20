@@ -26,8 +26,34 @@ NOTE:
 void compute_blurring_operator(short degree, double* B);
 
 /*
+Use O^{-1} = 1 / op = 1 / 1 - D -> D = 1 - O
+Then use geometric series
+O^{-1} = 1 + D + D^2 + D^3 + ...
+
+NOTE:	O ("oh", not zero) is the input operator
+		I ("eye") is the inverse, I = O^{-1}
+*/
+void compute_operator_inverse(short O_degree, const double* O,
+							  short I_degree, double* I);
+
+/*
+compute omega' values
+*/
+void compute_omega_prime(short p, short mu, double* omegap);
+
+/*
 driver to test compute_blurring_operator
 */
 void test_blurring_operator(void);
+
+/*
+driver to test polynomial multiplication routine
+*/
+void test_mpoly(void);
+
+/*
+driver to test building the omega' values
+*/
+void test_omegap(void);
 
 // End of file

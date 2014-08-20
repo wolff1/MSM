@@ -25,6 +25,8 @@ int main(int argc, char* argv[])
 		printf("* 7 - Produce Figure 5 (C1)      *\n");
 		printf("* 8 - Test theta and thetap      *\n");
 		printf("* 9 - Test blurring operator     *\n");
+		printf("*10 - Test polynomial multiply   *\n");
+		printf("*11 - Test omega' values         *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -68,6 +70,14 @@ int main(int argc, char* argv[])
 
 			case 9:	// test blurring operator
 				test_blurring_operator();
+				break;
+
+			case 10:	// test polynomial multiplication
+				test_mpoly();
+				break;
+
+			case 11:
+				test_omegap();
 				break;
 
 			case 0:	// Exit
