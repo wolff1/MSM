@@ -26,8 +26,8 @@
 #utility.o: utility.cpp
 #    $(CC) $(CFLAGS) utility.cpp
 
-all: src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp
-	icc -Iinclude -mkl src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp
+all: src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp src/operator.cpp src/phiC1.cpp
+	icc -Iinclude -mkl src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp src/operator.cpp src/phiC1.cpp
 	mv a.out bin/msm
 clean:
 	rm -rf *o bin/msm
