@@ -141,11 +141,61 @@ void compute_operator_inverse(short O_degree, const double* O,
 }
 
 /*
+Convert an operator from delta^2 to shifts: E-2+E
+
+cd -> "central difference" operator (input)
+s  -> "shifts" operator (output)
+
+NOTE:
+	- Both arrays should be length cd_degree+1
+	- This routine does not initialize s
+		- Instead it operates as s = s + ...
+
+The kth term of (E-2+E)^n is given by:
+s_k = ((-1)^(mod(n+k,2)))*nchoosek(2*n,k+n)
+*/
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s)
+{
+	short		n = 0;
+	short		k = 0;
+	double		f = 1.0;	//	(2n)!
+	double		nf = 1.0;	//	(n)!
+	double		g = 1.0;	// coefficient for a term due to conversion
+	double		sign1 = 1.0;
+	double		sign2 = 1.0;
+
+	assert(cd_degree > -1);
+	assert(cd != NULL);
+	assert(s != NULL);
+
+	//	Convert cd(\delta^2) to s(E)
+	for (n = 0; n <= cd_degree; n++)
+	{
+		g = f/(nf*nf);
+		sign2 = sign1;
+		s[0] = s[0] + sign2*cd[n]*g;
+		for (k = 1; k <= n; k++)
+		{
+			sign2 = -sign2;
+			g = ((n-k+1.0)*g) / ((double)(n+k));
+			s[k] = s[k] + sign2*cd[n]*g;
+		}
+
+		// Update the (2n)! part of the combination for the next iteration
+		f = (2.0*n+2.0)*(2.0*n+1.0)*f;
+		nf = (n+1.0)*nf;
+		sign1 = -sign1;
+	}
+}
+
+/*
 compute omega' values
 NOTE:
 	B has degree p-1
 	B2 has degree 2p-2
 	A2 has degree p-1
+	omega' has degree p/2+mu
 */
 void compute_omega_prime(short p, short mu, double* omegap)
 {
@@ -156,6 +206,8 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	double*		A2 = NULL; // A^2 ~= B^{-2}
 	double*		Ctmp = NULL;
 	double*		C = NULL;
+	double*		CE = NULL;
+	double*		AE = NULL;
 
 	assert(p%2 == 0);
 	assert(mu >= 0);
@@ -167,6 +219,7 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	A2 = (double*) dynvec(p_2, sizeof(double));
 	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
 	C = (double*) dynvec(p-2, sizeof(double));
+	CE = (double*) dynvec(p-2, sizeof(double));
 
 	//	Compute B_p
 	compute_blurring_operator(p_2-1, B);
@@ -207,6 +260,28 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	}
 
 	//	convert C(delta^2) to C(E)
+	convert_delta2_to_shifts(p-3, C, CE);
+/*
+	for (i = 0; i <= p-3; i++)
+	{
+		printf("CE[%d] = %f\n", i, CE[i]);
+	}
+	printf("\n");
+*/
+	//	convert A^2(delta^2) to A(E) = omega'
+	convert_delta2_to_shifts(p_2-1, A2, omegap);
+/*
+	for (i = 0; i <= p_2-1; i++)
+	{
+		printf("omega'[%d] = %f\n", i, omegap[i]);
+	}
+	printf("\n");
+*/
+	// Solve bi-infinite linear system involving B^2 and C(E)
+
+	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
+
+	//	add previous step to omega'
 
 	// Free dynamically allocated memory
 	dynfree(B);
@@ -214,6 +289,7 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	dynfree(A2);
 	dynfree(Ctmp);
 	dynfree(C);
+	dynfree(CE);
 }
 
 /*
@@ -330,6 +406,47 @@ void test_omegap(void)
 */
 	// Free dynamically allocated memory
 	dynfree(omegap);
+}
+
+/*
+driver to test conversion from delta^2 to shifts
+*/
+void test_convert_to_shifts(void)
+{
+	double*		cd = NULL;
+	double*		s = NULL;
+	short		degree = 2;
+	short		i = 0;
+	short		j = 0;
+
+	for (i = 0; i <= 4; i++)
+	{
+		// Allocate
+		cd = (double*) dynvec(i+1, sizeof(double));
+		s  = (double*) dynvec(i+1, sizeof(double));
+
+		// set one term and display
+		cd[i] = 1.0;
+		for (j = 0; j <= i; j++)
+		{
+			printf("cd[%02hd] = %f\n", j, cd[j]);
+		}
+		printf("\n");
+
+		// Convert cd to s
+		convert_delta2_to_shifts(i, cd, s);
+
+		// display result
+		for (j = 0; j <= i; j++)
+		{
+			printf("s[%02hd] = %f\n", j, s[j]);
+		}
+		printf("\n----------------------------------\n");
+
+		// Free
+		dynfree(cd);
+		dynfree(s);
+	}
 }
 
 // End of file

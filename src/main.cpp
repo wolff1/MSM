@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
 		printf("* 9 - Test blurring operator     *\n");
 		printf("*10 - Test polynomial multiply   *\n");
 		printf("*11 - Test omega' values         *\n");
+		printf("*12 - Test operator conversion   *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -76,8 +77,12 @@ int main(int argc, char* argv[])
 				test_mpoly();
 				break;
 
-			case 11:
+			case 11:	// test omega' values
 				test_omegap();
+				break;
+
+			case 12:	// test operator basis conversion
+				test_convert_to_shifts();
 				break;
 
 			case 0:	// Exit

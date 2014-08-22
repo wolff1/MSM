@@ -37,6 +37,18 @@ void compute_operator_inverse(short O_degree, const double* O,
 							  short I_degree, double* I);
 
 /*
+Convert an operator from delta^2 to shifts: E-2+E
+
+cd -> "central difference" operator (input)
+s  -> "shifts" operator (output)
+
+NOTE:
+Both arrays should be length cd_degree+1
+*/
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s);
+
+/*
 compute omega' values
 */
 void compute_omega_prime(short p, short mu, double* omegap);
@@ -55,5 +67,10 @@ void test_mpoly(void);
 driver to test building the omega' values
 */
 void test_omegap(void);
+
+/*
+driver to test conversion from delta^2 to shifts
+*/
+void test_convert_to_shifts(void);
 
 // End of file
