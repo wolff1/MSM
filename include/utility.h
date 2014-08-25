@@ -48,6 +48,7 @@ multiply polynomials where result has restricted degree
 Same as above except that c is not to exceed c_degree.
 NOTE: It is assumed that c has length c_degree+1
 */
-void mpolyr(short a_degree, double* a, short b_degree, double* b, short c_degree, double* c);
+void mpolyr(short a_degree, double* a, short b_degree, double* b,
+			short c_degree, double* c);
 
 // End of file

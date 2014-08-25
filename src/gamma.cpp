@@ -285,7 +285,8 @@ void splitting_test(void)
 	F = (double**) dynarr_d(nlev+1,samples+1);
 	DF = (double**) dynarr_d(nlev+1,samples+1);
 	c = (double*) dynvec(k+1,sizeof(double));
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN + MAX(PHI_DATA_LEN,GAMMA_DATA_LEN) + 1, sizeof(char));
+	data_file = (char*) dynvec(GP_DATA_DIR_LEN +
+						MAX(PHI_DATA_LEN,GAMMA_DATA_LEN) + 1, sizeof(char));
 	assert(X != NULL);
 	assert(F != NULL);
 	assert(DF != NULL);
@@ -334,9 +335,11 @@ if (i > 0)
     double Frel = fabs(F[nlev][i] - f)/fabs(F[nlev][i]);
     double DFrel = fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]);
 	if (Frel >= tol)
-		printf("i = %d, X = %f, F = %f, f = %f, |.| = %e\n", i, X[i], F[nlev][i], f, Frel);
+		printf("i = %d, X = %f, F = %f, f = %f, |.| = %e\n",
+				i, X[i], F[nlev][i], f, Frel);
 	if (DFrel >= tol)
-		printf("i = %d, X = %f, DF = %f, df = %f, |.| = %e\n", i, X[i], DF[nlev][i], df, DFrel);
+		printf("i = %d, X = %f, DF = %f, df = %f, |.| = %e\n",
+				i, X[i], DF[nlev][i], df, DFrel);
 	assert(Frel < tol);
 	assert(DFrel < tol);
 }
@@ -371,7 +374,8 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	// Static memory variables
 	char*	cmd_file_name = "splitting_";
 	char*	cmd_file_extension = ".gp";
-	size_t	cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
+	size_t	cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN +
+								strlen(cmd_file_extension);
 	// File stuff
 	size_t  bufmax = 0;
 	size_t  buf2max = 0;
@@ -388,7 +392,8 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	char*	buf2 = NULL;
     char*   buf2_1 =    "set term %s\n"
                         "set xlabel 'r'\n"
-						"set ylabel 'g_l(r)'\n" // below two lines rotates by -90 degrees
+						"set ylabel 'g_l(r)'\n"
+						// below two lines rotates by -90 degrees
                         //"set lmargin 10\n"
                         //"set label 1 'g_l(r)' at graph -0.1, graph 0.5\n"
                         "set label 2 '(a)' at graph 0.39, graph -0.08\n"
@@ -409,12 +414,15 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	assert(F != NULL);
 
 	// Dynamically allocate memory
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN + GP_DATA_TMP_LEN + 1,sizeof(char));
-	cmd_file = (char*) dynvec(GP_CMD_DIR_LEN + cmd_file_name_len + 1,sizeof(char));
+	data_file = (char*) dynvec(GP_DATA_DIR_LEN + GP_DATA_TMP_LEN + 1,
+								sizeof(char));
+	cmd_file = (char*) dynvec(GP_CMD_DIR_LEN + cmd_file_name_len + 1,
+								sizeof(char));
 
 	// Build file name(s)
 	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
-	sprintf(cmd_file, "%s%s%s%s", GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
+	sprintf(cmd_file, "%s%s%s%s",
+					GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
 
 	// Create DATA file with X, F[0], F[1], ..., F[nlev] columns and samples rows
 	data = fopen(data_file, "w");
@@ -428,7 +436,6 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	F[nlev][0] = 1000.0;
 	for (i = 0; i <= samples; i++)
 	{
-// FIXME - There is probably a better way to format this file... binary data would be most accurate, right?
 		// Add X to buffer
 		buflen = sprintf(buf, "%.32f", X[i]);
 		assert(bufmax > buflen);
@@ -447,7 +454,8 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 		bytes = fwrite(buf, sizeof(char), buflen, data);
 		if (bytes < buflen)
 		{
-			printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, data_file, buflen);
+			printf("<%lu> bytes written to temp file <%s> instead of <%lu>\n",
+				bytes, data_file, buflen);
 			break;
 		}
 
@@ -488,7 +496,8 @@ void plot_splittings(int samples, int nlev, int k, double a, double d,
 	bytes = fwrite(buf2, sizeof(char), buflen, cmd);
 	if (bytes < buflen)
 	{
-		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, cmd_file, buflen);
+		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n",
+				bytes, cmd_file, buflen);
 	}
 
 	// Close CMD file (ensure buffer is flushed to disk)

@@ -45,7 +45,6 @@ s  -> "shifts" operator (output)
 NOTE:
 Both arrays should be length cd_degree+1
 */
-//-------|---------|---------|---------|---------|---------|---------|---------|
 void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s);
 
 /*

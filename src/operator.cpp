@@ -154,7 +154,6 @@ NOTE:
 The kth term of (E-2+E)^n is given by:
 s_k = ((-1)^(mod(n+k,2)))*nchoosek(2*n,k+n)
 */
-//-------|---------|---------|---------|---------|---------|---------|---------|
 void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s)
 {
 	short		n = 0;

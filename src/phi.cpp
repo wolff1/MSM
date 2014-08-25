@@ -194,7 +194,8 @@ void phi_nesting_test(void)
 	int			p = 0;
 	char*		cmd_file_name = "nesting_";
 	char*		cmd_file_extension = ".gp";
-	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
+	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN +
+									strlen(cmd_file_extension);
 	size_t		bufmax = 0;
 	size_t		buflen = 0;
 	size_t		bytes = 0;
@@ -208,7 +209,8 @@ void phi_nesting_test(void)
     char*		buf2_1 =    "set term %s\n"
 							"set termoption dash\n"
 		                    "set xlabel 'u'\n"
-			                "set ylabel 'f(u)'\n" // below two lines rotates by -90 degrees
+			                "set ylabel 'f(u)'\n"
+							// below two lines rotates by -90 degrees
 							//"set lmargin 10\n"
 							//"set label 1 'f(u)' at graph -0.1, graph 0.5\n"
 							"set title 'Nesting of Spline Function Spaces'\n"
@@ -220,9 +222,12 @@ void phi_nesting_test(void)
 							"set yrange [ %7.3f : %7.3f ]\n"
 							"set key box\n"
 							"plot ";
-    char*		buf2_2 =    "data_file using 1:%d with lines title \"Phi(2u%+d)\",";
-    char*		buf2_3 =    "data_file using 1:%d with lines title \"Sum of fine grids\","
-							"data_file using 1:%d with lines title \"Phi(u)\"\n"
+    char*		buf2_2 =    "data_file using 1:%d with lines title "
+							"\"Phi(2u%+d)\",";
+    char*		buf2_3 =    "data_file using 1:%d with lines title "
+							"\"Sum of fine grids\","
+							"data_file using 1:%d with lines title "
+							"\"Phi(u)\"\n"
 							"pause -1\n"
 							"quit\n";
 	// Dynamically allocated memory variables

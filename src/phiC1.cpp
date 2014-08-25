@@ -164,7 +164,8 @@ void phi_nesting_testC1(void)
 	int			p = 0;
 	char*		cmd_file_name = "nesting_";
 	char*		cmd_file_extension = ".gp";
-	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN + strlen(cmd_file_extension);
+	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN +
+									strlen(cmd_file_extension);
 	size_t		bufmax = 0;
 	size_t		buflen = 0;
 	size_t		bytes = 0;
@@ -178,7 +179,8 @@ void phi_nesting_testC1(void)
     char*		buf2_1 =    "set term %s\n"
 							"set termoption dash\n"
 		                    "set xlabel 'u'\n"
-			                "set ylabel 'f(u)'\n" // below two lines rotates by -90 degrees
+			                "set ylabel 'f(u)'\n"
+							// below two lines rotates by -90 degrees
 							//"set lmargin 10\n"
 							//"set label 1 'f(u)' at graph -0.1, graph 0.5\n"
 							"set title 'Non-nesting of C1 Function Spaces'\n"
@@ -187,9 +189,12 @@ void phi_nesting_testC1(void)
 							"set yrange [ %7.3f : %7.3f ]\n"
 							"set key box\n"
 							"plot ";
-    char*		buf2_2 =    "data_file using 1:%d with lines title \"Phi(2u%+d)\",";
-    char*		buf2_3 =    "data_file using 1:%d with lines title \"Sum of fine grids\","
-							"data_file using 1:%d with lines title \"Phi(u)\"\n"
+    char*		buf2_2 =    "data_file using 1:%d with lines title "
+							"\"Phi(2u%+d)\",";
+    char*		buf2_3 =    "data_file using 1:%d with lines title "
+							"\"Sum of fine grids\","
+							"data_file using 1:%d with lines title "
+							"\"Phi(u)\"\n"
 							"pause -1\n"
 							"quit\n";
 	// Dynamically allocated memory variables
@@ -223,7 +228,8 @@ void phi_nesting_testC1(void)
 
 	// Build file name(s)
 	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
-	sprintf(cmd_file, "%s%s%s%s", GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
+	sprintf(cmd_file, "%s%s%s%s",
+					GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
 
 	//	Create DATA file
 	fp = fopen(data_file, "w");
@@ -291,7 +297,8 @@ assert(fabs(f - fc) < tol);
 		bytes = fwrite(buf, sizeof(char), buflen, fp);
 		if (bytes < buflen)
 		{
-			printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, data_file, buflen);
+			printf("<%lu> bytes written to temp file <%s> instead of <%lu>\n",
+					bytes, data_file, buflen);
 			break;
 		}
 
@@ -318,7 +325,7 @@ assert(fabs(f - fc) < tol);
 	buflen = sprintf(buf, buf2_1, GP_TERM, -0.2, 1.2);
 	assert(bufmax > buflen);
 
-	// Plot a line for each fine grid interpolant (p+1 fine grids, 1 sum of fine grids)
+	// Plot a line for each fine grid (p+1 fine grids, 1 sum of fine grids)
 	for (i = 0; i < p/2; i++)
 	{
 		buflen += sprintf(&buf[buflen], buf2_2, i+2, 2*i-3);
@@ -340,7 +347,8 @@ assert(fabs(f - fc) < tol);
 	bytes = fwrite(buf, sizeof(char), buflen, fp);
 	if (bytes < buflen)
 	{
-		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, cmd_file, buflen);
+		printf("<%lu> bytes written to temp file <%s> instead of <%lu>\n",
+				bytes, cmd_file, buflen);
 	}
 
 	// Close COMMAND file (ensure buffer is flushed to disk)

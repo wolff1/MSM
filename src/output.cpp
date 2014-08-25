@@ -109,12 +109,12 @@ void save2d(int data_points, double* x, double* f, char* save_file)
 	// Write contents of file
 	for (i = 0; i < data_points; i++)
 	{
-		// FIXME - There is probably a better way to format this file... binary data would be most accurate, right?
 		buflen = sprintf(buf, "%.32f %.32f\n", x[i], f[i]);
 		bytes = fwrite(buf, sizeofchar, buflen, fp);
 		if (bytes < buflen)
 		{
-			printf("<%d> bytes written to temporary file <%s> instead of <%d>\n", bytes, save_file, buflen);
+			printf("<%d> bytes written to temp file <%s> instead of <%d>\n",
+					bytes, save_file, buflen);
 			break;
 		}
 	}

@@ -6,8 +6,8 @@ utility functions
 #include "stdafx.h"
 
 /*
-NOTE: See https://software.intel.com/en-us/node/433552 for data alignment
-NOTE: See https://software.intel.com/sites/products/documentation/hpc/mkl/mklman/
+NOTE: https://software.intel.com/en-us/node/433552 for data alignment
+NOTE: https://software.intel.com/sites/products/documentation/hpc/mkl/mklman/
 		GUID-637284D3-4D1F-4D6C-9509-382CB2DD1A3D.htm for routines involving
 		linear systems
 */
@@ -101,8 +101,8 @@ void display_vector_d(double* x, int rows)
 /*
 a is input array of length a_degree representing polynomial coefficients
 b is input array of length b_degree representing polynomial coefficients
-c is output array of length a_degree+b_degree+1 representing polynomial coefficients
-	s.t. c = a*b
+c is output array of length a_degree+b_degree+1 representing polynomial
+	coefficients s.t. c = a*b
 NOTE:	It is assumed that the polynomials are in the same base
 		By convention, use a for the higher degree, b for lower degree
 */
@@ -139,7 +139,8 @@ multiply polynomials where result has restricted degree
 Same as above except that c is not to exceed c_degree.
 NOTE: It is assumed that c has length c_degree+1
 */
-void mpolyr(short a_degree, double* a, short b_degree, double* b, short c_degree, double* c)
+void mpolyr(short a_degree, double* a, short b_degree, double* b,
+			short c_degree, double* c)
 {
 	short		i = 0;
 	short		j = 0;

@@ -7,7 +7,8 @@ program output functions
 
 /*
 The follwoing preprocessor logic came from:
-http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-linux-windows-in-c-preprocessor
+http://stackoverflow.com/questions/5919996/
+how-to-detect-reliably-mac-os-x-ios-linux-windows-in-c-preprocessor
 */
 #ifdef _WIN32
 	//define something for Windows (32-bit and 64-bit, this part is common)
