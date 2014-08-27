@@ -50,4 +50,18 @@ NOTE: It is assumed that c has length c_degree+1
 */
 void mpolyr(short a_degree, double* a, short b_degree, double* b, short c_degree, double* c);
 
+/*
+bibst -> bi-infinite, banded, symmetric, Toeplitz
+lss -> linear system solver
+
+A_len   -> bandwidth
+A       -> band (diagonal to edge of band)
+b_len   -> length of rhs vector b, gives # of equations to solve
+b_nnz   -> the number of non-zero elements in b
+b       -> rhs vector
+x_len   -> length of the solution vector x
+x       -> solution vector (Ax = b)
+*/
+void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, short b_nnz, double* b, short x_len, double* x);
+
 // End of file

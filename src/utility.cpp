@@ -167,4 +167,128 @@ void mpolyr(short a_degree, double* a, short b_degree, double* b, short c_degree
 	}
 }
 
+
+/*
+bibst -> bi-infinite, banded, symmetric, Toeplitz
+lss -> linear system solver
+
+A_len   -> bandwidth
+A       -> band (diagonal to edge of band)
+b_len   -> length of rhs vector b, gives # of equations to solve
+b_nnz   -> the number of non-zero elements in b
+b       -> rhs vector
+x_len   -> length of the solution vector x
+x       -> solution vector (Ax = b)
+*/
+void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, short b_nnz, double* b, short x_len, double* x)
+{
+    short           i = 0;
+    short           j = 0;
+    short           k = 0;
+    short           bw = A_len; //  Change A_len to bw in definition?
+    short           imin = 0;   //  Used in infinite Cholesky
+    double          ods = 0.0;  //  off-diagonal sum
+    double          ds = 0.0;   //  on-diagonal sum
+    double          norm = 0.0; //  Used in convergence check
+    double**        G = NULL;   //  Lower triangular Cholesky factor
+    double*         pr = NULL;  //  Previous Row (used in infinite routine)
+    char            c[2] = {0,0};
+    
+    assert(A_len > 0);
+    assert(A != NULL);
+    assert(b_len > 0);
+    assert(b_nnz > 0);
+    assert(b != NULL);
+    assert(x_len > 0);
+    assert(x != NULL);
+
+    //  Dynamically allocate memory for matrices and vectors
+    G = (double**) dynarr_d(bw,bw);
+    pr = (double*) dynvec(bw, sizeof(double));
+
+    if (max_itr < 0)
+        max_itr = 1000;
+
+    //  Default values in G to be 1 on diagonal so initial divisions by
+    //  diagonal element do not produce non-values
+    for (i = 0; i < bw; i++)
+    {
+        G[i][i] = 1.0;
+    }
+
+/*
+    Factor A = (G^T)(G) (Upper-Lower Cholesky)
+        -> Use infinite Cholesky algorithm to get "converged" row
+        -> Use finite Cholesky algorithm to get "unique" rows
+*/
+
+    for (j = 0; j < max_itr; j++)
+    {
+        ds = 0.0;
+        imin = MAX(j - bw + 1, 0);
+        for (i = imin; i < j; i++)
+        {
+            ods = 0.0;
+//            for (k = 1; k < i-(j-bw+1)+1; k++)    //  correct, but w/ negative values
+            for (k = 1; k < i-imin+1; k++)          //  should be correct w/o negative values
+            {
+//printf("\tG[%d][%d] += G[%d][%d]*G[%d][%d]\n", i,j, i-k,i, i-k,j);
+//printf("\tG[%d][%d] += G[%d][%d]*G[%d][%d]\n", j-i,0, j-(i-k),0, j-(i-k),j-i);
+                ods += G[j-(i-k)][0]*G[j-(i-k)][j-i];
+            }
+//printf("\tG[%d][%d] = (A[%d]-sum)/G[%d][%d]\n", i,j, j-i, i,i);
+//printf("\tG[%d][%d] = (A[%d]-sum)/G[%d][%d]\n", j-i,0, j-i, j-i,j-i);
+            G[j-i][0] = (A[j-i] - ods) / G[j-i][j-i];
+            ds += G[j-i][0]*G[j-i][0];
+        }
+//printf("G[%d][%d] = A[%d]-sum\n", j,j, 0);
+//printf("G[%d][%d] = A[%d]-sum\n", 0,0, 0);
+assert (ds < A[0]);
+        G[0][0] = sqrt(A[0] - ds);
+
+        //  Convergence Test and save off pr
+        norm = 0.0;
+        for (i = 0; i < bw; i++)
+        {
+            norm += (G[i][0] - pr[i])*(G[i][0] - pr[i]);
+            pr[i] = G[i][0];
+        }
+        norm = sqrt(norm);
+        if (norm <= tol)
+        {
+printf("itr = %02d, norm = %e\n", j+1, norm);
+            break;
+        }
+
+        //  Save off "previous row" (i.e. newly computed row)
+
+//display_dynarr_d(G, bw, bw);
+        //  Shift moving window
+        for (i = bw-1; i > 0; i--)
+        {
+            for (k = i; k > 0; k--)
+            {
+                G[i][k] = G[i-1][k-1];
+            }
+        }
+/*
+        if (c[0] != 'r')
+        {
+            printf("Please press a key to step or \"r\" to run and then enter: ");
+            scanf("%s", c);
+        }
+*/
+    }
+
+/*
+    Solve (G^T)y = b using backward substitution
+    Solve (G)x = y  using forward substitution
+*/
+
+    //  Free dynamically allocated memory
+    dynfree(G[0]);
+    dynfree(G);
+    dynfree(pr);
+}
+
 // End of file
