@@ -221,32 +221,22 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
         -> Use infinite Cholesky algorithm to get "converged" row
         -> Use finite Cholesky algorithm to get "unique" rows
 */
-
     for (j = 0; j < max_itr; j++)
     {
         ds = 0.0;
-        imin = MAX(j - bw + 1, 0);
-        for (i = imin; i < j; i++)
+        for (i = MIN(j,bw-1); i > 0; i--)//  For j < bw-1, we want A[i] = 0.0
         {
             ods = 0.0;
-//            for (k = 1; k < i-(j-bw+1)+1; k++)    //  correct, but w/ negative values
-            for (k = 1; k < i-imin+1; k++)          //  should be correct w/o negative values
+            for (k = 1; k < bw-i; k++)
             {
-//printf("\tG[%d][%d] += G[%d][%d]*G[%d][%d]\n", i,j, i-k,i, i-k,j);
-//printf("\tG[%d][%d] += G[%d][%d]*G[%d][%d]\n", j-i,0, j-(i-k),0, j-(i-k),j-i);
-                ods += G[j-(i-k)][0]*G[j-(i-k)][j-i];
+                ods += G[i+k][0]*G[i+k][i];
             }
-//printf("\tG[%d][%d] = (A[%d]-sum)/G[%d][%d]\n", i,j, j-i, i,i);
-//printf("\tG[%d][%d] = (A[%d]-sum)/G[%d][%d]\n", j-i,0, j-i, j-i,j-i);
-            G[j-i][0] = (A[j-i] - ods) / G[j-i][j-i];
-            ds += G[j-i][0]*G[j-i][0];
+            G[i][0] = (A[i] - ods) / G[i][i];
+            ds += G[i][0]*G[i][0];
         }
-//printf("G[%d][%d] = A[%d]-sum\n", j,j, 0);
-//printf("G[%d][%d] = A[%d]-sum\n", 0,0, 0);
-assert (ds < A[0]);
         G[0][0] = sqrt(A[0] - ds);
 
-        //  Convergence Test and save off pr
+        //  Convergence Test & save off "previous row" (newly computed row)
         norm = 0.0;
         for (i = 0; i < bw; i++)
         {
@@ -256,13 +246,11 @@ assert (ds < A[0]);
         norm = sqrt(norm);
         if (norm <= tol)
         {
-printf("itr = %02d, norm = %e\n", j+1, norm);
             break;
         }
 
-        //  Save off "previous row" (i.e. newly computed row)
-
 //display_dynarr_d(G, bw, bw);
+
         //  Shift moving window
         for (i = bw-1; i > 0; i--)
         {
@@ -279,6 +267,7 @@ printf("itr = %02d, norm = %e\n", j+1, norm);
         }
 */
     }
+    printf("itr = %02d, norm = %e\n", j, norm);
 
 /*
     Solve (G^T)y = b using backward substitution
