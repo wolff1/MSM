@@ -186,13 +186,13 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     short           j = 0;
     short           k = 0;
     short           bw = A_len; //  Change A_len to bw in definition?
-    short           imin = 0;   //  Used in infinite Cholesky
     double          ods = 0.0;  //  off-diagonal sum
     double          ds = 0.0;   //  on-diagonal sum
     double          norm = 0.0; //  Used in convergence check
     double**        G = NULL;   //  Lower triangular Cholesky factor
     double*         pr = NULL;  //  Previous Row (used in infinite routine)
-    char            c[2] = {0,0};
+//    char            c[2] = {0,0};
+    double          A1 = 0.0;
     
     assert(A_len > 0);
     assert(A != NULL);
@@ -209,18 +209,12 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     if (max_itr < 0)
         max_itr = 1000;
 
-    //  Default values in G to be 1 on diagonal so initial divisions by
-    //  diagonal element do not produce non-values
-    for (i = 0; i < bw; i++)
-    {
-        G[i][i] = 1.0;
-    }
-
 /*
     Factor A = (G^T)(G) (Upper-Lower Cholesky)
         -> Use infinite Cholesky algorithm to get "converged" row
         -> Use finite Cholesky algorithm to get "unique" rows
 */
+    //  "INFINITE" CHOLESKY
     for (j = 0; j < max_itr; j++)
     {
         ds = 0.0;
@@ -249,8 +243,6 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             break;
         }
 
-//display_dynarr_d(G, bw, bw);
-
         //  Shift moving window
         for (i = bw-1; i > 0; i--)
         {
@@ -259,15 +251,79 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
                 G[i][k] = G[i-1][k-1];
             }
         }
-/*
-        if (c[0] != 'r')
-        {
-            printf("Please press a key to step or \"r\" to run and then enter: ");
-            scanf("%s", c);
-        }
-*/
     }
     printf("itr = %02d, norm = %e\n", j, norm);
+
+    //  Reset "infinite" Cholesky factor to be all converged row
+    for (i = 0; i < bw; i++)
+    {
+        for (j = 0; j <= i; j++)
+        {
+            G[i][j] = pr[i-j];
+        }
+    }
+//display_dynarr_d(G,bw,bw);
+
+    //  FINITE CHOLESKY
+    for (j = 0; j < bw-1; j++)    //  Loop over remaining columns
+    {
+        ds = 0.0;
+        for (i = bw-1-j; i > 0; i--)
+        {
+            ods = 0.0;
+            for (k = 1; k < bw-i; k++)
+            {
+                ods += G[i+k][0]*G[i+k][i];
+            }
+printf("\tG[%d][%d]\n", i,j);
+if (j < bw-2)
+{
+    //WHAT AND WHEN
+    A1 = A[i] + A[?];
+}
+else
+{
+    A1 = A[i];
+}
+            G[i][0] = (A1 - ods) / G[i][i];
+            ds += G[i][0]*G[i][0];
+        }
+
+printf("G[%d][%d]\n", 0,0);
+if (j < bw-2)
+{
+    //WHAT
+    A1 = A[0] + A[?];
+}
+else
+{
+    A1 = A[0]/2.0;
+}
+        G[0][0] = sqrt(A1 - ds);
+/*
+        //  Convergence Test & save off "previous row" (newly computed row)
+        norm = 0.0;
+        for (i = 0; i < bw; i++)
+        {
+            norm += (G[i][0] - pr[i])*(G[i][0] - pr[i]);
+            pr[i] = G[i][0];
+        }
+        norm = sqrt(norm);
+        if (norm <= tol)
+        {
+            break;
+        }
+*/
+        //  Shift moving window
+        for (i = bw-1; i > 0; i--)
+        {
+            for (k = i; k > 0; k--)
+            {
+                G[i][k] = G[i-1][k-1];
+            }
+        }
+    }
+//display_dynarr_d(G,bw,bw);
 
 /*
     Solve (G^T)y = b using backward substitution
