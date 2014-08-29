@@ -192,6 +192,7 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     double          norm = 0.0; //  Used in convergence check
     double**        G = NULL;   //  Lower triangular Cholesky factor
     double*         pr = NULL;  //  Previous Row (used in infinite routine)
+	double*			y = NULL;	//	Used in backward substition
 //    char            c[2] = {0,0};
     double          A1 = 0.0;
     
@@ -203,9 +204,12 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     assert(x_len > 0);
     assert(x != NULL);
 
+b_nnz = x_len;//FIXME
+
     //  Dynamically allocate memory for matrices and vectors
     G = (double**) dynarr_d(bw,bw);
     pr = (double*) dynvec(bw, sizeof(double));
+	y = (double*) dynvec(b_nnz, sizeof(double));
 
     if (max_itr < 0)
         max_itr = 1000;
@@ -319,12 +323,71 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     Solve (G^T)y = b using backward substitution
     Solve (G)x = y  using forward substitution
 */
-    //  NOTE:   First divide b by 2 b/c A was implicitely divided by 2
+	if (b_nnz > b_len)
+	{	//	Sanity check - avoid stepping out of bounds
+		b_nnz = b_len;
+	}
+b_nnz = x_len;//FIXME
 
-    //  Free dynamically allocated memory
+//short b_len, short b_nnz, double* b, short x_len, double* x
+
+	//	BACKWARD SUBSTIUTION
+	for (i = b_nnz-1; i >= bw; i--)
+	{
+		y[i] = 0.5*b[i];
+		for (j = 1; j < MIN(b_nnz-i,bw); j++)
+		{	// pr is converged row in Cholesky factor
+printf("G[%d][%d]*\n", i, i+j);
+			y[i] -= y[i+j]*pr[j];
+		}
+printf("G[%d][%d]*\n", i, i);
+		y[i] /= pr[0];	//	pr[0] is diagonal of the converged row
+	}
+
+	k = MIN(bw,b_nnz);
+	for (i = k-1; i >= 0; i--)
+	{
+		//  NOTE:   First divide b by 2 b/c A was implicitely divided by 2
+		y[i] = 0.5*b[i];
+		for (j = 1; j < k-i; j++)
+		{
+printf("G[%d][%d]\n", i, j);
+			y[i] -= G[j][i]*y[i+j];
+		}
+/*
+		for (j = k-i; j < bw; j++)
+		{
+printf("G[%d][%d]^\n", i, j);
+			y[i] -= pr[j]*y[i+j];
+		}
+*/
+printf("G[%d][%d]\n", i, i);
+		y[i] /= G[i][i];
+	}
+/*
+	//	FORWARD SUBSTITUION
+	k = MIN(b_nnz,x_len);
+	for (i = 0; i < k; i++)
+	{
+		for (j = 0; j < MIN(i,bw); j++)
+		{
+			// G
+		}
+	}
+
+	for (i = k; i < x_len; i++)
+	{
+		for (j = 0; j < i; j++)
+		{
+			// pr
+		}
+	}
+*/
+	//  Free dynamically allocated memory
     dynfree(G[0]);
     dynfree(G);
     dynfree(pr);
+	dynfree(y);
 }
 
 // End of file
