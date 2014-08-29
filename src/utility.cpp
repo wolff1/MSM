@@ -202,11 +202,6 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     assert(x_len > 0);
     assert(x != NULL);
 
-for (i = 0; i < A_len; i++)
-{
-    printf("A[%d] = %f\n", i, A[i]);
-}
-
     //  Dynamically allocate memory for matrices and vectors
     G = (double**) dynarr_d(bw,bw);
     pr = (double*) dynvec(bw, sizeof(double));
@@ -257,7 +252,7 @@ for (i = 0; i < A_len; i++)
             }
         }
     }
-    printf("itr = %02d, norm = %e\n", j, norm);
+//    printf("itr = %02d, norm = %e\n", j, norm);
 
     //  Reset "infinite" Cholesky factor to be all converged row
     for (i = 0; i < bw; i++)
@@ -267,10 +262,10 @@ for (i = 0; i < A_len; i++)
             G[i][j] = pr[i-j];
         }
     }
-display_dynarr_d(G,bw,bw);
+//display_dynarr_d(G,bw,bw);
 
     //  FINITE CHOLESKY
-    for (j = 0; j < bw-1; j++)    //  Loop over remaining columns
+    for (j = ceil(bw/2.0)-1; j >= 0; j--)    //  Loop over remaining columns
     {
         ds = 0.0;
         for (i = bw-1; i > 0; i--)
@@ -282,30 +277,27 @@ display_dynarr_d(G,bw,bw);
             }
 
             //  Determine true value derived from A to use
-            if ((j < bw-2) && (i < bw-2))
+            if ((j > 0) && (i < 2*(ceil(bw/2.0)-j-bw%2) + bw%2))
             {
-                A1 = A[i] + A[(bw-1)-abs(2*j-bw+3-i)];
+                A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
             }
             else
             {
                 A1 = A[i];
             }
-printf("(%d,%d) -> A[%d] = %f\n",(bw-j-2)+i,(bw-j-2), (bw-1)-abs(2*j-bw+3-i), A1);
             G[i][0] = (A1 - ods) / G[i][i];
             ds += G[i][0]*G[i][0];
         }
 
         //  Determine true value derived from A to use
-        if (j < bw-2)
+        if (j > 0)
         {
-            A1 = A[0] + A[(bw-1)-abs(2*j-bw+3-i)];
+            A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
         }
         else
         {
             A1 = A[0]/2.0;
         }
-printf("(%d,%d) -> A[%d] = %f, ds = %f\n",(bw-j-2)+i,(bw-j-2), (bw-1)-abs(2*j-bw+3-i), A1, ds);
-assert(A1 > ds);
         G[0][0] = sqrt(A1 - ds);
 
         //  Shift moving window
@@ -317,7 +309,7 @@ assert(A1 > ds);
             }
         }
     }
-display_dynarr_d(G,bw,bw);
+//display_dynarr_d(G,bw,bw);
 
 /*
     Solve (G^T)y = b using backward substitution
