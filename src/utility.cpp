@@ -202,6 +202,11 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     assert(x_len > 0);
     assert(x != NULL);
 
+for (i = 0; i < A_len; i++)
+{
+    printf("A[%d] = %f\n", i, A[i]);
+}
+
     //  Dynamically allocate memory for matrices and vectors
     G = (double**) dynarr_d(bw,bw);
     pr = (double*) dynvec(bw, sizeof(double));
@@ -262,58 +267,47 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             G[i][j] = pr[i-j];
         }
     }
-//display_dynarr_d(G,bw,bw);
+display_dynarr_d(G,bw,bw);
 
     //  FINITE CHOLESKY
     for (j = 0; j < bw-1; j++)    //  Loop over remaining columns
     {
         ds = 0.0;
-        for (i = bw-1-j; i > 0; i--)
+        for (i = bw-1; i > 0; i--)
         {
             ods = 0.0;
             for (k = 1; k < bw-i; k++)
             {
                 ods += G[i+k][0]*G[i+k][i];
             }
-printf("\tG[%d][%d]\n", i,j);
-if (j < bw-2)
-{
-    //WHAT AND WHEN
-    A1 = A[i] + A[?];
-}
-else
-{
-    A1 = A[i];
-}
+
+            //  Determine true value derived from A to use
+            if ((j < bw-2) && (i < bw-2))
+            {
+                A1 = A[i] + A[(bw-1)-abs(2*j-bw+3-i)];
+            }
+            else
+            {
+                A1 = A[i];
+            }
+printf("(%d,%d) -> A[%d] = %f\n",(bw-j-2)+i,(bw-j-2), (bw-1)-abs(2*j-bw+3-i), A1);
             G[i][0] = (A1 - ods) / G[i][i];
             ds += G[i][0]*G[i][0];
         }
 
-printf("G[%d][%d]\n", 0,0);
-if (j < bw-2)
-{
-    //WHAT
-    A1 = A[0] + A[?];
-}
-else
-{
-    A1 = A[0]/2.0;
-}
+        //  Determine true value derived from A to use
+        if (j < bw-2)
+        {
+            A1 = A[0] + A[(bw-1)-abs(2*j-bw+3-i)];
+        }
+        else
+        {
+            A1 = A[0]/2.0;
+        }
+printf("(%d,%d) -> A[%d] = %f, ds = %f\n",(bw-j-2)+i,(bw-j-2), (bw-1)-abs(2*j-bw+3-i), A1, ds);
+assert(A1 > ds);
         G[0][0] = sqrt(A1 - ds);
-/*
-        //  Convergence Test & save off "previous row" (newly computed row)
-        norm = 0.0;
-        for (i = 0; i < bw; i++)
-        {
-            norm += (G[i][0] - pr[i])*(G[i][0] - pr[i]);
-            pr[i] = G[i][0];
-        }
-        norm = sqrt(norm);
-        if (norm <= tol)
-        {
-            break;
-        }
-*/
+
         //  Shift moving window
         for (i = bw-1; i > 0; i--)
         {
@@ -323,12 +317,13 @@ else
             }
         }
     }
-//display_dynarr_d(G,bw,bw);
+display_dynarr_d(G,bw,bw);
 
 /*
     Solve (G^T)y = b using backward substitution
     Solve (G)x = y  using forward substitution
 */
+    //  NOTE:   First divide b by 2 b/c A was implicitely divided by 2
 
     //  Free dynamically allocated memory
     dynfree(G[0]);
