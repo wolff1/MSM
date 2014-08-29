@@ -279,7 +279,8 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             //  Determine true value derived from A to use
             if ((j > 0) && (i < 2*(ceil(bw/2.0)-j-bw%2) + bw%2))
             {
-                A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
+//                A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
+                A1 = A[i] + A[(bw-1)-abs(bw-2*j-i-1)];
             }
             else
             {
@@ -292,7 +293,9 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
         //  Determine true value derived from A to use
         if (j > 0)
         {
-            A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
+//            A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
+            //  NOTE: Same formula as above, but i = 0
+            A1 = A[0] + A[(bw-1)-abs(bw-2*j-1)];
         }
         else
         {
