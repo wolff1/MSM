@@ -168,4 +168,163 @@ void mpolyr(short a_degree, double* a, short b_degree, double* b,
 	}
 }
 
+
+/*
+bibst -> bi-infinite, banded, symmetric, Toeplitz
+lss -> linear system solver
+
+A_len   -> bandwidth
+A       -> band (diagonal to edge of band)
+b_len   -> length of rhs vector b, gives # of equations to solve
+b_nnz   -> the number of non-zero elements in b
+b       -> rhs vector
+x_len   -> length of the solution vector x
+x       -> solution vector (Ax = b)
+*/
+void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, short b_nnz, double* b, short x_len, double* x)
+{
+    short           i = 0;
+    short           j = 0;
+    short           k = 0;
+    short           bw = A_len; //  Change A_len to bw in definition?
+    double          ods = 0.0;  //  off-diagonal sum
+    double          ds = 0.0;   //  on-diagonal sum
+    double          norm = 0.0; //  Used in convergence check
+    double**        G = NULL;   //  Lower triangular Cholesky factor
+    double*         pr = NULL;  //  Previous Row (used in infinite routine)
+//    char            c[2] = {0,0};
+    double          A1 = 0.0;
+    
+    assert(A_len > 0);
+    assert(A != NULL);
+    assert(b_len > 0);
+    assert(b_nnz > 0);
+    assert(b != NULL);
+    assert(x_len > 0);
+    assert(x != NULL);
+
+    //  Dynamically allocate memory for matrices and vectors
+    G = (double**) dynarr_d(bw,bw);
+    pr = (double*) dynvec(bw, sizeof(double));
+
+    if (max_itr < 0)
+        max_itr = 1000;
+
+/*
+    Factor A = (G^T)(G) (Upper-Lower Cholesky)
+        -> Use infinite Cholesky algorithm to get "converged" row
+        -> Use finite Cholesky algorithm to get "unique" rows
+*/
+    //  "INFINITE" CHOLESKY
+    for (j = 0; j < max_itr; j++)
+    {
+        ds = 0.0;
+        for (i = MIN(j,bw-1); i > 0; i--)//  For j < bw-1, we want A[i] = 0.0
+        {
+            ods = 0.0;
+            for (k = 1; k < bw-i; k++)
+            {
+                ods += G[i+k][0]*G[i+k][i];
+            }
+            G[i][0] = (A[i] - ods) / G[i][i];
+            ds += G[i][0]*G[i][0];
+        }
+        G[0][0] = sqrt(A[0] - ds);
+
+        //  Convergence Test & save off "previous row" (newly computed row)
+        norm = 0.0;
+        for (i = 0; i < bw; i++)
+        {
+            norm += (G[i][0] - pr[i])*(G[i][0] - pr[i]);
+            pr[i] = G[i][0];
+        }
+        norm = sqrt(norm);
+        if (norm <= tol)
+        {
+            break;
+        }
+
+        //  Shift moving window
+        for (i = bw-1; i > 0; i--)
+        {
+            for (k = i; k > 0; k--)
+            {
+                G[i][k] = G[i-1][k-1];
+            }
+        }
+    }
+//    printf("itr = %02d, norm = %e\n", j, norm);
+
+    //  Reset "infinite" Cholesky factor to be all converged row
+    for (i = 0; i < bw; i++)
+    {
+        for (j = 0; j <= i; j++)
+        {
+            G[i][j] = pr[i-j];
+        }
+    }
+//display_dynarr_d(G,bw,bw);
+
+    //  FINITE CHOLESKY
+    for (j = ceil(bw/2.0)-1; j >= 0; j--)    //  Loop over remaining columns
+    {
+        ds = 0.0;
+        for (i = bw-1; i > 0; i--)
+        {
+            ods = 0.0;
+            for (k = 1; k < bw-i; k++)
+            {
+                ods += G[i+k][0]*G[i+k][i];
+            }
+
+            //  Determine true value derived from A to use
+            if ((j > 0) && (i < 2*(ceil(bw/2.0)-j-bw%2) + bw%2))
+            {
+//                A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
+                A1 = A[i] + A[(bw-1)-abs(bw-2*j-i-1)];
+            }
+            else
+            {
+                A1 = A[i];
+            }
+            G[i][0] = (A1 - ods) / G[i][i];
+            ds += G[i][0]*G[i][0];
+        }
+
+        //  Determine true value derived from A to use
+        if (j > 0)
+        {
+//            A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
+            //  NOTE: Same formula as above, but i = 0
+            A1 = A[0] + A[(bw-1)-abs(bw-2*j-1)];
+        }
+        else
+        {
+            A1 = A[0]/2.0;
+        }
+        G[0][0] = sqrt(A1 - ds);
+
+        //  Shift moving window
+        for (i = bw-1; i > 0; i--)
+        {
+            for (k = i; k > 0; k--)
+            {
+                G[i][k] = G[i-1][k-1];
+            }
+        }
+    }
+//display_dynarr_d(G,bw,bw);
+
+/*
+    Solve (G^T)y = b using backward substitution
+    Solve (G)x = y  using forward substitution
+*/
+    //  NOTE:   First divide b by 2 b/c A was implicitely divided by 2
+
+    //  Free dynamically allocated memory
+    dynfree(G[0]);
+    dynfree(G);
+    dynfree(pr);
+}
+
 // End of file

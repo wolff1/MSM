@@ -202,11 +202,13 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	short		p_2 = p/2;
 	double*		B = NULL;
 	double*		B2 = NULL;
+    double*     B2E = NULL;
 	double*		A2 = NULL; // A^2 ~= B^{-2}
 	double*		Ctmp = NULL;
 	double*		C = NULL;
 	double*		CE = NULL;
 	double*		AE = NULL;
+    double*     c = NULL;
 
 	assert(p%2 == 0);
 	assert(mu >= 0);
@@ -215,10 +217,12 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	// Dynamically allocate memory
 	B = (double*) dynvec(p_2, sizeof(double));
 	B2 = (double*) dynvec(p-1, sizeof(double));
+    B2E = (double*) dynvec(p-1, sizeof(double));
 	A2 = (double*) dynvec(p_2, sizeof(double));
 	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
 	C = (double*) dynvec(p-2, sizeof(double));
 	CE = (double*) dynvec(p-2, sizeof(double));
+    c = (double*) dynvec(p+mu+1, sizeof(double));
 
 	//	Compute B_p
 	compute_blurring_operator(p_2-1, B);
@@ -276,8 +280,15 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	}
 	printf("\n");
 */
-	// Solve bi-infinite linear system involving B^2 and C(E)
-
+	// Solve bi-infinite linear system involving B^2(E) and C(E)
+    convert_delta2_to_shifts(p-2, B2, B2E);
+    bibst_lss(100, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, p+mu+1, c);
+/*
+    for (i = 0; i <= p+mu; i++)
+    {
+        printf("c[%d] = %f\n", i, c[i]);
+    }
+*/
 	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
 
 	//	add previous step to omega'
@@ -285,10 +296,12 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	// Free dynamically allocated memory
 	dynfree(B);
 	dynfree(B2);
+    dynfree(B2E);
 	dynfree(A2);
 	dynfree(Ctmp);
 	dynfree(C);
 	dynfree(CE);
+    dynfree(c);
 }
 
 /*
