@@ -204,8 +204,6 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     assert(x_len > 0);
     assert(x != NULL);
 
-b_nnz = x_len;//FIXME
-
     //  Dynamically allocate memory for matrices and vectors
     G = (double**) dynarr_d(bw,bw);
     pr = (double*) dynvec(bw, sizeof(double));
@@ -327,7 +325,6 @@ b_nnz = x_len;//FIXME
 	{	//	Sanity check - avoid stepping out of bounds
 		b_nnz = b_len;
 	}
-b_nnz = x_len;//FIXME
 
 //short b_len, short b_nnz, double* b, short x_len, double* x
 
@@ -337,7 +334,7 @@ b_nnz = x_len;//FIXME
 		y[i] = 0.5*b[i];
 		for (j = 1; j < MIN(b_nnz-i,bw); j++)
 		{	// pr is converged row in Cholesky factor
-printf("G[%d][%d]*\n", i, i+j);
+printf("G[%d][%d]'\n", i, i+j);
 			y[i] -= y[i+j]*pr[j];
 		}
 printf("G[%d][%d]*\n", i, i);
@@ -351,16 +348,17 @@ printf("G[%d][%d]*\n", i, i);
 		y[i] = 0.5*b[i];
 		for (j = 1; j < k-i; j++)
 		{
-printf("G[%d][%d]\n", i, j);
+printf("G[%d][%d]^\n", i, i+j);
 			y[i] -= G[j][i]*y[i+j];
 		}
-/*
-		for (j = k-i; j < bw; j++)
+
+		//		for (j = k-i; j < bw; j++)
+		for (j = k-i; j < MIN(b_nnz-i,bw); j++)
 		{
-printf("G[%d][%d]^\n", i, j);
+printf("G[%d][%d]#\n", i, i+j);
 			y[i] -= pr[j]*y[i+j];
 		}
-*/
+
 printf("G[%d][%d]\n", i, i);
 		y[i] /= G[i][i];
 	}
