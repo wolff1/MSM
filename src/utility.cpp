@@ -207,7 +207,7 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     //  Dynamically allocate memory for matrices and vectors
     G = (double**) dynarr_d(bw,bw);
     pr = (double*) dynvec(bw, sizeof(double));
-	y = (double*) dynvec(b_nnz, sizeof(double));
+    y = (double*) dynvec(MAX(b_nnz,x_len), sizeof(double));
 
     if (max_itr < 0)
         max_itr = 1000;
@@ -265,7 +265,7 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             G[i][j] = pr[i-j];
         }
     }
-//display_dynarr_d(G,bw,bw);
+display_dynarr_d(G,bw,bw);
 
     //  FINITE CHOLESKY
     for (j = ceil(bw/2.0)-1; j >= 0; j--)    //  Loop over remaining columns
@@ -276,7 +276,7 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             ods = 0.0;
             for (k = 1; k < bw-i; k++)
             {
-                ods += G[i+k][0]*G[i+k][i];
+	      ods += G[i+k][0]*G[i+k][i];
             }
 
             //  Determine true value derived from A to use
@@ -315,7 +315,10 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             }
         }
     }
-//display_dynarr_d(G,bw,bw);
+display_vector_d(A, A_len);
+display_dynarr_d(G,bw,bw);
+display_vector_d(pr,bw);
+display_vector_d(b, b_len);
 
 /*
     Solve (G^T)y = b using backward substitution
@@ -329,58 +332,73 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
 //short b_len, short b_nnz, double* b, short x_len, double* x
 
 	//	BACKWARD SUBSTIUTION
-	for (i = b_nnz-1; i >= bw; i--)
+	for (i = b_nnz-1; i >= bw-1; i--)
 	{
 		y[i] = 0.5*b[i];
 		for (j = 1; j < MIN(b_nnz-i,bw); j++)
 		{	// pr is converged row in Cholesky factor
-printf("G[%d][%d]'\n", i, i+j);
+//printf("G[%d][%d]'\n", i, i+j);
 			y[i] -= y[i+j]*pr[j];
 		}
-printf("G[%d][%d]*\n", i, i);
+//printf("G[%d][%d]*\n", i, i);
 		y[i] /= pr[0];	//	pr[0] is diagonal of the converged row
 	}
 
-	k = MIN(bw,b_nnz);
+	k = MIN(bw-1,b_nnz);
 	for (i = k-1; i >= 0; i--)
 	{
 		//  NOTE:   First divide b by 2 b/c A was implicitely divided by 2
 		y[i] = 0.5*b[i];
 		for (j = 1; j < k-i; j++)
 		{
-printf("G[%d][%d]^\n", i, i+j);
-			y[i] -= G[j][i]*y[i+j];
+//printf("G[%d][%d]^\n", i, i+j);
+//			y[i] -= G[j][i]*y[i+j];
+			y[i] -= G[j+1][i+1]*y[i+j];
 		}
 
-		//		for (j = k-i; j < bw; j++)
+		// NOTE: MIN() keeps j from exceeding b_nnz-th column
 		for (j = k-i; j < MIN(b_nnz-i,bw); j++)
 		{
-printf("G[%d][%d]#\n", i, i+j);
+//printf("G[%d][%d]#\n", i, i+j);
 			y[i] -= pr[j]*y[i+j];
 		}
 
-printf("G[%d][%d]\n", i, i);
-		y[i] /= G[i][i];
+//printf("G[%d][%d]\n", i, i);
+//		y[i] /= G[i][i];
+		y[i] /= G[i+1][i+1];
 	}
-/*
+//display_vector_d(y,MAX(b_nnz,x_len));
+//printf("\n\n");
+
 	//	FORWARD SUBSTITUION
-	k = MIN(b_nnz,x_len);
+	k = MIN(bw-1,x_len);
 	for (i = 0; i < k; i++)
 	{
-		for (j = 0; j < MIN(i,bw); j++)
+	  x[i] = y[i];
+		for (j = i; j > 0; j--)
 		{
-			// G
+//printf("G[%d][%d]^\t%f\t%f\n", i, i-j, x[i-j], G[i][i-j]);
+//		  x[i] -= x[i-j]*G[i][i-j];
+		  x[i] -= x[i-j]*G[i+1][i-j+1];
 		}
+//printf("G[%d][%d]\t%f\n", i,i, G[i][i]);
+//		x[i] /= G[i][i];
+		x[i] /= G[i+1][i+1];
 	}
 
 	for (i = k; i < x_len; i++)
 	{
-		for (j = 0; j < i; j++)
+	  x[i] = y[i];
+		for (j = bw-1; j > 0; j--)
 		{
-			// pr
+//printf("G[%d][%d]\t%f\t%f\n", i,i-j, x[i-j], pr[j]);
+		  x[i] -= x[i-j]*pr[j];
 		}
+//printf("G[%d][%d]\t%f\n", i,i, pr[0]);
+		x[i] /= pr[0];
 	}
-*/
+display_vector_d(x,x_len);
+
 	//  Free dynamically allocated memory
     dynfree(G[0]);
     dynfree(G);
