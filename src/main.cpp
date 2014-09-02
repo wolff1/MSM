@@ -201,6 +201,17 @@ void test_sinc(void)
 	double*		omega5 = NULL;
 	double*		omega7 = NULL;
 	double**	results = NULL;
+	char*		cmd_file_name = "sinc_";
+	char*		cmd_file_extension = ".gp";
+	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN +
+									strlen(cmd_file_extension);
+	FILE*		fp = NULL;
+	char*		data_file = NULL;
+	char*		cmd_file = NULL;
+	char*		buf = NULL;
+	size_t		bufmax = 512;//6*32;
+	size_t		buflen = 0;
+	size_t		bytes = 0;
 
 	printf("Enter the number of samples: ");
 	scanf("%hd", &samples);
@@ -219,12 +230,24 @@ void test_sinc(void)
 	omega5 = (double*) dynvec(omega_max,sizeof(double));
 	omega7 = (double*) dynvec(omega_max,sizeof(double));
 	results = (double**) dynarr_d(4,samples+1);
+	data_file = (char*) dynvec(GP_DATA_DIR_LEN + GP_DATA_TMP_LEN + 1,sizeof(char));
+	cmd_file = (char*) dynvec(GP_CMD_DIR_LEN + cmd_file_name_len + 1,sizeof(char));
+	buf = (char*) dynvec(bufmax+1, sizeof(char));
 
 	//	Compute omega values
 	compute_omega(4, omega_max, omega3);
 	compute_omega(6, omega_max, omega5);
 	compute_omega(8, omega_max, omega7);
 
+	// Build file name(s)
+	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
+	sprintf(cmd_file, "%s%s%s%s", GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
+
+	//	Create DATA file
+	fp = fopen(data_file, "w");
+	assert(fp != NULL);
+
+	//	Compute values of interpolants and sinc function
 	for (i = 0; i <= samples; i++)
 	{
 		u = umin + (umax-umin)*(double)i /samples;
@@ -266,7 +289,69 @@ void test_sinc(void)
 			results[3][i] = 1.0;
 		}
 
-		printf("u = %f, %f, %f, %f, %f\n", u, results[0][i], results[1][i], results[2][i], results[3][i]);
+		//	Write data to buffer
+		buflen = sprintf(buf, "%.32f %.32f %.32f %.32f %.32f\n", u, results[0][i], results[1][i], results[2][i], results[3][i]);
+		// Write buffer to file
+		bytes = fwrite(buf, sizeof(char), buflen, fp);
+		if (bytes < buflen)
+		{
+			printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, data_file, buflen);
+			break;
+		}
+		// Clear out buffer for next usage
+		memset(buf, 0, bufmax+1);
+	}
+	// Close DATA file (ensure buffer is flushed to disk)
+	if (fclose(fp))
+	{
+		printf("Error closing DATA file.\n");
+	}
+
+	/*****WRITE THE COMMAND FILE TO DISPLAY THE RESULTS OF ABOVE *************/
+	fp = fopen(cmd_file, "w");
+	assert(fp != NULL);
+
+	// Write buffer to file (buf set to size of 512 bytes)
+	buflen = sprintf(buf,	"set term %s\n"
+							"set xlabel 'u'\n"
+							"set ylabel 'f(u)'\n"
+							"set title 'Fundamental splines of varying degree and sinc function'\n"
+							"set style data lines\n"
+							"set key box\n"
+							"plot [][-0.4:1.2] 0.0 title \"\", "
+									"data_file using 1:2 title \"Cubic\", "
+										 "\"\" using 1:3 title \"Quintic\", "
+										 "\"\" using 1:4 title \"Septic\", "
+										 "\"\" using 1:5 title \"Sinc\"\n"
+							"pause -1\n"
+							"quit\n",
+							GP_TERM);
+	assert(buflen < bufmax);
+	bytes = fwrite(buf, sizeof(char), buflen, fp);
+	if (bytes < buflen)
+	{
+		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, cmd_file, buflen);
+	}
+
+	// Close COMMAND file (ensure buffer is flushed to disk)
+	if (fclose(fp))
+	{
+		printf("Error closing COMMAND file.\n");
+	}
+
+	// Call gnuplot to plot DATA file using COMMAND file
+	plotf2d(cmd_file, data_file);
+
+	// Delete data file
+	if (remove(data_file))
+	{
+		printf("Error removing DATA file <%s>.\n", data_file);
+	}
+
+	// Delete command data file
+	if (remove(cmd_file))
+	{
+		printf("Error removing COMMAND file <%s>.\n", cmd_file);
 	}
 
 	//	Free dynamically allocated memory
@@ -275,6 +360,9 @@ void test_sinc(void)
 	dynfree(omega7);
 	dynfree(results[0]);
 	dynfree(results);
+	dynfree(data_file);
+	dynfree(cmd_file);
+	dynfree(buf);
 }
 
 // End of file
