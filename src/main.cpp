@@ -8,6 +8,7 @@ Defines the entry point for the console application.
 
 void test_mkl_MMM(void);
 void mkl_memory_check(void);
+void test_sinc(void);
 
 int main(int argc, char* argv[])
 {
@@ -29,6 +30,7 @@ int main(int argc, char* argv[])
 		printf("*11 - Test omega' values         *\n");
 		printf("*12 - Test operator conversion   *\n");
 		printf("*13 - Test omega values          *\n");
+		printf("*14 - Produce Figure 2 (sinc)    *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -88,6 +90,10 @@ int main(int argc, char* argv[])
 
 			case 13:	//	test omega values
 				test_omega();
+				break;
+
+			case 14:
+				test_sinc();
 				break;
 
 			case 0:	// Exit
@@ -175,6 +181,100 @@ void mkl_memory_check(void)
 			(long) AllocatedBytes, N_AllocatedBuffers);
 	}
 
+}
+
+/*
+Compare cubic, quintic, and septic splines to sinc function
+*/
+void test_sinc(void)
+{
+	short		i = 0;
+	short		j = 0;
+	short		n = 0;
+	short		p = 0;
+	double		umin = 0.0;
+	double		umax = 0.0;
+	double		u = 0.0;
+	short		samples = 100;
+	short		omega_max = 100;
+	double*		omega3 = NULL;
+	double*		omega5 = NULL;
+	double*		omega7 = NULL;
+	double**	results = NULL;
+
+	printf("Enter the number of samples: ");
+	scanf("%hd", &samples);
+
+	printf("Enter the number of omega values to compute: ");
+	scanf("%hd", &omega_max);
+	
+	printf("Enter the minimum u value: ");
+	scanf("%lf", &umin);
+
+	printf("Enter the maximum u value: ");
+	scanf("%lf", &umax);
+
+	//	Dynamically allocate memory
+	omega3 = (double*) dynvec(omega_max,sizeof(double));
+	omega5 = (double*) dynvec(omega_max,sizeof(double));
+	omega7 = (double*) dynvec(omega_max,sizeof(double));
+	results = (double**) dynarr_d(4,samples+1);
+
+	//	Compute omega values
+	compute_omega(4, omega_max, omega3);
+	compute_omega(6, omega_max, omega5);
+	compute_omega(8, omega_max, omega7);
+
+	for (i = 0; i <= samples; i++)
+	{
+		u = umin + (umax-umin)*(double)i /samples;
+
+		//	Cubic
+		p = 4;
+		for (j = 0; j < p; j++)
+		{
+			n = (short)floor(u) - p/2 + 1 + j;
+			assert(abs(n) < omega_max);
+			results[0][i] += omega3[abs(n)]*phi(p,u-(double)n,NULL);
+		}
+
+		//	Quintic
+		p = 6;
+		for (j = 0; j < p; j++)
+		{
+			n = (short)floor(u) - p/2 + 1 + j;
+			assert(abs(n) < omega_max);
+			results[1][i] += omega5[abs(n)]*phi(p,u-(double)n,NULL);
+		}
+
+		//	Septic
+		p = 8;
+		for (j = 0; j < p; j++)
+		{
+			n = (short)floor(u) - p/2 + 1 + j;
+			assert(abs(n) < omega_max);
+			results[2][i] += omega7[abs(n)]*phi(p,u-(double)n,NULL);
+		}
+
+		//	Sinc function
+		if (u != 0.0)
+		{
+			results[3][i] = sin(u*PI) / (u*PI);
+		}
+		else
+		{
+			results[3][i] = 1.0;
+		}
+
+		printf("u = %f, %f, %f, %f, %f\n", u, results[0][i], results[1][i], results[2][i], results[3][i]);
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(omega3);
+	dynfree(omega5);
+	dynfree(omega7);
+	dynfree(results[0]);
+	dynfree(results);
 }
 
 // End of file

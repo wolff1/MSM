@@ -3,8 +3,9 @@
 utility functions
 */
 
-#define MAX(x,y) ((x > y) ? (x) : (y))
-#define MIN(x,y) ((x < y) ? (x) : (y))
+#define	MAX(x,y)	((x > y) ? (x) : (y))
+#define	MIN(x,y)	((x < y) ? (x) : (y))
+#define	PI			3.14159265358979323846
 
 /*
 Allocate and zero memory for 2D array of type double
