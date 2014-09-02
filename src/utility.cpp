@@ -276,7 +276,7 @@ display_dynarr_d(G,bw,bw);
             ods = 0.0;
             for (k = 1; k < bw-i; k++)
             {
-	      ods += G[i+k][0]*G[i+k][i];
+				ods += G[i+k][0]*G[i+k][i];
             }
 
             //  Determine true value derived from A to use
@@ -306,14 +306,17 @@ display_dynarr_d(G,bw,bw);
         }
         G[0][0] = sqrt(A1 - ds);
 
-        //  Shift moving window
-        for (i = bw-1; i > 0; i--)
-        {
-            for (k = i; k > 0; k--)
-            {
-                G[i][k] = G[i-1][k-1];
-            }
-        }
+		if (j > 0)
+		{
+			//  Shift moving window
+			for (i = bw-1; i > 0; i--)
+			{
+				for (k = i; k > 0; k--)
+				{
+					G[i][k] = G[i-1][k-1];
+				}
+			}
+		}
     }
 display_vector_d(A, A_len);
 display_dynarr_d(G,bw,bw);
@@ -329,72 +332,56 @@ display_vector_d(b, b_len);
 		b_nnz = b_len;
 	}
 
-//short b_len, short b_nnz, double* b, short x_len, double* x
-
 	//	BACKWARD SUBSTIUTION
-	for (i = b_nnz-1; i >= bw-1; i--)
-	{
-		y[i] = 0.5*b[i];
-		for (j = 1; j < MIN(b_nnz-i,bw); j++)
-		{	// pr is converged row in Cholesky factor
-//printf("G[%d][%d]'\n", i, i+j);
-			y[i] -= y[i+j]*pr[j];
-		}
-//printf("G[%d][%d]*\n", i, i);
-		y[i] /= pr[0];	//	pr[0] is diagonal of the converged row
-	}
-
-	k = MIN(bw-1,b_nnz);
-	for (i = k-1; i >= 0; i--)
+	for (i = b_nnz-1; i >= bw; i--)
 	{
 		//  NOTE:   First divide b by 2 b/c A was implicitely divided by 2
 		y[i] = 0.5*b[i];
+		for (j = 1; j < MIN(b_nnz-i,bw); j++)
+		{	// pr is converged row in Cholesky factor
+			y[i] -= pr[j]*y[i+j];
+		}
+		y[i] /= pr[0];	//	pr[0] is diagonal of the converged row
+	}
+
+	k = MIN(bw,b_nnz);
+	for (i = k-1; i >= 0; i--)
+	{
+		y[i] = 0.5*b[i];
 		for (j = 1; j < k-i; j++)
 		{
-//printf("G[%d][%d]^\n", i, i+j);
-//			y[i] -= G[j][i]*y[i+j];
-			y[i] -= G[j+1][i+1]*y[i+j];
+			y[i] -= G[j][i]*y[i+j];
 		}
 
 		// NOTE: MIN() keeps j from exceeding b_nnz-th column
 		for (j = k-i; j < MIN(b_nnz-i,bw); j++)
 		{
-//printf("G[%d][%d]#\n", i, i+j);
 			y[i] -= pr[j]*y[i+j];
 		}
 
-//printf("G[%d][%d]\n", i, i);
-//		y[i] /= G[i][i];
-		y[i] /= G[i+1][i+1];
+		y[i] /= G[i][i];
 	}
-//display_vector_d(y,MAX(b_nnz,x_len));
-//printf("\n\n");
+display_vector_d(y,MAX(b_nnz,x_len));
 
 	//	FORWARD SUBSTITUION
-	k = MIN(bw-1,x_len);
+	k = MIN(bw,x_len);
 	for (i = 0; i < k; i++)
 	{
-	  x[i] = y[i];
+		x[i] = y[i];
 		for (j = i; j > 0; j--)
 		{
-//printf("G[%d][%d]^\t%f\t%f\n", i, i-j, x[i-j], G[i][i-j]);
-//		  x[i] -= x[i-j]*G[i][i-j];
-		  x[i] -= x[i-j]*G[i+1][i-j+1];
+		  x[i] -= G[i][i-j]*x[i-j];
 		}
-//printf("G[%d][%d]\t%f\n", i,i, G[i][i]);
-//		x[i] /= G[i][i];
-		x[i] /= G[i+1][i+1];
+		x[i] /= G[i][i];
 	}
 
 	for (i = k; i < x_len; i++)
 	{
-	  x[i] = y[i];
+		x[i] = y[i];
 		for (j = bw-1; j > 0; j--)
 		{
-//printf("G[%d][%d]\t%f\t%f\n", i,i-j, x[i-j], pr[j]);
-		  x[i] -= x[i-j]*pr[j];
+		  x[i] -= pr[j]*x[i-j];
 		}
-//printf("G[%d][%d]\t%f\n", i,i, pr[0]);
 		x[i] /= pr[0];
 	}
 display_vector_d(x,x_len);
