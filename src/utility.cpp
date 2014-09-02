@@ -181,7 +181,10 @@ b       -> rhs vector
 x_len   -> length of the solution vector x
 x       -> solution vector (Ax = b)
 */
-void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, short b_nnz, double* b, short x_len, double* x)
+void bibst_lss(long max_itr, double tol,
+				short A_len, double* A,
+				short b_len, short b_nnz, double* b,
+				short x_len, double* x)
 {
     short           i = 0;
     short           j = 0;
@@ -193,7 +196,6 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
     double**        G = NULL;   //  Lower triangular Cholesky factor
     double*         pr = NULL;  //  Previous Row (used in infinite routine)
 	double*			y = NULL;	//	Used in backward substition
-//    char            c[2] = {0,0};
     double          A1 = 0.0;
     
     assert(A_len > 0);
@@ -255,7 +257,6 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             }
         }
     }
-//    printf("itr = %02d, norm = %e\n", j, norm);
 
     //  Reset "infinite" Cholesky factor to be all converged row
     for (i = 0; i < bw; i++)
@@ -265,7 +266,6 @@ void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, sh
             G[i][j] = pr[i-j];
         }
     }
-display_dynarr_d(G,bw,bw);
 
     //  FINITE CHOLESKY
     for (j = ceil(bw/2.0)-1; j >= 0; j--)    //  Loop over remaining columns
@@ -282,7 +282,6 @@ display_dynarr_d(G,bw,bw);
             //  Determine true value derived from A to use
             if ((j > 0) && (i < 2*(ceil(bw/2.0)-j-bw%2) + bw%2))
             {
-//                A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
                 A1 = A[i] + A[(bw-1)-abs(bw-2*j-i-1)];
             }
             else
@@ -296,7 +295,6 @@ display_dynarr_d(G,bw,bw);
         //  Determine true value derived from A to use
         if (j > 0)
         {
-//            A1 = A[i] + A[(bw-1)-abs((bw-1)-(2*j+i))];
             //  NOTE: Same formula as above, but i = 0
             A1 = A[0] + A[(bw-1)-abs(bw-2*j-1)];
         }
@@ -318,10 +316,6 @@ display_dynarr_d(G,bw,bw);
 			}
 		}
     }
-display_vector_d(A, A_len);
-display_dynarr_d(G,bw,bw);
-display_vector_d(pr,bw);
-display_vector_d(b, b_len);
 
 /*
     Solve (G^T)y = b using backward substitution
@@ -361,7 +355,6 @@ display_vector_d(b, b_len);
 
 		y[i] /= G[i][i];
 	}
-display_vector_d(y,MAX(b_nnz,x_len));
 
 	//	FORWARD SUBSTITUION
 	k = MIN(bw,x_len);
@@ -384,7 +377,6 @@ display_vector_d(y,MAX(b_nnz,x_len));
 		}
 		x[i] /= pr[0];
 	}
-display_vector_d(x,x_len);
 
 	//  Free dynamically allocated memory
     dynfree(G[0]);

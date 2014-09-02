@@ -209,6 +209,11 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	double*		CE = NULL;
 	double*		AE = NULL;
     double*     c = NULL;
+	double*		pd = NULL;
+	double*		pE = NULL;
+	double*		c_full = NULL;
+	double*		p_full = NULL;
+	double*		high_terms = NULL;
 
 	assert(p%2 == 0);
 	assert(mu >= 0);
@@ -222,7 +227,12 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
 	C = (double*) dynvec(p-2, sizeof(double));
 	CE = (double*) dynvec(p-2, sizeof(double));
-    c = (double*) dynvec(p+mu+1, sizeof(double));
+    c = (double*) dynvec(mu+1, sizeof(double));
+	pd = (double*) dynvec(p_2+1,sizeof(double));
+	pE = (double*) dynvec(p_2+1,sizeof(double));
+	c_full = (double*) dynvec(2*mu+1,sizeof(double));
+	p_full = (double*) dynvec(p+1,sizeof(double));
+	high_terms = (double*) dynvec(p+2*mu+1,sizeof(double));
 
 	//	Compute B_p
 	compute_blurring_operator(p_2-1, B);
@@ -282,7 +292,7 @@ void compute_omega_prime(short p, short mu, double* omegap)
 */
 	// Solve bi-infinite linear system involving B^2(E) and C(E)
     convert_delta2_to_shifts(p-2, B2, B2E);
-    bibst_lss(100, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, p+mu+1, c);
+    bibst_lss(-1, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, mu+1, c);
 /*
     for (i = 0; i <= p+mu; i++)
     {
@@ -290,8 +300,34 @@ void compute_omega_prime(short p, short mu, double* omegap)
     }
 */
 	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
+	pd[p_2] = 1.0;
+	convert_delta2_to_shifts(p_2,pd,pE);
+/*
+	display_vector_d(pE,p_2+1);
+*/
+	// convolve (c,pE) after forming full, symmetric operator
+	c_full[mu] = c[0];
+	for (i = 1; i <= mu; i++)
+	{
+		c_full[mu+i] = c[i];
+		c_full[mu-i] = c[i];
+	}
+//display_vector_d(c_full,2*mu+1);
+	p_full[p_2] = pE[0];
+	for (i = 1; i <= p_2; i++)
+	{
+		p_full[p_2+i] = pE[i];
+		p_full[p_2-i] = pE[i];
+	}
+//display_vector_d(p_full,p+1);
+	mpoly(2*mu, c_full, p, p_full, high_terms);
+//display_vector_d(high_terms,p+2*mu+1);
 
 	//	add previous step to omega'
+	for (i = 0; i <= p_2+mu; i++)
+	{
+		omegap[i] += high_terms[p_2+mu+i];
+	}
 
 	// Free dynamically allocated memory
 	dynfree(B);
@@ -302,6 +338,11 @@ void compute_omega_prime(short p, short mu, double* omegap)
 	dynfree(C);
 	dynfree(CE);
     dynfree(c);
+	dynfree(pd);
+	dynfree(pE);
+	dynfree(c_full);
+	dynfree(p_full);
+	dynfree(high_terms);
 }
 
 /*
@@ -408,14 +449,14 @@ void test_omegap(void)
 	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
 
 	compute_omega_prime(p, mu, omegap);
-/*
+
 	printf("\n");
-	for (i = 0; i < p_2+mu+1; i++)
+	for (i = 0; i <= p_2+mu; i++)
 	{
 		printf("%02hd - %f\n", i, omegap[i]);
 	}
 	printf("\n");
-*/
+
 	// Free dynamically allocated memory
 	dynfree(omegap);
 }

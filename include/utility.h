@@ -63,6 +63,9 @@ b       -> rhs vector
 x_len   -> length of the solution vector x
 x       -> solution vector (Ax = b)
 */
-void bibst_lss(long max_itr, double tol, short A_len, double* A, short b_len, short b_nnz, double* b, short x_len, double* x);
+void bibst_lss(long max_itr, double tol,
+				short A_len, double* A,
+				short b_len, short b_nnz, double* b,
+				short x_len, double* x);
 
 // End of file
