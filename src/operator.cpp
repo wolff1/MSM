@@ -189,6 +189,48 @@ void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s)
 }
 
 /*
+compute omega values
+NOTE:
+	B has degree p-1
+*/
+void compute_omega(short p, short n, double* omega)
+{
+	short		i = 0;
+	short		p_2 = p/2;
+	double*		B = NULL;
+	double*		Psi = NULL;
+
+	assert(p%2 == 0);
+	assert(n >= 0);
+	assert(omega != NULL);
+
+	// Dynamically allocate memory
+	B = (double*) dynvec(p_2, sizeof(double));
+	Psi = (double*) dynvec(1,sizeof(double));
+
+	//	Compute B(E)
+	for (i = 0; i < p_2; i++)
+	{
+		B[i] = phi(p,(double)i,NULL);
+	}
+
+	//	Set up Psi
+	Psi[0] = 1.0;
+
+	//	Solve for omega
+    bibst_lss(-1, pow(2.0,-53), p_2, B, 1, 1, Psi, n, omega);
+/*
+    for (i = 0; i < p_2; i++)
+    {
+        printf("c[%d] = %f\n", i, omega[i]);
+    }
+*/
+	// Free dynamically allocated memory
+	dynfree(B);
+	dynfree(Psi);
+}
+
+/*
 compute omega' values
 NOTE:
 	B has degree p-1
@@ -429,6 +471,39 @@ void test_mpoly(void)
 }
 
 /*
+driver to test building the omega values
+*/
+void test_omega(void)
+{
+	short		i = 0;
+	short		p = 0;
+	short		p_2 = 0;
+	short		n = 0;
+	double*		omega = NULL;
+
+	printf("Please enter p: ");
+	scanf("%hd", &p);
+	p_2 = p/2;
+	printf("Please enter n: ");
+	scanf("%hd", &n);
+
+	// Dynamically allocate memory
+	omega = (double*) dynvec(n, sizeof(double));
+
+	compute_omega(p, n, omega);
+
+	printf("\n");
+	for (i = 0; i < n; i++)
+	{
+		printf("%02hd: %f\n", i, omega[i]);
+	}
+	printf("\n");
+
+	// Free dynamically allocated memory
+	dynfree(omega);
+}
+
+/*
 driver to test building the omega' values
 */
 void test_omegap(void)
@@ -453,7 +528,7 @@ void test_omegap(void)
 	printf("\n");
 	for (i = 0; i <= p_2+mu; i++)
 	{
-		printf("%02hd - %f\n", i, omegap[i]);
+		printf("%02hd: %f\n", i, omegap[i]);
 	}
 	printf("\n");
 

@@ -48,9 +48,16 @@ Both arrays should be length cd_degree+1
 void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s);
 
 /*
+compute omega values
+*/
+void compute_omega(short p, short n, double* omega);
+
+/*
 compute omega' values
 */
 void compute_omega_prime(short p, short mu, double* omegap);
+
+//	DRIVERS BELOW
 
 /*
 driver to test compute_blurring_operator
@@ -61,6 +68,11 @@ void test_blurring_operator(void);
 driver to test polynomial multiplication routine
 */
 void test_mpoly(void);
+
+/*
+driver to test building the omega values
+*/
+void test_omega(void);
 
 /*
 driver to test building the omega' values

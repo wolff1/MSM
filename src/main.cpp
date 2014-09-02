@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
 		printf("*10 - Test polynomial multiply   *\n");
 		printf("*11 - Test omega' values         *\n");
 		printf("*12 - Test operator conversion   *\n");
+		printf("*13 - Test omega values          *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -83,6 +84,10 @@ int main(int argc, char* argv[])
 
 			case 12:	// test operator basis conversion
 				test_convert_to_shifts();
+				break;
+
+			case 13:	//	test omega values
+				test_omega();
 				break;
 
 			case 0:	// Exit
