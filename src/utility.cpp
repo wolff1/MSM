@@ -222,10 +222,10 @@ void bibst_lss(long max_itr, double tol,
     //  "INFINITE" CHOLESKY
     for (j = 0; j < max_itr; j++)
     {
-        ds = 0.0;
+        ds = 0.0;	//ds -> diagonal sum: sum used in computing the diagonal
         for (i = MIN(j,bw-1); i > 0; i--)//  For j < bw-1, we want A[i] = 0.0
         {
-            ods = 0.0;
+            ods = 0.0;	//ods -> off-diagonal sum, used in off-diagonal values
             for (k = 1; k < bw-i; k++)
             {
                 ods += G[i+k][0]*G[i+k][i];
@@ -270,10 +270,10 @@ void bibst_lss(long max_itr, double tol,
     //  FINITE CHOLESKY
     for (j = ceil(bw/2.0)-1; j >= 0; j--)    //  Loop over remaining columns
     {
-        ds = 0.0;
+        ds = 0.0;	// diagonal sum - used in computed diagonal value
         for (i = bw-1; i > 0; i--)
         {
-            ods = 0.0;
+            ods = 0.0;	// off-diagonal sum, used for off-diagonal values
             for (k = 1; k < bw-i; k++)
             {
 				ods += G[i+k][0]*G[i+k][i];
