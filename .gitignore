@@ -2,3 +2,4 @@
 *~
 *.DS_Store
 vs2010/*
+xcode/*
