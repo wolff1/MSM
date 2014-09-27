@@ -10,7 +10,7 @@ Solves for coefficients of gamma
 k is degree of continuity
 b will return k+1 vector of coefficients
 */
-void gamma_init(int k, double* x)
+void gamma_init(short k, double* x)
 {
 	double** A = NULL;	// Coefficient matrix
 	double* b = x;		// Alias output parameter x
@@ -73,7 +73,7 @@ void gamma_init(int k, double* x)
 Evaluate gamma and gamma' at (positive) position x
 c is coefficient vector for gamma
 */
-double gamma(double *c, int k, double x, double* dgamma)
+double gamma(double *c, short k, double x, double* dgamma)
 {
 	double f = 0.0;
 	double df = 0.0;
@@ -110,7 +110,7 @@ Evaluate theta* and theta*' at position x
 c is coefficient vector for gamma
 k is degree of continuity of gamma
 */
-double theta_star(double *c, int k, double x, double* dtheta_star)
+double theta_star(double *c, short k, double x, double* dtheta_star)
 {
     double f = 0.0;
     double df = 0.0;
@@ -128,7 +128,7 @@ Evaluate theta and theta' at position x
 c is coefficient vector for gamma
 k is degree of continuity of gamma
 */
-double theta(double *c, int k, double x, double* dtheta)
+double theta(double *c, short k, double x, double* dtheta)
 {
 	double f = 0.0;
 	double df = 0.0;
@@ -147,7 +147,7 @@ Evaluate theta and theta' at position x as single polynomial
 c is coefficient vector for gamma
 k is degree of continuity of gamma
 */
-double thetap(double *c, int k, double x, double* dtheta)
+double thetap(double *c, short k, double x, double* dtheta)
 {
 	double	f = 0.0;
 	double	df = 0.0;
@@ -237,7 +237,7 @@ void splitting_test(void)
 	// Static memory variables
 	int			i = 0;
 	int			samples = 0;
-	int			k = 0;
+	short		k = 0;
 	double		a = 0.0;
 	double		one_over_a = 0.0;
 	double		al = 0.0;
@@ -259,14 +259,14 @@ void splitting_test(void)
 	scanf("%d", &samples);
 	assert(samples > 0);
 
-	// Get k where k is degree of continuity of the softener
+	// Get nlev where nlev is the number of levels
 	printf("Please enter levels parameter nlev = ");
 	scanf("%d", &nlev);
 	assert(nlev > 1);
 
 	// Get k where k is degree of continuity of the softener
 	printf("Please enter softening parameter k = ");
-	scanf("%d", &k);
+	scanf("%hd", &k);
 	assert(k > 0);
 
 	// Get a where a is cut-off distance
@@ -346,7 +346,7 @@ if (i > 0)
 	}
 
 	// Plot splittings on single graph along with f(x) = 1/x
-	plot_splittings(samples, nlev, k, a, d, X, F);
+	plot_splittings(samples, nlev, a, d, X, F);
 //	plot_splittings(samples, nlev, k, a, d, X, DF);
 
 	// Free dynamically allocated memory
@@ -362,13 +362,12 @@ if (i > 0)
 /*
 samples:	number of data points
 nlev:		number of levels (3->2 grids)
-k:			continuity of smoothing
 a:			cut-off distance
 d:			length of domain starting at 0.0
 X:			independent variable, 0.0 <= X <= d (vector, 1 x samples)
 F:			dependent variable(s) (array, nlev x samples)
 */
-void plot_splittings(int samples, int nlev, int k, double a, double d,
+void plot_splittings(int samples, int nlev, double a, double d,
 						double* X, double** F)
 {
 	// Static memory variables
@@ -535,7 +534,7 @@ void gamma_test_all(void)
 {
 	int			i = 0;
 	int			samples = 0;
-	int			k = 0;
+	short		k = 0;
 	double*		X = NULL;
 	double*		F = NULL;
 	double*		DF = NULL;
@@ -549,7 +548,7 @@ void gamma_test_all(void)
 
 	// Get k where k is degree of continuity of the softener
 	printf("Please enter softening parameter k = ");
-	scanf("%d", &k);
+	scanf("%hd", &k);
 	assert(k > 0);
 
 	// Create arrays for dependent and independent variables
