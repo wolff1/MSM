@@ -181,7 +181,62 @@ double thetap(double *c, short k, double x, double* dtheta)
 	return f;
 }
 
+#define	STENCIL_STORAGE(L)	(L+1)*(L+2)*(L+3)/6
+#define	STENCIL_MAP_Z(z)	z*(z+1)*(z+2)/6
+#define	STENCIL_MAP_Y(y)	y*(y+1)/2
+#define STENCIL_MAP_X(x)	x
+
 /*** DRIVER FUNCTIONS BELOW ***/
+
+void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, STENCIL* Gamma)
+{
+	unsigned long	x = 0;
+	unsigned long	y = 0;
+	unsigned long	z = 0;
+	double*			data = NULL;
+	unsigned long	len = ceil(2*alpha);
+	double			dtheta = 0.0;
+	unsigned long	z2 = 0;
+	unsigned long	y2 = 0;
+	unsigned long	zi = 0;
+	unsigned long	yi = 0;
+	double			distance = 0.0;
+
+	//	Initialize Gamma
+	Gamma->seq.num_dimensions = 1;
+	Gamma->seq.dimensions = (unsigned long*) dynvec(Gamma->seq.num_dimensions, sizeof(unsigned long));
+	*Gamma->seq.dimensions = STENCIL_STORAGE(len);
+	Gamma->seq.data = (double*) dynvec(*Gamma->seq.dimensions, sizeof(double));
+	Gamma->is_sphere = 0;
+	Gamma->length = len;
+	Gamma->loop_ranges = NULL;
+
+	printf("Gamma has size: %lu, ceil(2*alpha) = %lu\n", *Gamma->seq.dimensions, len);
+
+	data = Gamma->seq.data;
+
+	for (z = 0; z <= Gamma->length; z++)
+	{
+		z2 = z*z;
+		zi = STENCIL_MAP_Z(z);
+		for (y = 0; y <= z; y++)
+		{
+			y2 = y*y + z2;
+			yi = zi + STENCIL_MAP_Y(y);
+			for (x = 0; x <= y; x++)
+			{
+				distance = h * sqrt((double)x*x + y2) / a;
+				data[yi + STENCIL_MAP_X(x)] = theta(c, k, distance, &dtheta);
+				//data[yi + STENCIL_MAP_X(x)] = gamma(c, k, distance, &dtheta);
+				printf("(%02lu, %02lu, %02lu), idx = %05lu, distance = %e, value = %e\n", x,y,z, yi + STENCIL_MAP_X(x), distance, data[yi + STENCIL_MAP_X(x)]);
+			}
+		}
+	}
+
+	//	Free memory
+	dynfree(Gamma->seq.dimensions);
+	dynfree(Gamma->seq.data);
+}
 
 /*
 Compare theta and thetap
@@ -196,15 +251,19 @@ void test_thetas(void)
 	double	dt2 = 0.0;
 	double	e = 0.0;
 	double	de = 0.0;
-	int		k = 0;
+	short	k = 0;
 	double*	c = NULL;
 	double	x = 0.0;
+	STENCIL	Gamma;
+	double	a = 0;
+	double	h = 0.0;
+	double	alpha = 0.0;
 
 	printf("Enter samples: ");
 	scanf("%d", &samples);
 
 	printf("Enter k: ");
-	scanf("%d", &k);
+	scanf("%hd", &k);
 
 	c = (double*) dynvec(k+1,sizeof(double));
 
@@ -222,6 +281,16 @@ void test_thetas(void)
 
 		printf("%f: Error = %e, dError = %e\n", x, e, de);
 	}
+
+	//	Attempt to build Gamma stencil
+	printf("Enter a: "); // alpha = a/h, radius = 2*alpha, discrete radius = ceil(2*alpha)
+	scanf("%lf", &a);
+
+	printf("Enter h: "); // alpha = a/h, radius = 2*alpha, discrete radius = ceil(2*alpha)
+	scanf("%lf", &h);
+	alpha = a/h;
+
+	build_Gamma_stencil(k, c, a, h, alpha, &Gamma);
 
 	dynfree(c);
 }

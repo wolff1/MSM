@@ -9,6 +9,21 @@ gamma.h - the softening function used to split the kernel
 #define GAMMA_DATA_LEN		strlen(GAMMA_DATA)
 #define THETA_DATA_LEN		strlen(THETA_DATA)
 
+typedef struct
+{
+	unsigned long	num_dimensions;
+	unsigned long*	dimensions;
+	double*			data;
+} SEQUENCE;
+
+typedef struct
+{
+	SEQUENCE		seq;
+	unsigned long	length;
+	short			is_sphere;
+	double**		loop_ranges;
+} STENCIL;
+
 /*
 Solves for coefficients of gamma
 k is degree of continuity
