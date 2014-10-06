@@ -10,13 +10,13 @@ utility functions
 /*
 Allocate and zero memory for 2D array of type double
 */
-double** dynarr_d(int rows, int cols);
+double** dynarr_d(unsigned long rows, unsigned long cols);
 
 /*
 Allocate and zero memory for vector (1D array) whose elements
 have size "size"
 */
-void* dynvec(int rows, size_t size);
+void* dynvec(unsigned long rows, size_t size);
 
 /*
 Free allocated memory
@@ -26,12 +26,12 @@ void dynfree(void* ptr);
 /*
 Display elements of 2D array
 */
-void display_dynarr_d(double** A, int rows, int cols);
+void display_dynarr_d(double** A, unsigned long rows, unsigned long cols);
 
 /*
 Display elements of vector
 */
-void display_vector_d(double* x, int rows);
+void display_vector_d(double* x, unsigned long rows);
 
 /*
 a is input array of length a_degree+1 representing polynomial coefficients

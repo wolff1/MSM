@@ -9,19 +9,20 @@ gamma.h - the softening function used to split the kernel
 #define GAMMA_DATA_LEN		strlen(GAMMA_DATA)
 #define THETA_DATA_LEN		strlen(THETA_DATA)
 
-typedef struct
-{
-	unsigned long	num_dimensions;
-	unsigned long*	dimensions;
-	double*			data;
-} SEQUENCE;
+#define	STENCIL_STORAGE(L)		(L+1)*(L+2)*(L+3)/6
+#define	STENCIL_MAP_Z(z)		z*(z+1)*(z+2)/6
+#define	STENCIL_MAP_Y(y)		y*(y+1)/2
+#define STENCIL_MAP_X(x)		x
+
+#define	STENCIL_STORAGE_2D(L)	(L+1)*(L+2)/2
 
 typedef struct
 {
-	SEQUENCE		seq;
-	unsigned long	length;
-	short			is_sphere;
-	double**		loop_ranges;
+	unsigned long	size;
+//	unsigned long	zmax;
+	unsigned long*	ymax;
+	unsigned long*	xmax;
+	double*			data;
 } STENCIL;
 
 /*

@@ -15,9 +15,9 @@ NOTE: https://software.intel.com/sites/products/documentation/hpc/mkl/mklman/
 /*
 Allocate and zero memory for 2D array of type double
 */
-double** dynarr_d(int rows, int cols)
+double** dynarr_d(unsigned long rows, unsigned long cols)
 {
-	int i = 0;
+	unsigned long i = 0;
 	double** ptr = NULL;
 	double* buf = NULL;
 
@@ -43,7 +43,7 @@ double** dynarr_d(int rows, int cols)
 Allocate and zero memory for vector (1D array) whose elements
 have size "size"
 */
-void* dynvec(int rows, size_t size)
+void* dynvec(unsigned long rows, size_t size)
 {
 	void* ptr = NULL;
 
@@ -68,10 +68,10 @@ void dynfree(void* ptr)
 /*
 Display elements of 2D array
 */
-void display_dynarr_d(double** A, int rows, int cols)
+void display_dynarr_d(double** A, unsigned long rows, unsigned long cols)
 {
-	int i = 0;
-	int j = 0;
+	unsigned long i = 0;
+	unsigned long j = 0;
 
 	for (i = 0; i < rows; i++)
 	{
@@ -87,9 +87,9 @@ void display_dynarr_d(double** A, int rows, int cols)
 /*
 Display elements of vector
 */
-void display_vector_d(double* x, int rows)
+void display_vector_d(double* x, unsigned long rows)
 {
-	int i = 0;
+	unsigned long i = 0;
 
 	for (i = 0; i < rows; i++)
 	{

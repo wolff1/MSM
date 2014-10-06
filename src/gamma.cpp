@@ -181,11 +181,6 @@ double thetap(double *c, short k, double x, double* dtheta)
 	return f;
 }
 
-#define	STENCIL_STORAGE(L)	(L+1)*(L+2)*(L+3)/6
-#define	STENCIL_MAP_Z(z)	z*(z+1)*(z+2)/6
-#define	STENCIL_MAP_Y(y)	y*(y+1)/2
-#define STENCIL_MAP_X(x)	x
-
 /*** DRIVER FUNCTIONS BELOW ***/
 
 void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, STENCIL* Gamma)
@@ -193,49 +188,101 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 	unsigned long	x = 0;
 	unsigned long	y = 0;
 	unsigned long	z = 0;
+
 	double*			data = NULL;
-	unsigned long	len = ceil(2*alpha);
 	double			dtheta = 0.0;
-	unsigned long	z2 = 0;
-	unsigned long	y2 = 0;
+
+	unsigned long	zz = 0;
+	unsigned long	yyzz = 0;
 	unsigned long	zi = 0;
 	unsigned long	yi = 0;
 	double			distance = 0.0;
+	unsigned long	zi_2d = 0;
+
+	double			r = 0;
+	double			rr = 0;
+
+	int				cnt = 0;
+	int				total = 0;
+	int				cnt2 = 0;
+	int				total2 = 0;
 
 	//	Initialize Gamma
-	Gamma->seq.num_dimensions = 1;
-	Gamma->seq.dimensions = (unsigned long*) dynvec(Gamma->seq.num_dimensions, sizeof(unsigned long));
-	*Gamma->seq.dimensions = STENCIL_STORAGE(len);
-	Gamma->seq.data = (double*) dynvec(*Gamma->seq.dimensions, sizeof(double));
-	Gamma->is_sphere = 0;
-	Gamma->length = len;
-	Gamma->loop_ranges = NULL;
+	Gamma->size = (unsigned long) ceil(2*alpha);
+	Gamma->data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
+	Gamma->ymax = (unsigned long*) dynvec(Gamma->size+1, sizeof(unsigned long));					//ONE VALUE PER Z
+	Gamma->xmax = (unsigned long*) dynvec(STENCIL_STORAGE_2D(Gamma->size), sizeof(unsigned long));// ONE VALUE PER (Y,Z)
 
-	printf("Gamma has size: %lu, ceil(2*alpha) = %lu\n", *Gamma->seq.dimensions, len);
+	printf("Gamma has size: %lu\n", Gamma->size);
+	printf("loop_rng_x has size: %lu\n", STENCIL_STORAGE_2D(Gamma->size));
 
-	data = Gamma->seq.data;
-
-	for (z = 0; z <= Gamma->length; z++)
+	//	CUBIC/48 STENCIL; CUBIC LOOP STRUCTURE
+	data = Gamma->data;
+	for (z = 0; z <= Gamma->size; z++)
 	{
-		z2 = z*z;
+		zz = z*z;
 		zi = STENCIL_MAP_Z(z);
-		for (y = 0; y <= z; y++)
+		zi_2d = STENCIL_MAP_Y(z);
+		Gamma->ymax[z] = z;
+		for (y = 0; y <= Gamma->ymax[z]; y++)
 		{
-			y2 = y*y + z2;
+			yyzz = y*y + zz;
 			yi = zi + STENCIL_MAP_Y(y);
-			for (x = 0; x <= y; x++)
+			Gamma->xmax[STENCIL_MAP_X(y) + zi_2d] = y;
+			for (x = 0; x <= Gamma->xmax[STENCIL_MAP_X(y) + zi_2d]; x++)
 			{
-				distance = h * sqrt((double)x*x + y2) / a;
+				total++;
+				distance = h * sqrt((double)x*x + yyzz) / a;
+				if (distance < 2.0) cnt++;
 				data[yi + STENCIL_MAP_X(x)] = theta(c, k, distance, &dtheta);
 				//data[yi + STENCIL_MAP_X(x)] = gamma(c, k, distance, &dtheta);
-				printf("(%02lu, %02lu, %02lu), idx = %05lu, distance = %e, value = %e\n", x,y,z, yi + STENCIL_MAP_X(x), distance, data[yi + STENCIL_MAP_X(x)]);
+//				printf("(%02lu, %02lu, %02lu), idx = %05lu, distance = %e, value = %e\n", x,y,z, yi + STENCIL_MAP_X(x), distance, data[yi + STENCIL_MAP_X(x)]);
 			}
 		}
 	}
+	printf("total = %d, cnt = %d => %f percent nonzero\n", total, cnt, cnt*100.0/total);
+
+	//	CUBIC/48 STENCIL; SPHERIC LOOP STRUCTURE
+	data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
+	r = (double)Gamma->size;
+	rr = r*r;
+	for (z = 0; z <= (unsigned long)r; z++)
+	{
+		zz = z*z;														//	Partial distance calculation
+		zi = STENCIL_MAP_Z(z);											//	Partial stencil index calculation
+		zi_2d = STENCIL_MAP_Y(z);										//	Partial 2D stencil index calculation
+		Gamma->ymax[z] = MIN(z, (unsigned long) floor(sqrt(rr - zz)));	//	Maximum y value for sphere
+		for (y = 0; y <= Gamma->ymax[z]; y++)
+		{
+			yyzz = y*y + zz;
+			yi = zi + STENCIL_MAP_Y(y);
+			Gamma->xmax[STENCIL_MAP_X(y) + zi_2d] = MIN(y, (unsigned long) floor(sqrt(rr - yyzz)));
+			for (x = 0; x <= Gamma->xmax[STENCIL_MAP_X(y) + zi_2d]; x++)
+			{
+				total2++;
+				distance = h * sqrt((double)x*x + yyzz) / a;
+				if (distance < 2.0) cnt2++;
+				data[yi + STENCIL_MAP_X(x)] = theta(c, k, distance, &dtheta);
+				//data[yi + STENCIL_MAP_X(x)] = gamma(c, k, distance, &dtheta);
+//				printf("(%02lu, %02lu, %02lu), idx = %05lu, distance = %e, value = %e\n", x,y,z, yi + STENCIL_MAP_X(x), distance, data[yi + STENCIL_MAP_X(x)]);
+			}
+		}
+	}
+	printf("total = %d, cnt = %d => %f percent nonzero\n", total2, cnt2, cnt2*100.0/total2);
+	printf("%f percent iterations; %f percent operations\n", total2*100.0/total, cnt2*100.0/cnt);
+
+	//	Ensure both ways give the same results!
+	for (x = 0; x < STENCIL_STORAGE(Gamma->size); x++)
+	{
+		if (Gamma->data[x] != data[x])
+			printf("x=%lu, data=%lf, data2=%lf\n", x, Gamma->data[x], data[x]);
+	}
 
 	//	Free memory
-	dynfree(Gamma->seq.dimensions);
-	dynfree(Gamma->seq.data);
+	dynfree(data);
+	dynfree(Gamma->data);
+	dynfree(Gamma->xmax);
+	dynfree(Gamma->ymax);
 }
 
 /*
