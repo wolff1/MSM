@@ -24,6 +24,7 @@ gamma.h - the softening function used to split the kernel
 
 typedef struct
 {
+	short			shape;
 	unsigned long	size;	//	= zmax
 	unsigned long*	ymax;
 	unsigned long*	xmax;
@@ -71,7 +72,7 @@ void stencil_initialize(STENCIL* s, unsigned long size, short shape);
 void stencil_populate(STENCIL* s, double* c, short k, short function_type,
 						double h_a);
 void stencil_display(STENCIL* s, double h_a);
-void stencil_shift(STENCIL* s, double* omega_prime);
+void stencil_shift(STENCIL* s, short degree, double* omega_prime, STENCIL* K);
 void stencil_free(STENCIL* s);
 void build_Gamma_stencil(short k, double* c, double a, double h, double alpha, STENCIL* Gamma);
 

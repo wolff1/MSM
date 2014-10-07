@@ -297,6 +297,7 @@ void stencil_initialize(STENCIL* s, unsigned long size, short shape)
 	unsigned long	zi_2d = 0;
 
 	//	Initialize stencil
+	s->shape = shape;
 	s->size = size;
 	s->data = (double*)
 				dynvec(STENCIL_STORAGE(s->size), sizeof(double));
@@ -306,7 +307,7 @@ void stencil_initialize(STENCIL* s, unsigned long size, short shape)
 				dynvec(STENCIL_STORAGE_2D(s->size), sizeof(unsigned long));
 
 	//	Set up loop ranges
-	if (shape == STENCIL_SHAPE_SPHERE)
+	if (s->shape == STENCIL_SHAPE_SPHERE)
 	{
 		//	SPHERIC
 		rr = (double) s->size * s->size;
@@ -399,21 +400,173 @@ void stencil_display(STENCIL* s, double h_a)
 }
 
 //-------|---------|---------|---------|---------|---------|---------|---------|
-void stencil_shift(STENCIL* s, double* omega_prime)
+void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 {
-/*
-	//	Apply anti-blurring operator to Gamma
-	for (z = 0; z <= s->size; z++)
+	unsigned long		z = 0;
+	unsigned long		y = 0;
+	unsigned long		x = 0;
+	short				n = degree;
+	unsigned long		zz = 0, zy = 0;
+	unsigned long		yz = 0, yy = 0, yx = 0;
+	unsigned long		xy = 0, xx = 0;
+	unsigned long		i = 0;
+	unsigned long		m = 0;
+	unsigned long		r = s->size;
+	STENCIL				tmp;
+
+	assert(s != NULL);
+	assert(K != NULL);
+//	assert(s->size == K->size);
+
+	//	Create temporary stencil with same shape and size as K
+	stencil_initialize(&tmp, K->size, K->shape);
+
+	//	Apply anti-blurring operator to s in Z direction, K = (A_z)s
+	for (z = 0; z <= K->size; z++)
 	{
-		for (y = 0; y <= s->ymax[z]; y++)
+		zz = STENCIL_MAP_Z(z);
+		for (y = 0; y <= K->ymax[z]; y++)
 		{
-			for (x = 0; x <= s->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			yz = STENCIL_MAP_Z(y);
+			yy = STENCIL_MAP_Y(y);
+			for (x = 0; x <= K->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
 			{
+				xy = STENCIL_MAP_Y(x);
+				xx = STENCIL_MAP_X(x);
+
 				//	This is the computation of K_{x,y,z}
+				i = zz + yy + xx;
+				K->data[i] = omegap[0]*s->data[i];
+				for (m = 1; m <= MIN(r-z,n); m++)
+				{	//	(x,y,z+m) -> z+m <= r -> m <= r-z
+					K->data[i] += omegap[m]*s->data[STENCIL_MAP_Z(z+m)+yy+xx];
+				}
+				for (m = 1; m <= MIN(z-y,n); m++)
+				{	//	(x,y,z-m) -> z-m >= y -> m <= z-y
+					K->data[i] += omegap[m]*s->data[STENCIL_MAP_Z(z-m)+yy+xx];
+				}
+				for (m = z-y+1; m <= MIN(z-x,n); m++)
+				{	//	(x,z-m,y) -> z-m >= x -> m <= z-x
+					K->data[i] += omegap[m]*s->data[yz+STENCIL_MAP_Y(z-m)+xx];
+				}
+				for (m = z-x+1; m <= MIN(z,n); m++)
+				{	//	(z-m,x,y) -> z-m >= 0 -> m <= z
+					K->data[i] += omegap[m]*s->data[yz+xy+STENCIL_MAP_X(z-m)];
+				}
+				for (m = z+1; m <= MIN(x+z,n); m++)
+				{	//	(m-z,x,y) -> m-z <= x -> m <= x+z
+					K->data[i] += omegap[m]*s->data[yz+xy+STENCIL_MAP_X(m-z)];
+				}
+				for (m = z+x+1; m <= MIN(y+z,n); m++)
+				{	//	(x,m-z,y) -> m-z <= y -> m <= y+z
+					K->data[i] += omegap[m]*s->data[yz+STENCIL_MAP_Y(m-z)+xx];
+				}
+				for (m = z+y+1; m <= MIN(z+r,n); m++)
+				{	//	(x,y,m-z) -> m-z <= r -> m <= z+r
+					K->data[i] += omegap[m]*s->data[STENCIL_MAP_Z(m-z)+yy+xx];
+				}
 			}
 		}
 	}
-*/
+
+	//	Apply anti-blurring operator to s in Y direction, tmp = (A_y)K = (A_y)(A_z)s
+	for (z = 0; z <= tmp.size; z++)
+	{
+		zz = STENCIL_MAP_Z(z);
+		zy = STENCIL_MAP_Y(z);
+		for (y = 0; y <= tmp.ymax[z]; y++)
+		{
+			yy = STENCIL_MAP_Y(y);
+			for (x = 0; x <= tmp.xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				xy = STENCIL_MAP_Y(x);
+				xx = STENCIL_MAP_X(x);
+
+				//	This is the computation of tmp_{x,y,z}
+				i = zz + yy + xx;
+				tmp.data[i] = omegap[0]*K->data[i];
+				for (m = 1; m <= MIN(z-y,n); m++)
+				{	//	(x,y+m,z) -> y+m <= z -> m <= z-y
+					tmp.data[i] += omegap[m]*K->data[zz+STENCIL_MAP_Y(y+m)+xx];
+				}
+				for (m = z-y+1; m <= MIN(r-y,n); m++)
+				{	//	(x,z,y+m) -> y+m <= r -> m <= r-y
+					tmp.data[i] += omegap[m]*K->data[STENCIL_MAP_Z(y+m)+zy+xx];
+				}
+				for (m = 1; m <= MIN(y-x,n); m++)
+				{	//	(x,y-m,z) -> y-m >= x -> y >= x + m -> m <= y-x
+					tmp.data[i] += omegap[m]*K->data[zz+STENCIL_MAP_Y(y-m)+xx];
+				}
+				for (m = y-x+1; m <= MIN(y,n); m++)
+				{	//	(y-m,x,z) -> y-m >= 0 -> y >= m -> m <= y
+					tmp.data[i] += omegap[m]*K->data[zz+xy+STENCIL_MAP_X(y-m)];
+				}
+				for (m = y+1; m <= MIN(x+y,n); m++)
+				{	//	(m-y,x,z) -> m-y <= x -> m <= x + y
+					tmp.data[i] += omegap[m]*K->data[zz+xy+STENCIL_MAP_X(m-y)];
+				}
+				for (m = x+y+1; m <= MIN(y+z,n); m++)
+				{	//	(x,m-y,z) -> m-y <= z -> m <= z + y
+					tmp.data[i] += omegap[m]*K->data[zz+STENCIL_MAP_Y(m-y)+xx];
+				}
+				for (m = y+z+1; m <= MIN(y+r,n); m++)
+				{	//	(x,z,m-y) -> m-y <= r -> m <= r+y
+					tmp.data[i] += omegap[m]*K->data[STENCIL_MAP_Z(m-y)+zy+xx];
+				}
+			}
+		}
+	}
+
+	//	Apply anti-blurring operator to s in X direction, K = (A_z)tmp = (A_z)(A_y)K = (A_z)(A_y)(A_z)s
+	for (z = 0; z <= K->size; z++)
+	{
+		zz = STENCIL_MAP_Z(z);
+		zy = STENCIL_MAP_Y(z);
+		for (y = 0; y <= K->ymax[z]; y++)
+		{
+			yy = STENCIL_MAP_Y(y);
+			yx = STENCIL_MAP_X(y);
+			for (x = 0; x <= K->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				xx = STENCIL_MAP_X(x);
+
+				//	This is the computation of K_{x,y,z}
+				i = zz + yy + xx;
+				K->data[i] = omegap[0]*tmp.data[i];
+				for (m = 1; m <= MIN(y-x,n); m++)
+				{	//	(x+m,y,z) -> x+m <= y -> m <= y-x
+					K->data[i] += omegap[m]*tmp.data[zz+yy+STENCIL_MAP_X(x+m)];
+				}
+				for (m = y-x+1; m <= MIN(z-x,n); m++)
+				{	//	(y,x+m,z) -> x+m <= z -> m <= z-x
+					K->data[i] += omegap[m]*tmp.data[zz+STENCIL_MAP_Y(x+m)+yx];
+				}
+				for (m = z-x+1; m <= MIN(r-x,n); m++)
+				{	//	(y,z,x+m) -> x+m <= r -> m <= r-x
+					K->data[i] += omegap[m]*tmp.data[STENCIL_MAP_Z(x+m)+zy+yx];
+				}
+				for (m = 1; m <= MIN(x,n); m++)
+				{	//	(x-m,y,z) -> x-m >= 0 -> m <= x
+					K->data[i] += omegap[m]*tmp.data[zz+yy+STENCIL_MAP_X(x-m)];
+				}
+				for (m = x+1; m <= MIN(x+y,n); m++)
+				{	//	(m-x,y,z) -> m-x <= y -> m <= x+y
+					K->data[i] += omegap[m]*tmp.data[zz+yy+STENCIL_MAP_X(m-x)];
+				}
+				for (m = x+y+1; m <= MIN(x+z,n); m++)
+				{	//	(y,m-x,z) -> m-x <= z -> m <= x+z
+					K->data[i] += omegap[m]*tmp.data[zz+STENCIL_MAP_Y(m-x)+yx];
+				}
+				for (m = x+z+1; m <= MIN(x+r,n); m++)
+				{	//	(y,z,m-x) -> m-x <= r -> m <= r + x
+					K->data[i] += omegap[m]*tmp.data[STENCIL_MAP_Z(m-x)+zy+yx];
+				}
+			}
+		}
+	}
+
+	//	Delete the temporary stencil
+	stencil_free(&tmp);
 }
 
 //-------|---------|---------|---------|---------|---------|---------|---------|
@@ -902,6 +1055,8 @@ void test_preprocessing(void)
 	short			mu = 0;
 	double*			c = NULL;
 	double*			omegap = NULL;
+	STENCIL			theta;
+	STENCIL			gamma;
 	STENCIL			g2g;
 	STENCIL			tg2g;
 
@@ -934,23 +1089,27 @@ void test_preprocessing(void)
 	compute_omega_prime(p, mu, omegap);
 
 	//	Pre-processing
-	stencil_initialize(&g2g, (unsigned long) ceil(2.0*alpha),
-						STENCIL_SHAPE_SPHERE);
-	stencil_populate(&g2g, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
-	stencil_display(&g2g, h/a);
-	//stencil_shift(&g2g, omegap);
-	//stencil_display(&g2g, 0.0);
+	stencil_initialize(&theta, (unsigned long) ceil(2.0*alpha), STENCIL_SHAPE_SPHERE);
+	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
+	stencil_display(&theta, h/a);
 
-	stencil_initialize(&tg2g, (unsigned long) ceil(2.0*alpha),
-						STENCIL_SHAPE_CUBE);
-	stencil_populate(&tg2g, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
-	stencil_display(&tg2g, h/a);
-	//stencil_shift(&tg2g, omegap);
+	stencil_initialize(&g2g, theta.size, theta.shape);
+	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
+	stencil_display(&g2g, 0.0);
+
+	stencil_initialize(&gamma, (unsigned long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
+	//stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
+	//stencil_display(&gamma, h/a);
+
+	stencil_initialize(&tg2g, gamma.size + p_2 + mu, gamma.shape);
+	//stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
 	//stencil_display(&tg2g, 0.0);
 
 	//	Free dynamically allocated memory
 	dynfree(c);
 	dynfree(omegap);
+	stencil_free(&theta);
+	stencil_free(&gamma);
 	stencil_free(&g2g);
 	stencil_free(&tg2g);
 }
