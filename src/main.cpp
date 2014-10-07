@@ -31,6 +31,7 @@ int main(int argc, char* argv[])
 		printf("*12 - Test operator conversion   *\n");
 		printf("*13 - Test omega values          *\n");
 		printf("*14 - Produce Figure 2 (sinc)    *\n");
+		printf("*15 - Test Preprocessing         *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -94,6 +95,10 @@ int main(int argc, char* argv[])
 
 			case 14:
 				test_sinc();
+				break;
+
+			case 15:
+				test_preprocessing();
 				break;
 
 			case 0:	// Exit

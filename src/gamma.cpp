@@ -181,8 +181,7 @@ double thetap(double *c, short k, double x, double* dtheta)
 	return f;
 }
 
-/*** DRIVER FUNCTIONS BELOW ***/
-
+//-------|---------|---------|---------|---------|---------|---------|---------|
 void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, STENCIL* Gamma)
 {
 	unsigned long	x = 0;
@@ -208,16 +207,17 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 	int				total2 = 0;
 
 	//	Initialize Gamma
-	Gamma->size = (unsigned long) ceil(2*alpha);
+	Gamma->size = (unsigned long) ceil(2.0*alpha);
 	Gamma->data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
 	Gamma->ymax = (unsigned long*) dynvec(Gamma->size+1, sizeof(unsigned long));					//ONE VALUE PER Z
 	Gamma->xmax = (unsigned long*) dynvec(STENCIL_STORAGE_2D(Gamma->size), sizeof(unsigned long));// ONE VALUE PER (Y,Z)
-
+/*
 	printf("Gamma has size: %lu\n", Gamma->size);
 	printf("loop_rng_x has size: %lu\n", STENCIL_STORAGE_2D(Gamma->size));
-
+*/
 	//	CUBIC/48 STENCIL; CUBIC LOOP STRUCTURE
 	data = Gamma->data;
+/*
 	for (z = 0; z <= Gamma->size; z++)
 	{
 		zz = z*z;
@@ -241,9 +241,9 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 		}
 	}
 	printf("total = %d, cnt = %d => %f percent nonzero\n", total, cnt, cnt*100.0/total);
-
+*/
 	//	CUBIC/48 STENCIL; SPHERIC LOOP STRUCTURE
-	data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
+//	data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
 	r = (double)Gamma->size;
 	rr = r*r;
 	for (z = 0; z <= (unsigned long)r; z++)
@@ -259,31 +259,177 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 			Gamma->xmax[STENCIL_MAP_X(y) + zi_2d] = MIN(y, (unsigned long) floor(sqrt(rr - yyzz)));
 			for (x = 0; x <= Gamma->xmax[STENCIL_MAP_X(y) + zi_2d]; x++)
 			{
-				total2++;
+//				total2++;
 				distance = h * sqrt((double)x*x + yyzz) / a;
-				if (distance < 2.0) cnt2++;
+//				if (distance < 2.0) cnt2++;
 				data[yi + STENCIL_MAP_X(x)] = theta(c, k, distance, &dtheta);
 				//data[yi + STENCIL_MAP_X(x)] = gamma(c, k, distance, &dtheta);
 //				printf("(%02lu, %02lu, %02lu), idx = %05lu, distance = %e, value = %e\n", x,y,z, yi + STENCIL_MAP_X(x), distance, data[yi + STENCIL_MAP_X(x)]);
 			}
 		}
 	}
-	printf("total = %d, cnt = %d => %f percent nonzero\n", total2, cnt2, cnt2*100.0/total2);
-	printf("%f percent iterations; %f percent operations\n", total2*100.0/total, cnt2*100.0/cnt);
-
+//	printf("total = %d, cnt = %d => %f percent nonzero\n", total2, cnt2, cnt2*100.0/total2);
+//	printf("%f percent iterations; %f percent operations\n", total2*100.0/total, cnt2*100.0/cnt);
+/*
 	//	Ensure both ways give the same results!
 	for (x = 0; x < STENCIL_STORAGE(Gamma->size); x++)
 	{
 		if (Gamma->data[x] != data[x])
 			printf("x=%lu, data=%lf, data2=%lf\n", x, Gamma->data[x], data[x]);
 	}
-
+*/
 	//	Free memory
-	dynfree(data);
-	dynfree(Gamma->data);
-	dynfree(Gamma->xmax);
-	dynfree(Gamma->ymax);
+//	dynfree(data);
+	//dynfree(Gamma->data);
+	//dynfree(Gamma->xmax);
+	//dynfree(Gamma->ymax);
 }
+
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void stencil_initialize(STENCIL* s, unsigned long size, short shape)
+{
+	double			r = 0.0;
+	double			rr = 0.0;
+	unsigned long	z = 0;
+	unsigned long	y = 0;
+	unsigned long	zz = 0;
+	unsigned long	yyzz = 0;
+	unsigned long	zi_2d = 0;
+
+	//	Initialize stencil
+	s->size = size;
+	s->data = (double*)
+				dynvec(STENCIL_STORAGE(s->size), sizeof(double));
+	s->ymax = (unsigned long*)	//	One max per z
+				dynvec(s->size+1, sizeof(unsigned long));
+	s->xmax = (unsigned long*)	//	One max per (y,z)
+				dynvec(STENCIL_STORAGE_2D(s->size), sizeof(unsigned long));
+
+	//	Set up loop ranges
+	if (shape == STENCIL_SHAPE_SPHERE)
+	{
+		//	SPHERIC
+		rr = (double) s->size * s->size;
+		for (z = 0; z <= s->size; z++)
+		{
+			zz = z*z;
+			zi_2d = STENCIL_MAP_Y(z);
+			s->ymax[z] = MIN(z, (unsigned long) floor(sqrt(rr - zz)));
+			for (y = 0; y <= s->ymax[z]; y++)
+			{
+				yyzz = y*y + zz;
+				s->xmax[STENCIL_MAP_X(y) + zi_2d] =
+					MIN(y, (unsigned long) floor(sqrt(rr - yyzz)));
+			}
+		}
+	}
+	else
+	{
+		//	CUBIC
+		for (z = 0; z <= s->size; z++)
+		{
+			zi_2d = STENCIL_MAP_Y(z);
+			s->ymax[z] = z;
+			for (y = 0; y <= s->ymax[z]; y++)
+			{
+				s->xmax[STENCIL_MAP_X(y) + zi_2d] = y;
+			}
+		}
+	}
+}
+
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void stencil_populate(STENCIL* s, double* c, short k, short type, double h_a)
+{
+	double			(*f)(double*,short,double,double*);
+	unsigned long	z = 0;
+	unsigned long	y = 0;
+	unsigned long	x = 0;
+	unsigned long	zz = 0;
+	unsigned long	zi = 0;
+	unsigned long	zi_2d = 0;
+	unsigned long	yyzz = 0;
+	unsigned long	yi = 0;
+
+	if (type == STENCIL_FUNCTION_TYPE_THETA)
+		f = &theta;
+	else
+		f = &gamma;
+
+	for (z = 0; z <= s->size; z++)
+	{
+		zz = z*z;
+		zi = STENCIL_MAP_Z(z);
+		zi_2d = STENCIL_MAP_Y(z);
+		for (y = 0; y <= s->ymax[z]; y++)
+		{
+			yyzz = y*y + zz;
+			yi = zi + STENCIL_MAP_Y(y);
+			for (x = 0; x <= s->xmax[STENCIL_MAP_X(y) + zi_2d]; x++)
+			{
+				s->data[yi + STENCIL_MAP_X(x)] = (*f)(c, k, h_a*sqrt((double)x*x + yyzz), NULL);
+			}
+		}
+	}
+}
+
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void stencil_display(STENCIL* s, double h_a)
+{
+	unsigned long		z = 0;
+	unsigned long		y = 0;
+	unsigned long		x = 0;
+	unsigned long		idx = 0;
+	double				d = 0.0;
+
+	for (z = 0; z <= s->size; z++)
+	{
+		for (y = 0; y <= s->ymax[z]; y++)
+		{
+			for (x = 0; x <= s->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				d = h_a*sqrt((double) x*x + y*y + z*z);
+				idx = STENCIL_MAP_X(x) + STENCIL_MAP_Y(y) + STENCIL_MAP_Z(z);
+				printf("(%d,%d,%d) -> %e -> %e\n", x,y,z, d, s->data[idx]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+}
+
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void stencil_shift(STENCIL* s, double* omega_prime)
+{
+/*
+	//	Apply anti-blurring operator to Gamma
+	for (z = 0; z <= s->size; z++)
+	{
+		for (y = 0; y <= s->ymax[z]; y++)
+		{
+			for (x = 0; x <= s->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				//	This is the computation of K_{x,y,z}
+			}
+		}
+	}
+*/
+}
+
+//-------|---------|---------|---------|---------|---------|---------|---------|
+void stencil_free(STENCIL* s)
+{
+	if (s->data != NULL)
+		dynfree(s->data);
+
+	if (s->xmax != NULL)
+		dynfree(s->xmax);
+
+	if (s->ymax != NULL)
+		dynfree(s->ymax);
+}
+
+/*** DRIVER FUNCTIONS BELOW ***/
 
 /*
 Compare theta and thetap
@@ -301,10 +447,6 @@ void test_thetas(void)
 	short	k = 0;
 	double*	c = NULL;
 	double	x = 0.0;
-	STENCIL	Gamma;
-	double	a = 0;
-	double	h = 0.0;
-	double	alpha = 0.0;
 
 	printf("Enter samples: ");
 	scanf("%d", &samples);
@@ -328,16 +470,6 @@ void test_thetas(void)
 
 		printf("%f: Error = %e, dError = %e\n", x, e, de);
 	}
-
-	//	Attempt to build Gamma stencil
-	printf("Enter a: "); // alpha = a/h, radius = 2*alpha, discrete radius = ceil(2*alpha)
-	scanf("%lf", &a);
-
-	printf("Enter h: "); // alpha = a/h, radius = 2*alpha, discrete radius = ceil(2*alpha)
-	scanf("%lf", &h);
-	alpha = a/h;
-
-	build_Gamma_stencil(k, c, a, h, alpha, &Gamma);
 
 	dynfree(c);
 }
@@ -754,6 +886,73 @@ void gamma_test_all(void)
 	dynfree(X);
 	dynfree(F);
 	dynfree(DF);
+}
+
+/*
+Builds Gamma, anti-blurring operator, etc
+*/
+void test_preprocessing(void)
+{
+	short			k = 0;
+	double			a = 0;
+	double			h = 0.0;
+	double			alpha = 0.0;
+	short			p = 0;
+	short			p_2 = 0;
+	short			mu = 0;
+	double*			c = NULL;
+	double*			omegap = NULL;
+	STENCIL			g2g;
+	STENCIL			tg2g;
+
+	//	Get parameters from user
+	printf("Please enter p: ");
+	scanf("%hd", &p);
+
+	printf("Please enter mu: ");
+	scanf("%hd", &mu);
+
+	printf("Enter k: ");
+	scanf("%hd", &k);
+
+	printf("Enter a: "); // alpha = a/h, radius = 2*alpha
+	scanf("%lf", &a);
+
+	printf("Enter h: "); // alpha = a/h, radius = 2*alpha
+	scanf("%lf", &h);
+
+	//	Compute computed values
+	p_2 = p/2;
+	alpha = a/h;
+
+	// Dynamically allocate memory
+	c = (double*) dynvec(k+1,sizeof(double));
+	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
+
+	//	Pre-pre-processing
+	gamma_init(k, c);
+	compute_omega_prime(p, mu, omegap);
+
+	//	Pre-processing
+	stencil_initialize(&g2g, (unsigned long) ceil(2.0*alpha),
+						STENCIL_SHAPE_SPHERE);
+	stencil_populate(&g2g, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
+	stencil_display(&g2g, h/a);
+	//stencil_shift(&g2g, omegap);
+	//stencil_display(&g2g, 0.0);
+
+	stencil_initialize(&tg2g, (unsigned long) ceil(2.0*alpha),
+						STENCIL_SHAPE_CUBE);
+	stencil_populate(&tg2g, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
+	stencil_display(&tg2g, h/a);
+	//stencil_shift(&tg2g, omegap);
+	//stencil_display(&tg2g, 0.0);
+
+	//	Free dynamically allocated memory
+	dynfree(c);
+	dynfree(omegap);
+	stencil_free(&g2g);
+	stencil_free(&tg2g);
 }
 
 // End of file

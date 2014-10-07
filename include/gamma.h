@@ -16,10 +16,15 @@ gamma.h - the softening function used to split the kernel
 
 #define	STENCIL_STORAGE_2D(L)	(L+1)*(L+2)/2
 
+#define	STENCIL_SHAPE_SPHERE	1
+#define	STENCIL_SHAPE_CUBE		2
+
+#define	STENCIL_FUNCTION_TYPE_THETA		1
+#define	STENCIL_FUNCTION_TYPE_GAMMA		2
+
 typedef struct
 {
-	unsigned long	size;
-//	unsigned long	zmax;
+	unsigned long	size;	//	= zmax
 	unsigned long*	ymax;
 	unsigned long*	xmax;
 	double*			data;
@@ -59,6 +64,17 @@ k is degree of continuity of gamma
 */
 double thetap(double *c, short k, double x, double* dtheta);
 
+/*
+stencil operations below:
+*/
+void stencil_initialize(STENCIL* s, unsigned long size, short shape);
+void stencil_populate(STENCIL* s, double* c, short k, short function_type,
+						double h_a);
+void stencil_display(STENCIL* s, double h_a);
+void stencil_shift(STENCIL* s, double* omega_prime);
+void stencil_free(STENCIL* s);
+void build_Gamma_stencil(short k, double* c, double a, double h, double alpha, STENCIL* Gamma);
+
 /*** DRIVER FUNCTIONS BELOW ***/
 
 /*
@@ -89,5 +105,10 @@ void plot_splittings(int samples, int nlev, double a, double d,
 Tests gamma, theta, and theta_star without regard to method or scaling
 */
 void gamma_test_all(void);
+
+/*
+Builds Gamma, anti-blurring operator, etc
+*/
+void test_preprocessing(void);
 
 // End of file
