@@ -14,7 +14,14 @@ gamma.h - the softening function used to split the kernel
 #define	STENCIL_MAP_Y(y)		y*(y+1)/2
 #define STENCIL_MAP_X(x)		x
 
-#define	STENCIL_STORAGE_2D(L)	(L+1)*(L+2)/2
+//	The following are for the "stacked" symmetric plane stencils
+//	which are intermediate results while applying the anti-blurring
+//	operator.
+#define	STENCIL_MAP_Z2(L,z)		z*(L+2)*(L+1)/2	//	L is K->size
+#define	STENCIL_MAP_Y2(y)		y*(y+1)/2
+#define STENCIL_MAP_X2(x)		x
+
+#define	STENCIL_STORAGE_2D(L)	(L+1)*(L+2)/2	//	Used for loop ranges
 
 #define	STENCIL_SHAPE_SPHERE	1
 #define	STENCIL_SHAPE_CUBE		2

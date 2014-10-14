@@ -656,18 +656,12 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 	unsigned long		y = 0;
 	unsigned long		x = 0;
 	short				n = degree;
-	unsigned long		zz = 0, zy = 0;
-	unsigned long		yz = 0, yy = 0, yx = 0;
-	unsigned long		xy = 0, xx = 0;
+	unsigned long		xx = 0, yy = 0, zz = 0;
 	unsigned long		i = 0;
 	unsigned long		m = 0;
 	unsigned long		r = s->size;
 	double*				tmp1 = NULL;
 	double*				tmp2 = NULL;
-
-	unsigned long		zz1 = 0, zy1 = 0;
-	unsigned long		yz1 = 0, yy1 = 0, yx1 = 0;
-	unsigned long		xy1 = 0, xx1 = 0;
 
 	assert(s != NULL);
 	assert(K != NULL);
@@ -681,13 +675,13 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 //***NOTE: COULD RESTRICT LOOPS TO SPHERIC INDEXES OF K, I THINK***
 	for (z = 0; z <= K->size; z++)
 	{
-		zz = z*(K->size+2)*(K->size+1)/2;
+		zz = STENCIL_MAP_Z2(K->size,z);
 		for (y = 0; y <= z; y++)
 		{
-			yy = y*(y+1)/2;
+			yy = STENCIL_MAP_Y2(y);
 			for (x = 0; x <= y; x++)
 			{
-				xx = x;
+				xx = STENCIL_MAP_X2(x);
 //				printf("(%02lu,%02lu,%02lu) -> %lu", x,y,z, zz+yy+xx);
 
 				tmp1[zz+yy+xx] = omegap[0]*s->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)];
@@ -733,10 +727,10 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 
 		for (y = z+1; y <= K->size; y++)
 		{
-			yy = y*(y+1)/2;
+			yy = STENCIL_MAP_Y2(y);
 			for (x = 0; x <= z; x++)
 			{
-				xx = x;
+				xx = STENCIL_MAP_X2(x);
 //***NOTE: x <= z < y
 //				printf("(%02lu,%02lu,%02lu) -> %lu", x,y,z, zz+yy+xx);
 
@@ -782,7 +776,7 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 
 			for (x = z+1; x <= y; x++)
 			{
-				xx = x;
+				xx = STENCIL_MAP_X2(x);
 //***NOTE: z < x <= y
 //				printf("(%02lu,%02lu,%02lu) -> %lu", x,y,z, zz+yy+xx);
 
@@ -829,15 +823,16 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 	}
 /*
 	//	Display "stacked" half-plane where x-y plane is symmetric
+	printf("tmp1:\n");
 	for (z = 0; z <= K->size; z++)
 	{
-		zz = z*(K->size+2)*(K->size+1)/2;
+		zz = STENCIL_MAP_Z2(K->size,z);//z*(K->size+2)*(K->size+1)/2;
 		for (y = 0; y <= K->size; y++)
 		{
-			yy = y*(y+1)/2;
+			yy = STENCIL_MAP_Y2(y);//y*(y+1)/2;
 			for (x = 0; x <= y; x++)
 			{
-				xx = x;
+				xx = STENCIL_MAP_X2(x);//x;
 				printf("%+e ", tmp1[zz+yy+xx]);
 			}
 			printf("\n");
@@ -845,48 +840,161 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 		printf("\n");
 	}
 */
-
+	r = K->size;	//	This represents the length of the "stacked" symmetric plane stencils
 	//	Apply anti-blurring operator to (A_z)s in Y direction, i.e., (A_y)(A_z)s
 	for (z = 0; z <= K->size; z++)
 	{
-		zz = z*(z+1)/2;
-		zz1 = z*(K->size+2)*(K->size+1)/2;
+		zz = STENCIL_MAP_Y2(z);
 		for (y = 0; y <= z; y++)
 		{
-			yy = y;
-			yy1 = y*(y+1)/2;
+			yy = STENCIL_MAP_X2(y);
 			for (x = 0; x <= y; x++)
 			{
 //	x <= y <= z
-				xx = x*(K->size+2)*(K->size+1)/2;
-				xx1 = x;
-				printf("(%02lu,%02lu,%02lu) -> %lu", x,y,z, xx+zz+yy);
+				xx = STENCIL_MAP_Z2(K->size,x);
+//				printf("(%02lu,%02lu,%02lu) -> %02lu", x,y,z, xx+zz+yy);
 
-				//tmp2[xx+zz+yy] = omegap[0]*tmp1[zz1+yy1+xx1];
-				printf("\n");
+				tmp2[xx+zz+yy] = omegap[0]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(y)+STENCIL_MAP_X2(x)];
+//				printf(":%lu", 0);
+				for (m = 1; m <= MIN(r-y,n); m++)
+				{
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(y+m)+STENCIL_MAP_X2(x)];
+//					printf(":%lu", m);
+				}
+				for (m = 1; m <= MIN(y-x,n); m++)
+				{	//	y-m >= x -> m <= y-x
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(y-m)+STENCIL_MAP_X2(x)];
+//					printf(":%lu", m);
+				}
+				for (m = y-x+1; m <= MIN(y,n); m++)
+				{	//	y-m >= 0 -> m <= y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y-m)];
+//					printf(":%lu", m);
+				}
+				for (m = y+1; m <= MIN(x+y,n); m++)
+				{	//	m-y <= x -> m <= x+y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(m-y)];
+//					printf(":%lu", m);
+				}
+				for (m = x+y+1; m <= MIN(r+y,n); m++)
+				{	//	m-y <= r -> m <= r+y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(m-y)+STENCIL_MAP_X2(x)];
+//					printf(":%lu", m);
+				}
+//				printf("\n");
 			}
 
 			for (x = y+1; x <= z; x++)
 			{
 //	y <= x <= z
-				xx = x*(K->size+2)*(K->size+1)/2;
-				printf("(%02lu,%02lu,%02lu) -> %lu", x,y,z, xx+zz+yy);
+				xx = STENCIL_MAP_Z2(K->size,x);
+//				printf("(%02lu,%02lu,%02lu) -> %02lu", x,y,z, xx+zz+yy);
 
-				//tmp2[xx+zz+yy] = omegap[0]*tmp1[];
-				printf("\n");
+				tmp2[xx+zz+yy] = omegap[0]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y)];
+//				printf(":%lu", 0);
+				for (m = 1; m <= MIN(x-y,n); m++)
+				{	//	y+m <= x -> m <= x-y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y+m)];
+//					printf(":%lu", m);
+				}
+				for (m = x-y+1; m <= MIN(r-y,n); m++)
+				{	//	y+m <= r -> m <= r-y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(y+m)+STENCIL_MAP_X2(x)];
+//					printf(":%lu", m);
+				}
+				for (m = 1; m <= MIN(y,n); m++)
+				{	//	y-m >= 0 -> m <= y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y-m)];
+//					printf(":%lu", m);
+				}
+				for (m = y+1; m <= MIN(x+y,n); m++)
+				{	//	m-y <= x -> m <= x+y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(m-y)];
+//					printf(":%lu", m);
+				}
+				for (m = x+y+1; m <= MIN(r+y,n); m++)
+				{	//	m-y <= r -> m <= r+y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(m-y)+STENCIL_MAP_X2(x)];
+//					printf(":%lu", m);
+				}
+//				printf("\n");
 			}
 
 			for (x = z+1; x <= K->size; x++)
 			{
 //	y <= z <= x
-				xx = x*(K->size+2)*(K->size+1)/2;
-				printf("(%02lu,%02lu,%02lu) -> %lu", x,y,z, xx+zz+yy);
+				xx = STENCIL_MAP_Z2(K->size,x);
+//				printf("(%02lu,%02lu,%02lu) -> %02lu", x,y,z, xx+zz+yy);
 
-				//tmp2[xx+zz+yy] = omegap[0]*tmp1[];
-				printf("\n");
+				tmp2[xx+zz+yy] = omegap[0]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+//				printf(":%lu", 0);
+				for (m = 1; m <= MIN(z-y,n); m++)
+				{	//	y+m <= z -> m <= z-y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y+m)];
+//					printf(":%lu", m);
+				}
+				for (m = z-y+1; m <= MIN(r-y,n); m++)
+				{	//	y+m <= r -> m <= r-y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(y+m)+STENCIL_MAP_X2(z)];
+//					printf(":%lu", m);
+				}
+				for (m = 1; m <= MIN(y,n); m++)
+				{	//	y-m >= 0 -> m <= y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y-m)];
+//					printf(":%lu", m);
+				}
+				for (m = y+1; m <= MIN(z+y,n); m++)
+				{	//	m-y <= z -> m <= y+z
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(m-y)];
+//					printf(":%lu", m);
+				}
+				for (m = y+z+1; m <= MIN(r+y,n); m++)
+				{	//	m-y <= r -> m <= r+y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(m-y)+STENCIL_MAP_X2(z)];
+//					printf(":%lu", m);
+				}
+//				printf("\n");
 			}
 		}
 	}
+/*
+	//	Display "stacked" half-plane where y-z plane is symmetric
+	printf("\ntmp2\n");
+	for (x = 0; x <= K->size; x++)
+	{
+		//xx = x*(K->size+2)*(K->size+1)/2;
+		xx = STENCIL_MAP_Z2(K->size,x);
+		for (z = 0; z <= K->size; z++)
+		{
+			//zz = z*(z+1)/2;
+			zz = STENCIL_MAP_Y2(z);
+			for (y = 0; y <= z; y++)
+			{
+				//yy = y;
+				yy = STENCIL_MAP_X2(y);
+				printf("%+e ", tmp2[xx+zz+yy]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+*/
+	//	Apply anti-blurring operator to (A_y)(A_z)s in X direction, i.e., (A_x)(A_y)(A_z)s
+	for (z = 0; z <= K->size; z++)
+	{
+		zz = STENCIL_MAP_Z(z);
+		for (y = 0; y <= K->ymax[z]; y++)
+		{
+			yy = STENCIL_MAP_Y(y);
+			for (x = 0; x <= K->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				xx = STENCIL_MAP_X(x);
+				K->data[zz+yy+xx] = omegap[0]*tmp2[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+			}
+		}
+	}
+
+	stencil_display(K,0.0);
 
 	//	Free dynamically allocated memory
 	dynfree(tmp1);
