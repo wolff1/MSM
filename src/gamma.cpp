@@ -320,13 +320,14 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 
 	assert(s != NULL);
 	assert(K != NULL);
-//	assert(s->size == K->size);
+	assert(s->size == K->size);
 
 	//	Create memory for intermediate stencils
 	tmp1 = (double*) dynvec((K->size+1)*(K->size+1)*(K->size+2)/2,sizeof(double));
 	tmp2 = (double*) dynvec((K->size+1)*(K->size+1)*(K->size+2)/2,sizeof(double));
 
 	//	Apply anti-blurring operator to s in Z direction, i.e., (A_z)s
+//    printf("Apply anti-blurring in Z direction!\n");
 //***NOTE: COULD RESTRICT LOOPS TO SPHERIC INDEXES OF K, I THINK***
 	for (z = 0; z <= K->size; z++)
 	{
@@ -495,6 +496,7 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 		printf("\n");
 	}
 */
+//    printf("Apply anti-blurring in Y direction!\n");
 	r = K->size;	//	This represents the length of the "stacked" symmetric plane stencils
 	//	Apply anti-blurring operator to (A_z)s in Y direction, i.e., (A_y)(A_z)s
 	for (z = 0; z <= K->size; z++)
@@ -634,6 +636,7 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 		printf("\n");
 	}
 */
+//    printf("Apply anti-blurring in X direction!\n");
 	r = K->size;
 	//	Apply anti-blurring operator to (A_y)(A_z)s in X direction, i.e., (A_x)(A_y)(A_z)s
 	for (z = 0; z <= K->size; z++)
@@ -1203,11 +1206,11 @@ void test_preprocessing(void)
 	//stencil_display(&g2g, 1.0);
 
 	//	Pre-processing (Top level)
-	stencil_initialize(&gamma, (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
+	stencil_initialize(&gamma, 10 * (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
 	stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
 	//stencil_display(&gamma, h/a);
 
-	stencil_initialize(&tg2g, 10*gamma.size, gamma.shape);
+	stencil_initialize(&tg2g, gamma.size, gamma.shape);
 	stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
 	//stencil_display(&tg2g, 0.0);
 
