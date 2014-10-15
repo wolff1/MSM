@@ -1550,7 +1550,7 @@ void test_preprocessing(void)
 	gamma_init(k, c);
 	compute_omega_prime(p, mu, omegap);
 
-	//	Pre-processing
+	//	Pre-processing (Intermediate levels)
 	stencil_initialize(&theta, (long) ceil(2.0*alpha), STENCIL_SHAPE_SPHERE);
 	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
 	//stencil_display(&theta, h/a);
@@ -1559,16 +1559,15 @@ void test_preprocessing(void)
 	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
 	//stencil_display(&g2g, 1.0);
 
-    //  Test g2g stencil
-/*
+	//	Pre-processing (Top level)
 	stencil_initialize(&gamma, (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
-	//stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
+	stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
 	//stencil_display(&gamma, h/a);
 
-	stencil_initialize(&tg2g, gamma.size + p_2 + mu, gamma.shape);
-	//stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
+	stencil_initialize(&tg2g, gamma.size, gamma.shape);
+	stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
 	//stencil_display(&tg2g, 0.0);
-*/
+
 	//	Free dynamically allocated memory
 	dynfree(c);
 	dynfree(omegap);
