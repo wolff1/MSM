@@ -184,19 +184,19 @@ double thetap(double *c, short k, double x, double* dtheta)
 //-------|---------|---------|---------|---------|---------|---------|---------|
 void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, STENCIL* Gamma)
 {
-	unsigned long	x = 0;
-	unsigned long	y = 0;
-	unsigned long	z = 0;
+	long			x = 0;
+	long			y = 0;
+	long			z = 0;
 
 	double*			data = NULL;
 	double			dtheta = 0.0;
 
-	unsigned long	zz = 0;
-	unsigned long	yyzz = 0;
-	unsigned long	zi = 0;
-	unsigned long	yi = 0;
+	long			zz = 0;
+	long			yyzz = 0;
+	long			zi = 0;
+	long			yi = 0;
 	double			distance = 0.0;
-	unsigned long	zi_2d = 0;
+	long			zi_2d = 0;
 
 	double			r = 0;
 	double			rr = 0;
@@ -207,10 +207,10 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 	int				total2 = 0;
 
 	//	Initialize Gamma
-	Gamma->size = (unsigned long) ceil(2.0*alpha);
+	Gamma->size = (long) ceil(2.0*alpha);
 	Gamma->data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
-	Gamma->ymax = (unsigned long*) dynvec(Gamma->size+1, sizeof(unsigned long));					//ONE VALUE PER Z
-	Gamma->xmax = (unsigned long*) dynvec(STENCIL_STORAGE_2D(Gamma->size), sizeof(unsigned long));// ONE VALUE PER (Y,Z)
+	Gamma->ymax = (long*) dynvec(Gamma->size+1, sizeof(long));					//ONE VALUE PER Z
+	Gamma->xmax = (long*) dynvec(STENCIL_STORAGE_2D(Gamma->size), sizeof(long));// ONE VALUE PER (Y,Z)
 /*
 	printf("Gamma has size: %lu\n", Gamma->size);
 	printf("loop_rng_x has size: %lu\n", STENCIL_STORAGE_2D(Gamma->size));
@@ -246,17 +246,17 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 //	data = (double*) dynvec(STENCIL_STORAGE(Gamma->size), sizeof(double));
 	r = (double)Gamma->size;
 	rr = r*r;
-	for (z = 0; z <= (unsigned long)r; z++)
+	for (z = 0; z <= (long)r; z++)
 	{
 		zz = z*z;														//	Partial distance calculation
 		zi = STENCIL_MAP_Z(z);											//	Partial stencil index calculation
 		zi_2d = STENCIL_MAP_Y(z);										//	Partial 2D stencil index calculation
-		Gamma->ymax[z] = MIN(z, (unsigned long) floor(sqrt(rr - zz)));	//	Maximum y value for sphere
+		Gamma->ymax[z] = MIN(z, (long) floor(sqrt(rr - zz)));	//	Maximum y value for sphere
 		for (y = 0; y <= Gamma->ymax[z]; y++)
 		{
 			yyzz = y*y + zz;
 			yi = zi + STENCIL_MAP_Y(y);
-			Gamma->xmax[STENCIL_MAP_X(y) + zi_2d] = MIN(y, (unsigned long) floor(sqrt(rr - yyzz)));
+			Gamma->xmax[STENCIL_MAP_X(y) + zi_2d] = MIN(y, (long) floor(sqrt(rr - yyzz)));
 			for (x = 0; x <= Gamma->xmax[STENCIL_MAP_X(y) + zi_2d]; x++)
 			{
 //				total2++;
@@ -286,25 +286,25 @@ void	build_Gamma_stencil(short k, double* c, double a, double h, double alpha, S
 }
 
 //-------|---------|---------|---------|---------|---------|---------|---------|
-void stencil_initialize(STENCIL* s, unsigned long size, short shape)
+void stencil_initialize(STENCIL* s, long size, short shape)
 {
 	double			r = 0.0;
 	double			rr = 0.0;
-	unsigned long	z = 0;
-	unsigned long	y = 0;
-	unsigned long	zz = 0;
-	unsigned long	yyzz = 0;
-	unsigned long	zi_2d = 0;
+	long			z = 0;
+	long			y = 0;
+	long			zz = 0;
+	long			yyzz = 0;
+	long			zi_2d = 0;
 
 	//	Initialize stencil
 	s->shape = shape;
 	s->size = size;
 	s->data = (double*)
 				dynvec(STENCIL_STORAGE(s->size), sizeof(double));
-	s->ymax = (unsigned long*)	//	One max per z
-				dynvec(s->size+1, sizeof(unsigned long));
-	s->xmax = (unsigned long*)	//	One max per (y,z)
-				dynvec(STENCIL_STORAGE_2D(s->size), sizeof(unsigned long));
+	s->ymax = (long*)	//	One max per z
+				dynvec(s->size+1, sizeof(long));
+	s->xmax = (long*)	//	One max per (y,z)
+				dynvec(STENCIL_STORAGE_2D(s->size), sizeof(long));
 
 	//	Set up loop ranges
 	if (s->shape == STENCIL_SHAPE_SPHERE)
@@ -315,12 +315,12 @@ void stencil_initialize(STENCIL* s, unsigned long size, short shape)
 		{
 			zz = z*z;
 			zi_2d = STENCIL_MAP_Y(z);
-			s->ymax[z] = MIN(z, (unsigned long) floor(sqrt(rr - zz)));
+			s->ymax[z] = MIN(z, (long) floor(sqrt(rr - zz)));
 			for (y = 0; y <= s->ymax[z]; y++)
 			{
 				yyzz = y*y + zz;
 				s->xmax[STENCIL_MAP_X(y) + zi_2d] =
-					MIN(y, (unsigned long) floor(sqrt(rr - yyzz)));
+					MIN(y, (long) floor(sqrt(rr - yyzz)));
 			}
 		}
 	}
@@ -343,14 +343,14 @@ void stencil_initialize(STENCIL* s, unsigned long size, short shape)
 void stencil_populate(STENCIL* s, double* c, short k, short type, double h_a)
 {
 	double			(*f)(double*,short,double,double*);
-	unsigned long	z = 0;
-	unsigned long	y = 0;
-	unsigned long	x = 0;
-	unsigned long	zz = 0;
-	unsigned long	zi = 0;
-	unsigned long	zi_2d = 0;
-	unsigned long	yyzz = 0;
-	unsigned long	yi = 0;
+	long			z = 0;
+	long			y = 0;
+	long			x = 0;
+	long			zz = 0;
+	long			zi = 0;
+	long			zi_2d = 0;
+	long			yyzz = 0;
+	long			yi = 0;
 
 	if (type == STENCIL_FUNCTION_TYPE_THETA)
 		f = &theta;
@@ -377,10 +377,10 @@ void stencil_populate(STENCIL* s, double* c, short k, short type, double h_a)
 //-------|---------|---------|---------|---------|---------|---------|---------|
 void stencil_display(STENCIL* s, double h_a)
 {
-	unsigned long		z = 0;
-	unsigned long		y = 0;
-	unsigned long		x = 0;
-	unsigned long		idx = 0;
+	long				z = 0;
+	long				y = 0;
+	long				x = 0;
+	long				idx = 0;
 	double				d = 0.0;
 
 	for (z = 0; z <= s->size; z++)
@@ -402,17 +402,17 @@ void stencil_display(STENCIL* s, double h_a)
 //-------|---------|---------|---------|---------|---------|---------|---------|
 void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 {
-	unsigned long		z = 0;
-	unsigned long		y = 0;
-	unsigned long		x = 0;
+	long				z = 0;
+	long				y = 0;
+	long				x = 0;
 	short				n = degree;
-	unsigned long		zz = 0, zy = 0;
-	unsigned long		yz = 0, yy = 0, yx = 0;
-	unsigned long		xy = 0, xx = 0;
-	unsigned long		i = 0;
-	unsigned long		i2 = 0;
-	unsigned long		m = 0;
-	unsigned long		r = s->size;
+	long				zz = 0, zy = 0;
+	long				yz = 0, yy = 0, yx = 0;
+	long				xy = 0, xx = 0;
+	long				i = 0;
+	long				i2 = 0;
+	long				m = 0;
+	long				r = s->size;
 
 	assert(s != NULL);
 	assert(K != NULL);
@@ -482,16 +482,16 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 //-------|---------|---------|---------|---------|---------|---------|---------|
 void stencil_shiftx(STENCIL* s, short degree, double* omegap, STENCIL* K)
 {
-	unsigned long		z = 0;
-	unsigned long		y = 0;
-	unsigned long		x = 0;
+	long				z = 0;
+	long				y = 0;
+	long				x = 0;
 	short				n = degree;
-	unsigned long		zz = 0, zy = 0;
-	unsigned long		yz = 0, yy = 0, yx = 0;
-	unsigned long		xy = 0, xx = 0;
-	unsigned long		i = 0;
-	unsigned long		m = 0;
-	unsigned long		r = s->size;
+	long				zz = 0, zy = 0;
+	long				yz = 0, yy = 0, yx = 0;
+	long				xy = 0, xx = 0;
+	long				i = 0;
+	long				m = 0;
+	long				r = s->size;
 	STENCIL				tmp;
 
 	assert(s != NULL);
@@ -652,14 +652,14 @@ void stencil_shiftx(STENCIL* s, short degree, double* omegap, STENCIL* K)
 
 void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 {
-	unsigned long		z = 0;
-	unsigned long		y = 0;
-	unsigned long		x = 0;
+	long				z = 0;
+	long				y = 0;
+	long				x = 0;
 	short				n = degree;
-	unsigned long		xx = 0, yy = 0, zz = 0;
-	unsigned long		i = 0;
-	unsigned long		m = 0;
-	unsigned long		r = s->size;
+	long				xx = 0, yy = 0, zz = 0;
+	long				i = 0;
+	long				m = 0;
+	long				r = s->size;
 	double*				tmp1 = NULL;
 	double*				tmp2 = NULL;
 
@@ -979,6 +979,7 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 		printf("\n");
 	}
 */
+	r = K->size;
 	//	Apply anti-blurring operator to (A_y)(A_z)s in X direction, i.e., (A_x)(A_y)(A_z)s
 	for (z = 0; z <= K->size; z++)
 	{
@@ -989,7 +990,26 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 			for (x = 0; x <= K->xmax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
 			{
 				xx = STENCIL_MAP_X(x);
+				printf("(%02lu,%02lu,%02lu) -> %02lu", x,y,z, zz+yy+xx);
+
 				K->data[zz+yy+xx] = omegap[0]*tmp2[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+				printf(":%lu", 0);
+				for (m = 1; m <= MIN(r-x,n); m++)
+				{	//	x+m <= r -> m <= r-x
+					K->data[zz+yy+xx] += omegap[m]*tmp2[STENCIL_MAP_Z2(K->size,x+m)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+					printf(":%lu", m);
+				}
+				for (m = 1; m <= MIN(x,n); m++)
+				{	//	x-m >= 0 -> m <= x
+					K->data[zz+yy+xx] += omegap[m]*tmp2[STENCIL_MAP_Z2(K->size,x-m)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+					printf(":%lu", m);
+				}
+				for (m = x+1; m <= MIN(r+x,n); m++)
+				{	//	m-x <= r -> m <= r+x
+					K->data[zz+yy+xx] += omegap[m]*tmp2[STENCIL_MAP_Z2(K->size,m-x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+					printf(":%lu", m);
+				}
+				printf("\n");
 			}
 		}
 	}
@@ -1521,7 +1541,7 @@ void test_preprocessing(void)
 	compute_omega_prime(p, mu, omegap);
 
 	//	Pre-processing
-	stencil_initialize(&theta, (unsigned long) ceil(2.0*alpha), STENCIL_SHAPE_SPHERE);
+	stencil_initialize(&theta, (long) ceil(2.0*alpha), STENCIL_SHAPE_SPHERE);
 	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
 	//stencil_display(&theta, h/a);
 
@@ -1529,7 +1549,7 @@ void test_preprocessing(void)
 	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
 	//stencil_display(&g2g, 0.0);
 
-	stencil_initialize(&gamma, (unsigned long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
+	stencil_initialize(&gamma, (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
 	//stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
 	//stencil_display(&gamma, h/a);
 

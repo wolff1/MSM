@@ -32,9 +32,9 @@ gamma.h - the softening function used to split the kernel
 typedef struct
 {
 	short			shape;
-	unsigned long	size;	//	= zmax
-	unsigned long*	ymax;
-	unsigned long*	xmax;
+	long			size;	//	= zmax
+	long*			ymax;
+	long*			xmax;
 	double*			data;
 } STENCIL;
 
@@ -75,7 +75,7 @@ double thetap(double *c, short k, double x, double* dtheta);
 /*
 stencil operations below:
 */
-void stencil_initialize(STENCIL* s, unsigned long size, short shape);
+void stencil_initialize(STENCIL* s, long size, short shape);
 void stencil_populate(STENCIL* s, double* c, short k, short function_type,
 						double h_a);
 void stencil_display(STENCIL* s, double h_a);
