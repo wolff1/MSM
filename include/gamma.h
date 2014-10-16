@@ -41,7 +41,7 @@ typedef struct
 /*
 Solves for coefficients of gamma
 k is degree of continuity
-c is k+1 vector to hold coefficients
+x is k+1 vector to hold coefficients
 */
 void gamma_init(short k, double* x);
 
