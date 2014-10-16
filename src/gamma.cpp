@@ -324,7 +324,6 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 
 	//	Create memory for intermediate stencils
 	tmp1 = (double*) dynvec((K->size+1)*(K->size+1)*(K->size+2)/2,sizeof(double));
-	tmp2 = (double*) dynvec((K->size+1)*(K->size+1)*(K->size+2)/2,sizeof(double));
 
 	//	Apply anti-blurring operator to s in Z direction, i.e., (A_z)s
 //    printf("Apply anti-blurring in Z direction!\n");
@@ -497,6 +496,7 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 	}
 */
 //    printf("Apply anti-blurring in Y direction!\n");
+	tmp2 = (double*) dynvec((K->size+1)*(K->size+1)*(K->size+2)/2,sizeof(double));
 	r = K->size;	//	This represents the length of the "stacked" symmetric plane stencils
 	//	Apply anti-blurring operator to (A_z)s in Y direction, i.e., (A_y)(A_z)s
 	for (z = 0; z <= K->size; z++)
@@ -614,6 +614,9 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 			}
 		}
 	}
+
+	//	Free dynamically allocated memory for tmp1
+	dynfree(tmp1);
 /*
 	//	Display "stacked" half-plane where y-z plane is symmetric
 	printf("\ntmp2\n");
@@ -672,8 +675,7 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 		}
 	}
 
-	//	Free dynamically allocated memory
-	dynfree(tmp1);
+	//	Free dynamically allocated memory for tmp2
 	dynfree(tmp2);
 }
 
