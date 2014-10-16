@@ -10,6 +10,10 @@ void test_mkl_MMM(void);
 void mkl_memory_check(void);
 void test_sinc(void);
 
+void msm_init(void);
+void msm_preprocess(void);
+void msm_eval(void);
+
 int main(int argc, char* argv[])
 {
 	int choice = 1;
@@ -368,6 +372,39 @@ void test_sinc(void)
 	dynfree(data_file);
 	dynfree(cmd_file);
 	dynfree(buf);
+}
+
+void msm_init(void)
+{
+	//	input: accuracy parameters
+
+	//	g2p
+
+	//	g2fg
+
+	//	p2p
+
+	//	omega'
+
+	//	g2g
+	//	tg2g
+}
+
+void msm_preprocess(void)
+{
+	//	input: omegap', alpha, domain size, K-top
+
+	//	if g2g == NULL
+	//		compute intermediate stencil (only happens once)
+
+	//	if tg2g == NULL or domain enlarged
+	//		first full computation is resizing from 0 to X
+	//		additional computations are resizing from X to Y
+}
+
+void msm_eval(void)
+{
+	//	input: r, q, options, parameters
 }
 
 // End of file
