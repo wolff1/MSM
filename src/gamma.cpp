@@ -1151,6 +1151,126 @@ void gamma_test_all(void)
 	dynfree(DF);
 }
 
+void stencil_naive(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Ki, STENCIL* Kt)
+{
+	double		alpha = a/h;
+	short		radius = (short)ceil(2*alpha);
+	short		size = 2*radius+1;
+	short		Ksize = size;//+2*degree;
+	double*		Gamma = NULL;
+	double*		KZ = NULL;
+	double*		KY = NULL;
+	double*		KX = NULL;
+	long		x = 0;
+	long		y = 0;
+	long		z = 0;
+	long		m = 0;
+	double		d = 0.0;
+	FILE*		fp = NULL;
+
+	Gamma = (double*) dynvec(size*size*size, sizeof(double));
+	KZ = (double*) dynvec(Ksize*Ksize*Ksize, sizeof(double));
+	KY = (double*) dynvec(Ksize*Ksize*Ksize, sizeof(double));
+	KX = (double*) dynvec(Ksize*Ksize*Ksize, sizeof(double));
+
+	fp = fopen("Gamma.dat", "w");
+	for (z = 0; z < size; z++)
+	{
+		for (y = 0; y < size; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				d = h*sqrt((double)(x-radius)*(x-radius) + (double)(y-radius)*(y-radius) + (double)(z-radius)*(z-radius))/a;
+				Gamma[z*size*size + y*size + x] = theta(c,k,d,NULL);
+				fprintf(fp, "%+e ", Gamma[z*size*size + y*size + x]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	fp = fopen("KZ.dat", "w");
+	//	Apply in Z direction
+	for (z = 0; z < size; z++)
+	{
+		for (y = 0; y < size; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				KZ[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[0]*Gamma[z*size*size + y*size + x];
+				for (m = 1; m <= MIN(degree,size-1-z); m++)
+				{
+					KZ[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*Gamma[(z+m)*size*size + y*size + x];
+				}
+				for (m = 1; m <= MIN(degree,z); m++)
+				{
+					KZ[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*Gamma[(z-m)*size*size + y*size + x];
+				}
+				fprintf(fp, "%+e ", KZ[(z)*Ksize*Ksize + (y)*Ksize + (x)]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	fp = fopen("KY.dat", "w");
+	//	Apply in Y direction
+	for (z = 0; z < size; z++)
+	{
+		for (y = 0; y < size; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				KY[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[0]*KZ[z*size*size + y*size + x];
+				for (m = 1; m <= MIN(degree,size-1-y,); m++)
+				{
+					KY[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KZ[(z)*size*size + (y+m)*size + x];
+				}
+				for (m = 1; m <= MIN(degree,y); m++)
+				{
+					KY[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KZ[(z)*size*size + (y-m)*size + x];
+				}
+				fprintf(fp, "%+e ", KY[(z)*Ksize*Ksize + (y)*Ksize + (x)]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	fp = fopen("KX.dat", "w");
+	//	Apply in X direction
+	for (z = 0; z < size; z++)
+	{
+		for (y = 0; y < size; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[0]*KY[z*size*size + y*size + x];
+				for (m = 1; m <= MIN(degree,size-1-x,); m++)
+				{
+					KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KY[(z)*size*size + (y)*size + (x+m)];
+				}
+				for (m = 1; m <= MIN(degree,x); m++)
+				{
+					KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KY[(z)*size*size + (y)*size + (x-m)];
+				}
+				fprintf(fp, "%+e ", KX[(z)*Ksize*Ksize + (y)*Ksize + (x)]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	dynfree(KZ);
+	dynfree(KY);
+	dynfree(KX);
+	dynfree(Gamma);
+}
+
 /*
 Builds Gamma, anti-blurring operator, etc
 */
@@ -1201,11 +1321,11 @@ void test_preprocessing(void)
 	//	Pre-processing (Intermediate levels)
 	stencil_initialize(&theta, (long) ceil(2.0*alpha), STENCIL_SHAPE_SPHERE);
 	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
-	//stencil_display(&theta, h/a);
+	stencil_display(&theta, h/a);
 
 	stencil_initialize(&g2g, theta.size, theta.shape);
 	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
-	//stencil_display(&g2g, 1.0);
+	stencil_display(&g2g, 1.0);
 
 	//	Pre-processing (Top level)
 	stencil_initialize(&gamma, 10 * (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
@@ -1215,6 +1335,8 @@ void test_preprocessing(void)
 	stencil_initialize(&tg2g, gamma.size, gamma.shape);
 	stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
 	//stencil_display(&tg2g, 0.0);
+
+	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g, &tg2g);
 
 	//	Free dynamically allocated memory
 	dynfree(c);
