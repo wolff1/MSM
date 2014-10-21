@@ -1151,7 +1151,7 @@ void gamma_test_all(void)
 	dynfree(DF);
 }
 
-void stencil_naive(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Ki, STENCIL* Kt)
+void stencil_naive(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Ki)
 {
 	double		alpha = a/h;
 	short		radius = (short)ceil(2*alpha);
@@ -1185,7 +1185,6 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 			{
 				d = h*sqrt((double)(x-radius)*(x-radius) + (double)(y-radius)*(y-radius) + (double)(z-radius)*(z-radius))/a;
 				Gamma[z*size*size + y*size + x] = theta(c,k,d,NULL);
-//				Gamma[z*size*size + y*size + x] = gamma(c,k,d,NULL);
 				fprintf(fp, "%+e ", Gamma[z*size*size + y*size + x]);
 			}
 			fprintf(fp, "\n");
@@ -1293,6 +1292,151 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 	dynfree(Gamma);
 }
 
+void stencil_naive_top(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Kt)
+{
+	short		radius = Kt->size+degree;
+	short		size = 2*Kt->size+2*degree+1;
+	short		Ksize = 2*Kt->size+1;
+	double*		Gamma = NULL;
+	double*		KZ = NULL;
+	double*		KY = NULL;
+	double*		KX = NULL;
+	long		x = 0;
+	long		y = 0;
+	long		z = 0;
+	long		m = 0;
+	double		d = 0.0;
+	FILE*		fp = NULL;
+	double		minerr = 1.0;
+	double		maxerr = 0.0;
+	double		err = 0.0;
+/*
+Gamma:	[l, l, l]
+KZ:		[l, l, s]
+KY:		[l, s, s]
+KX:		[s, s, s]
+*/
+	Gamma = (double*) dynvec(size*size*size, sizeof(double));
+	KZ = (double*) dynvec(size*size*Ksize, sizeof(double));
+	KY = (double*) dynvec(size*Ksize*Ksize, sizeof(double));
+	KX = (double*) dynvec(Ksize*Ksize*Ksize, sizeof(double));
+
+	fp = fopen("Gamma.dat", "w");
+	for (z = 0; z < size; z++)
+	{
+		for (y = 0; y < size; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				d = h*sqrt((double)(x-radius)*(x-radius) + (double)(y-radius)*(y-radius) + (double)(z-radius)*(z-radius))/a;
+				Gamma[z*size*size + y*size + x] = gamma(c,k,d,NULL);
+				fprintf(fp, "%+e ", Gamma[z*size*size + y*size + x]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	fp = fopen("KZ.dat", "w");
+	//	Apply in Z direction
+	for (z = 0; z < Ksize; z++)
+	{
+		for (y = 0; y < size; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				KZ[(z)*size*size + (y)*size + (x)] += omegap[0]*Gamma[(z+degree)*size*size + (y)*size + (x)];
+				for (m = 1; m <= degree; m++)
+				{
+					KZ[(z)*size*size + (y)*size + (x)] += omegap[m]*Gamma[(z+degree+m)*size*size + (y)*size + (x)];
+				}
+				for (m = 1; m <= degree; m++)
+				{
+					KZ[(z)*size*size + (y)*size + (x)] += omegap[m]*Gamma[(z+degree-m)*size*size + (y)*size + (x)];
+				}
+				fprintf(fp, "%+e ", KZ[(z)*size*size + (y)*size + (x)]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	fp = fopen("KY.dat", "w");
+	//	Apply in Y direction
+	for (z = 0; z < Ksize; z++)
+	{
+		for (y = 0; y < Ksize; y++)
+		{
+			for (x = 0; x < size; x++)
+			{
+				KY[(z)*Ksize*size + (y)*size + (x)] += omegap[0]*KZ[z*size*size + (y+degree)*size + x];
+				for (m = 1; m <= degree; m++)
+				{
+					KY[(z)*Ksize*size + (y)*size + (x)] += omegap[m]*KZ[(z)*size*size + (y+degree+m)*size + x];
+				}
+				for (m = 1; m <= degree; m++)
+				{
+					KY[(z)*Ksize*size + (y)*size + (x)] += omegap[m]*KZ[(z)*size*size + (y+degree-m)*size + x];
+				}
+				fprintf(fp, "%+e ", KY[(z)*Ksize*size + (y)*size + (x)]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	fp = fopen("KX.dat", "w");
+	//	Apply in X direction
+	for (z = 0; z < Ksize; z++)
+	{
+		for (y = 0; y < Ksize; y++)
+		{
+			for (x = 0; x < Ksize; x++)
+			{
+				KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[0]*KY[z*Ksize*size + y*size + (x+degree)];
+				for (m = 1; m <= degree; m++)
+				{
+					KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KY[(z)*Ksize*size + (y)*size + (x+degree+m)];
+				}
+				for (m = 1; m <= degree; m++)
+				{
+					KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KY[(z)*Ksize*size + (y)*size + (x+degree-m)];
+				}
+				fprintf(fp, "%+e ", KX[(z)*Ksize*Ksize + (y)*Ksize + (x)]);
+			}
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	for (z = 0; z <= Kt->size; z++)
+	{
+		for (y = 0; y <= Kt->ymax[z]; y++)
+		{
+			for (x = 0; x <= Kt->xmax[STENCIL_MAP_Y(z)+STENCIL_MAP_X(y)]; x++)
+			{
+				// +radius for KX
+				err = fabs(Kt->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)] - KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)]);
+//				printf("(%02d,%02d,%02d) Ki = %+e, KX = %+e, err = %+e\n", x,y,z, Kt->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)], KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)], err);
+				if (err > maxerr)
+					maxerr = err;
+				if (err < minerr)
+					minerr = err;
+			}
+		}
+	}
+	printf("Kt: minerr = %+e, maxerr = %+e\n", minerr, maxerr);
+
+	dynfree(KZ);
+	dynfree(KY);
+	dynfree(KX);
+	dynfree(Gamma);
+}
+
 /*
 Builds Gamma, anti-blurring operator, etc
 */
@@ -1349,8 +1493,11 @@ void test_preprocessing(void)
 	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
 	//stencil_display(&g2g, 1.0);
 
+	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g);
+
 	//	Pre-processing (Top level)
-	stencil_initialize(&gamma, (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
+	//stencil_initialize(&gamma, (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
+	stencil_initialize(&gamma, 5.0, STENCIL_SHAPE_CUBE);
 	stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
 	//stencil_display(&gamma, h/a);
 
@@ -1358,7 +1505,7 @@ void test_preprocessing(void)
 	stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
 	//stencil_display(&tg2g, 1.0);
 
-	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g, &tg2g);
+	stencil_naive_top(p, a, h, p_2+mu, omegap, k, c, &tg2g);
 
 	//	Free dynamically allocated memory
 	dynfree(c);
