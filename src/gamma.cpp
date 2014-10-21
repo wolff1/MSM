@@ -583,31 +583,31 @@ void stencil_shift(STENCIL* s, short degree, double* omegap, STENCIL* K)
 				xx = STENCIL_MAP_Z2(K->size,x);
 //				printf("(%02ld,%02ld,%02ld) -> %02ld", x,y,z, xx+zz+yy);
 
-				tmp2[xx+zz+yy] = omegap[0]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y)];
+				tmp2[xx+zz+yy] = omegap[0]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y)];
 //				printf(":%ld", 0);
-				for (m = 1; m <= MIN(z-y,n); m++)
-				{	//	y+m <= z -> m <= z-y
-					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y+m)];
+				for (m = 1; m <= MIN(x-y,n); m++)
+				{	//	y+m <= x -> m <= x-y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y+m)];
 //					printf(":%ld", m);
 				}
-				for (m = z-y+1; m <= MIN(r-y,n); m++)
+				for (m = x-y+1; m <= MIN(r-y,n); m++)
 				{	//	y+m <= r -> m <= r-y
-					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(y+m)+STENCIL_MAP_X2(z)];
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(y+m)+STENCIL_MAP_X2(x)];
 //					printf(":%ld", m);
 				}
 				for (m = 1; m <= MIN(y,n); m++)
 				{	//	y-m >= 0 -> m <= y
-					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(y-m)];
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(y-m)];
 //					printf(":%ld", m);
 				}
-				for (m = y+1; m <= MIN(z+y,n); m++)
-				{	//	m-y <= z -> m <= y+z
-					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(z)+STENCIL_MAP_X2(m-y)];
+				for (m = y+1; m <= MIN(x+y,n); m++)
+				{	//	m-y <= x -> m <= x+y
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(x)+STENCIL_MAP_X2(m-y)];
 //					printf(":%ld", m);
 				}
-				for (m = y+z+1; m <= MIN(r+y,n); m++)
+				for (m = x+y+1; m <= MIN(r+y,n); m++)
 				{	//	m-y <= r -> m <= r+y
-					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,x)+STENCIL_MAP_Y2(m-y)+STENCIL_MAP_X2(z)];
+					tmp2[xx+zz+yy] += omegap[m]*tmp1[STENCIL_MAP_Z2(K->size,z)+STENCIL_MAP_Y2(m-y)+STENCIL_MAP_X2(x)];
 //					printf(":%ld", m);
 				}
 //				printf("\n");
@@ -1167,6 +1167,9 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 	long		m = 0;
 	double		d = 0.0;
 	FILE*		fp = NULL;
+	double		minerr = 1.0;
+	double		maxerr = 0.0;
+	double		err = 0.0;
 
 	Gamma = (double*) dynvec(size*size*size, sizeof(double));
 	KZ = (double*) dynvec(Ksize*Ksize*Ksize, sizeof(double));
@@ -1182,6 +1185,7 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 			{
 				d = h*sqrt((double)(x-radius)*(x-radius) + (double)(y-radius)*(y-radius) + (double)(z-radius)*(z-radius))/a;
 				Gamma[z*size*size + y*size + x] = theta(c,k,d,NULL);
+//				Gamma[z*size*size + y*size + x] = gamma(c,k,d,NULL);
 				fprintf(fp, "%+e ", Gamma[z*size*size + y*size + x]);
 			}
 			fprintf(fp, "\n");
@@ -1265,6 +1269,24 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 	}
 	fclose(fp);
 
+	for (z = 0; z <= Ki->size; z++)
+	{
+		for (y = 0; y <= Ki->ymax[z]; y++)
+		{
+			for (x = 0; x <= Ki->xmax[STENCIL_MAP_Y(z)+STENCIL_MAP_X(y)]; x++)
+			{
+				// +radius for KX
+				err = fabs(Ki->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)] - KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)]);
+//				printf("(%02d,%02d,%02d) Ki = %+e, KX = %+e, err = %+e\n", x,y,z, Ki->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)], KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)], err);
+				if (err > maxerr)
+					maxerr = err;
+				if (err < minerr)
+					minerr = err;
+			}
+		}
+	}
+	printf("Ki: minerr = %+e, maxerr = %+e\n", minerr, maxerr);
+
 	dynfree(KZ);
 	dynfree(KY);
 	dynfree(KX);
@@ -1321,20 +1343,20 @@ void test_preprocessing(void)
 	//	Pre-processing (Intermediate levels)
 	stencil_initialize(&theta, (long) ceil(2.0*alpha), STENCIL_SHAPE_SPHERE);
 	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
-	stencil_display(&theta, h/a);
+	//stencil_display(&theta, h/a);
 
 	stencil_initialize(&g2g, theta.size, theta.shape);
 	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
-	stencil_display(&g2g, 1.0);
+	//stencil_display(&g2g, 1.0);
 
 	//	Pre-processing (Top level)
-	stencil_initialize(&gamma, 10 * (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
+	stencil_initialize(&gamma, (long) ceil(2.0*alpha), STENCIL_SHAPE_CUBE);
 	stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
 	//stencil_display(&gamma, h/a);
 
 	stencil_initialize(&tg2g, gamma.size, gamma.shape);
 	stencil_shift(&gamma, p_2 + mu, omegap, &tg2g);
-	//stencil_display(&tg2g, 0.0);
+	//stencil_display(&tg2g, 1.0);
 
 	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g, &tg2g);
 
