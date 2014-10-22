@@ -10,7 +10,7 @@ centered b-spline phi
 	x is the independent variable
 	*dphi is output parameter which will contain the derivative of phi at x
 */
-double phi(int p, double x, double* dphi)
+double phi(short p, double x, double* dphi)
 {
 	double f = 0.0;
 	double df = 0.0;
@@ -60,6 +60,44 @@ double phi(int p, double x, double* dphi)
 	return f;
 }
 
+//  Horner's rule version of phi
+void new_phi(short p, double** g2p, short n, double* x, double* phi, double* dphi)
+{
+    short       i = 0;
+    short       j = 0;
+    short       p_2 = p/2;
+    short       k = 0;
+    double      xp = 0.0;
+    double      s = 0.0;
+
+    assert(phi != NULL);
+    assert(dphi != NULL);
+
+    for (i = 0; i < n; i++)
+    {
+        phi[i] = 0.0;
+        dphi[i] = 0.0;
+        s = (x[i] > 0.0 ? 1.0 : -1.0);
+        xp = fabs(x[i]);
+
+        if (xp < p_2)
+        {
+            k = floor(xp);
+            xp = xp - k - 1;
+
+            phi[i] = g2p[k][p-1];
+            dphi[i] = g2p[k][p-1]*(p-1);
+            for (j = p-2; j > 0; j--)
+            {
+                phi[i] = phi[i]*xp + g2p[k][j];
+                dphi[i] = dphi[i]*xp + g2p[k][j]*j;
+            }
+            phi[i] = phi[i]*xp + g2p[k][0];
+            dphi[i] = dphi[i]*s;
+        }
+    }
+}
+
 /*
 Compute the coefficients for the B-spines which allow them to be
 nested from a grid to a finer grid.
@@ -104,6 +142,7 @@ Tests phi and phi' without regard to method or scaling.
 */
 void phi_test_all(void)
 {
+#if 0
 	int			i = 0;
 	int			samples = 0;
 	int			p = 0;
@@ -153,6 +192,113 @@ void phi_test_all(void)
 	dynfree(X);
 	dynfree(F);
 	dynfree(DF);
+#endif
+    //  Compute fixed Phi coefficients for polynomial evaluation
+    short       p = 0;
+    short       p_2 = 0;
+    double**    g2p = NULL;
+    double**    A = NULL;
+    double*     b = NULL;
+    short       i = 0;
+    short       j = 0;
+    short       k = 0;
+    double      x = 0.0;
+    double      xmk = 0.0;
+    double      dx = 0;
+	lapack_int  rc = 0;
+	lapack_int* piv = NULL;
+
+    short       samples = 0;
+    double*     y1 = NULL;
+    double*     dy1 = NULL;
+    double*     y2 = NULL;
+    double*     dy2 = NULL;
+    double*     xs = NULL;
+
+    printf("Enter p: ");
+    scanf("%hd", &p);
+
+    p_2 = p/2;
+    dx = 1.0/(p_2-2+1);
+    g2p = (double**) dynarr_d(p_2,p);
+    A = (double**) dynarr_d(p,p);
+    b = (double*) dynvec(p, sizeof(double));
+
+    for (k = 0; k < p_2; k++)
+    {
+        x = k;
+        for (j = 0; j < p_2; j++)
+        {
+            //  down column -> different values of x
+//            printf("k=%hd, j=%hd, x=%f\n", k, j, x);
+            xmk = x - (k+1);
+
+            //  across powers in row
+            A[j][0] = 1.0;
+            A[j+p_2][0] = 0.0;
+            A[j+p_2][1] = 1.0;
+            for (i = 1; i < p-1; i++)
+            {
+                A[j][i] = A[j][i-1]*xmk;
+                A[j+p_2][i+1] = (i+1)*A[j][i];
+            }
+            A[j][p-1] = A[j][p-2]*xmk;
+
+            //  right hand side of linear system
+            b[j] = phi(p, x, &b[j+p_2]);
+            x += dx;
+        }
+
+//        display_dynarr_d(A, p, p);
+//        display_vector_d(b, p);
+
+        //  Solve Ax = b with x being g2p[k]
+        // NOTE: b is overwritten with x, A is overwritten with LU
+        piv = (lapack_int*) dynvec(p,sizeof(lapack_int));
+        rc = LAPACKE_dgesv(LAPACK_ROW_MAJOR, (lapack_int) p, (lapack_int) 1,
+                            A[0], (lapack_int) p, piv, b, (lapack_int) 1);
+        dynfree(piv);
+        assert(rc == 0); // zero is SUCCESS
+
+        for (i = 0; i < p; i++)
+        {
+            g2p[k][i] = b[i];
+        }
+
+//        display_vector_d(g2p[k], p);
+    }
+
+    //  Test new phi
+    printf("Enter samples: ");
+    scanf("%hd", &samples);
+
+    y1 = (double*) dynvec(samples+1, sizeof(double));
+    dy1 = (double*) dynvec(samples+1, sizeof(double));
+    y2 = (double*) dynvec(samples+1, sizeof(double));
+    dy2 = (double*) dynvec(samples+1, sizeof(double));
+    xs = (double*) dynvec(samples+1, sizeof(double));
+
+    for (i = 0; i <= samples; i++)
+    {
+        xs[i] = (double)i*p/samples - (double)p_2;
+        y1[i] = phi(p,xs[i],&dy1[i]);
+    }
+
+    new_phi(p, g2p, samples+1, xs, y2, dy2);
+
+    for (i = 0; i <= samples; i++)
+    {
+        if (y1[i] != y2[i])
+            printf("y diff: %e\n", fabs(y2[i]-y1[i]));
+        if (dy1[i] != dy2[i])
+            printf("dy diff: %e\n", fabs(dy2[i]-dy1[i]));
+    }
+    
+    dynfree(g2p[0]);
+    dynfree(g2p);
+    dynfree(A[0]);
+    dynfree(A);
+    dynfree(b);
 }
 
 /*

@@ -12,7 +12,7 @@ centered b-spline phi
 	x is the independent variable
 	*dphi is output parameter which will contain the derivative of phi at x
 */
-double phi(int p, double x, double* dphi);
+double phi(short p, double x, double* dphi);
 
 /*
 Compute the coefficients for the B-spines which allow them to be
