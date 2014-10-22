@@ -1627,7 +1627,7 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 			for (x = 0; x < size; x++)
 			{
 				KY[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[0]*KZ[z*size*size + y*size + x];
-				for (m = 1; m <= MIN(degree,size-1-y,); m++)
+				for (m = 1; m <= MIN(degree,size-1-y); m++)
 				{
 					KY[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KZ[(z)*size*size + (y+m)*size + x];
 				}
@@ -1652,7 +1652,7 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 			for (x = 0; x < size; x++)
 			{
 				KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[0]*KY[z*size*size + y*size + x];
-				for (m = 1; m <= MIN(degree,size-1-x,); m++)
+				for (m = 1; m <= MIN(degree,size-1-x); m++)
 				{
 					KX[(z)*Ksize*Ksize + (y)*Ksize + (x)] += omegap[m]*KY[(z)*size*size + (y)*size + (x+m)];
 				}
@@ -1675,8 +1675,8 @@ void stencil_naive(short p, double a, double h, short degree, double* omegap, sh
 			for (x = 0; x <= Ki->xmax[STENCIL_MAP_Y(z)+STENCIL_MAP_X(y)]; x++)
 			{
 				// +radius for KX
-				err = fabs(Ki->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)] - KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)]);
-//				printf("(%02d,%02d,%02d) Ki = %+e, KX = %+e, err = %+e\n", x,y,z, Ki->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)], KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)], err);
+				err = fabs(Ki->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)] - KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)]) / fabs(KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)]);
+//				printf("(%02ld,%02ld,%02ld) Ki = %+e, KX = %+e, err = %+e\n", x,y,z, Ki->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)], KX[(z+radius)*Ksize*Ksize+(y+radius)*Ksize+(x+radius)], err);
 				if (err > maxerr)
 					maxerr = err;
 				if (err < minerr)
@@ -1820,8 +1820,8 @@ KX:		[s, s, s]
 			for (x = 0; x <= Kt->xmax[STENCIL_MAP_Y(z)+STENCIL_MAP_X(y)]; x++)
 			{
 				// +radius for KX
-				err = fabs(Kt->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)] - KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)]);
-//				printf("(%02d,%02d,%02d) Kt = %+e, KX = %+e, err = %+e\n", x,y,z, Kt->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)], KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)], err);
+				err = fabs(Kt->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)] - KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)]) / fabs(KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)]);
+//				printf("(%02ld,%02ld,%02ld) Kt = %+e, KX = %+e, err = %+e\n", x,y,z, Kt->data[STENCIL_MAP_Z(z)+STENCIL_MAP_Y(y)+STENCIL_MAP_X(x)], KX[(z+Kt->size)*Ksize*Ksize+(y+Kt->size)*Ksize+(x+Kt->size)], err);
 				if (err > maxerr)
 					maxerr = err;
 				if (err < minerr)
