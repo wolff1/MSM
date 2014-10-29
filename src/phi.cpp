@@ -215,6 +215,11 @@ void phi_test_all(void)
     double*     dy2 = NULL;
     double*     xs = NULL;
 
+	double		max = 0.0;
+	double		min = 1.0;
+	double		maxd = 0.0;
+	double		mind = 1.0;
+
     printf("Enter p: ");
     scanf("%hd", &p);
 
@@ -278,7 +283,7 @@ void phi_test_all(void)
     dy2 = (double*) dynvec(samples+1, sizeof(double));
     xs = (double*) dynvec(samples+1, sizeof(double));
 
-    for (i = 0; i <= samples; i++)
+	for (i = 0; i <= samples; i++)
     {
         xs[i] = (double)i*p/samples - (double)p_2;
         y1[i] = phi(p,xs[i],&dy1[i]);
@@ -286,19 +291,31 @@ void phi_test_all(void)
 
     new_phi(p, g2p, samples+1, xs, y2, dy2);
 
+	//	Determine min/max (absolute) errors
     for (i = 0; i <= samples; i++)
     {
-        if (y1[i] != y2[i])
-            printf("y diff: %e\n", fabs(y2[i]-y1[i]));
-        if (dy1[i] != dy2[i])
-            printf("dy diff: %e\n", fabs(dy2[i]-dy1[i]));
-    }
+		if (fabs(y2[i]-y1[i]) > max)
+			max = fabs(y2[i]-y1[i]);
+		if (fabs(y2[i]-y1[i]) < min)
+			min = fabs(y2[i]-y1[i]);
+
+		if (fabs(dy2[i]-dy1[i]) > maxd)
+			maxd = fabs(dy2[i]-dy1[i]);
+		if (fabs(dy2[i]-dy1[i]) < mind)
+			mind = fabs(dy2[i]-dy1[i]);
+	}
+	printf("min/max y = (%e,%e), dy= (%e,%e)\n", min,max, mind,maxd);
     
     dynfree(g2p[0]);
     dynfree(g2p);
     dynfree(A[0]);
     dynfree(A);
     dynfree(b);
+	dynfree(y1);
+	dynfree(dy1);
+	dynfree(y2);
+	dynfree(dy2);
+	dynfree(xs);
 }
 
 /*

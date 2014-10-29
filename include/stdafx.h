@@ -11,8 +11,8 @@
 // TODO: reference additional headers your program requires here
 #include <stdlib.h>
 #include <assert.h>
-#include <math.h>	// fabs, ceil
-#include <string.h> // for memset and string functions
+#include <math.h>	//	fabs, ceil
+#include <string.h> //	for memset and string functions
 #include <mkl.h>
 
 // Project specific
