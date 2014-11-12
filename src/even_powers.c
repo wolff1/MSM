@@ -3,7 +3,7 @@
 even_powers.c - the softening function used to split the kernel
 */
 
-#include "all.h"
+#include "even_powers.h"
 
 /*
 Solves for coefficients of gamma
@@ -73,7 +73,7 @@ void gamma_init(short k, double* x)
 Evaluate gamma and gamma' at (positive) position x
 c is coefficient vector for gamma
 */
-double gamma(double *c, short k, double x, double* dgamma)
+double _gamma(double *c, short k, double x, double* dgamma)
 {
 	double f = 0.0;
 	double df = 0.0;
@@ -115,7 +115,7 @@ double theta_star(double *c, short k, double x, double* dtheta_star)
     double f = 0.0;
     double df = 0.0;
 
-    f = 1.0/x - gamma(c, k, x, &df);
+    f = 1.0/x - _gamma(c, k, x, &df);
     df = -1.0/(x*x) - df;
 
     if (dtheta_star != NULL)
@@ -134,7 +134,7 @@ double theta(double *c, short k, double x, double* dtheta)
 	double df = 0.0;
 	double df2 = 0.0;
 
-    f = gamma(c, k, x, &df) - 0.5*gamma(c, k, 0.5*x, &df2);
+    f = _gamma(c, k, x, &df) - 0.5*_gamma(c, k, 0.5*x, &df2);
     df = df - 0.25*df2;
 
 	if (dtheta != NULL)
@@ -172,7 +172,7 @@ double thetap(double *c, short k, double x, double* dtheta)
 	}
 	else if (x < 2.0)
 	{
-		f = 1.0/x - 0.5*gamma(c,k,0.5*x,&df);
+		f = 1.0/x - 0.5*_gamma(c,k,0.5*x,&df);
 		df = -1.0/xx - 0.25*df;
 	}
 
@@ -262,7 +262,7 @@ void stencil_populate(STENCIL* s, double* c, short k, short type, double h_a)
 	if (type == STENCIL_FUNCTION_TYPE_THETA)
 		f = &theta;
 	else
-		f = &gamma;
+		f = &_gamma;
 
 	for (z = 0; z <= s->size; z++)
 	{
@@ -1071,7 +1071,7 @@ df += DF[l][i];
 			al = 0.5*al;
 		}
 		// Gamma - Top level long range part of splitting (infinit)
-		F[l][i] = gamma(c, k, al*X[i], &DF[l][i]);
+		F[l][i] = _gamma(c, k, al*X[i], &DF[l][i]);
 		F[l][i] = al*F[l][i];
 		DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
@@ -1317,7 +1317,7 @@ void gamma_test_all(void)
 	for (i = 0; i <= samples; i++)
 	{
 		X[i] = (2.0*(double)i/(double)samples);
-		F[i] = gamma(c, k, X[i], &DF[i]);
+		F[i] = _gamma(c, k, X[i], &DF[i]);
 /*
 		printf("%02d:\tgamma(%f) = %f\tgamma'(%f) = %f\n",
 				i, X[i], F[i], X[i], DF[i]);
@@ -1369,7 +1369,7 @@ void gamma_test_all(void)
 	for (i = 1; i <= samples; i++)
 	{
 		X[i] = (2.0*(double)i/(double)samples);
-		F[i] = gamma(c, k, X[i], &DF[i]);
+		F[i] = _gamma(c, k, X[i], &DF[i]);
 /*
 		printf("%02d:\tgamma(%f) = %f\tgamma'(%f) = %f\n",
 				i, X[i], F[i], X[i], DF[i]);
@@ -1568,7 +1568,7 @@ KX:		[s, s, s]
 			for (x = 0; x < size; x++)
 			{
 				d = h*sqrt((double)(x-radius)*(x-radius) + (double)(y-radius)*(y-radius) + (double)(z-radius)*(z-radius))/a;
-				Gamma[z*size*size + y*size + x] = gamma(c,k,d,NULL);
+				Gamma[z*size*size + y*size + x] = _gamma(c,k,d,NULL);
 				fprintf(fp, "%+e ", Gamma[z*size*size + y*size + x]);
 			}
 			fprintf(fp, "\n");

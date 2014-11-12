@@ -2,7 +2,8 @@
 /*
 b_spline.c - Routines related to operator(s)
 */
-#include "all.h"
+
+#include "b_spline.h"
 
 /*
 void compute_blurring_operator(short degree)

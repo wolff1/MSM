@@ -3,7 +3,7 @@
 c1_spline.c - C1 phi (CUBIC ONLY)
 */
 
-#include "all.h"
+#include "c1_spline.h"
 
 // These are for the CUBIC "shifted-powers" version
 double c[2][4] = {{0.0, -0.5, 2.0, 1.5},

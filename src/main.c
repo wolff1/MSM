@@ -1,10 +1,9 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-main.c - Defines the entry point for the console application.
+main.c - entry point for the tester
 */
 
-#include "all.h"
-#include "c1_spline.h"	// Remove eventually
+#include "tester.h"
 
 void test_mkl_MMM(void);
 void mkl_memory_check(void);

@@ -3,6 +3,10 @@
 c1_spline.h - C1 phi
 */
 
+#include "all.h"
+#include "memory.h"
+#include "output.h"		//	remove?
+
 #define PHI_DATA_C1		"phiC1.dat"
 
 #define PHI_DATA_C1_LEN	strlen(PHI_DATA_C1)

@@ -3,6 +3,10 @@
 b_spline.h - operator related routine(s)
 */
 
+#include "all.h"
+#include "memory.h"
+#include "interpolant.h"	//	remove?
+
 /*
 void compute_B(short degree)
 where

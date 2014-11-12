@@ -15,14 +15,9 @@
 #include <string.h> //	for memset and string functions
 #include <mkl.h>
 
-// Project specific
-#include "memory.h"
-#include "b_spline.h"
-#include "even_powers.h"
-#include "output.h"
-#include "interpolant.h"
-
-// Global constant(s):
-#define MEM_ALIGN	64
+// Global macros:
+#define	MAX(x,y)	((x > y) ? (x) : (y))
+#define	MIN(x,y)	((x < y) ? (x) : (y))
+#define	PI			3.14159265358979323846
 
 // End of file

@@ -3,7 +3,7 @@
 centered b-spline phi
 */
 
-#include "all.h"
+#include "interpolant.h"
 
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant

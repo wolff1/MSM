@@ -3,6 +3,11 @@
 even_powers.h - the softening function used to split the kernel
 */
 
+#include "all.h"
+#include "memory.h"
+#include "output.h"			//	remove?
+#include "interpolant.h"	//	remove?
+
 #define GAMMA_DATA			"gamma.dat"
 #define THETA_DATA			"theta.dat"
 
@@ -49,7 +54,7 @@ void gamma_init(short k, double* x);
 Evaluate gamma and gamma' at position x
 c is coefficient vector for gamma
 */
-double gamma(double *c, short k, double x, double* dgamma);
+double _gamma(double *c, short k, double x, double* dgamma);
 
 /*
 Evaluate theta* and theta*' at position x

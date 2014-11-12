@@ -3,7 +3,7 @@
 memory.c - utility functions
 */
 
-#include "all.h"
+#include "memory.h"
 
 /*
 NOTE: https://software.intel.com/en-us/node/433552 for data alignment

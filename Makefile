@@ -1,33 +1,45 @@
-# Use icc for Intel Composer XE 2013
-#CC=icc
-# Compiler flags
-#CFLAGS=-Iinclude -c -Wall
+# This Makefile to be run from the parent directory of src/ and include/
+# Use icc for Intel compiler
 
-#all: msm
+#----------------------------------------------------------------------------
 
-#msm: main.o gamma.o output.o phi.o stdafx.o utility.o
-#	$(CC) main.o gamma.o output.o phi.o stdafx.o utility.o -o msm
+#all: src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp src/operator.cpp src/phiC1.cpp
+#	icc -Iinclude -mkl src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp src/operator.cpp src/phiC1.cpp
+#	mv a.out bin/msm
 
-#main.o: main.cpp
-#	$(CC) $(CFLAGS) main.cpp
+#all: src/interpolant/b_spline/b_spline.c src/interpolant/c1_spline/c1_spline.c src/interpolant/interpolant.c src/memory/memory.c src/output/output.c src/softener/even_powers/even_powers.c src/softener/softener.c src/tester/main.c
+#	icc -Wall -Wshadow -Iinclude -mkl  src/interpolant/b_spline/b_spline.c src/interpolant/c1_spline/c1_spline.c src/interpolant/interpolant.c src/memory/memory.c src/output/output.c src/softener/even_powers/even_powers.c src/softener/softener.c src/tester/main.c
+#	mv a.out bin/msm
 
-#gamma.o: gamma.cpp
-#    $(CC) $(CFLAGS) gamma.cpp
+#----------------------------------------------------------------------------
 
-#output.o: output.cpp
-#    $(CC) $(CFLAGS) output.cpp
+IDIR	= include
+SDIR	= src
+LDIR	= lib
+ODIR	= bin
+BDIR	= bin
 
-#phi.o: phi.cpp
-#    $(CC) $(CFLAGS) phi.cpp
+LIBS	= -mkl
 
-#stdafx.o: stdafx.cpp
-#    $(CC) $(CFLAGS) stdafx.cpp
+CC		= icc
+CFLAGS	= -Wall -Wshadow -I$(IDIR)
 
-#utility.o: utility.cpp
-#    $(CC) $(CFLAGS) utility.cpp
+_DEPS	= all.h b_spline.h c1_spline.h even_powers.h interpolant.h memory.h output.h softener.h tester.h
+DEPS	= $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-all: src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp src/operator.cpp src/phiC1.cpp
-	icc -Iinclude -mkl src/main.cpp src/gamma.cpp src/output.cpp src/phi.cpp src/stdafx.cpp src/utility.cpp src/operator.cpp src/phiC1.cpp
-	mv a.out bin/msm
+_OBJ	= b_spline.o c1_spline.o interpolant.o memory.o output.o even_powers.o softener.o main.o
+OBJ		= $(patsubst %,$(ODIR)/%,$(_OBJ))
+
+$(ODIR)/%.o: $(SDIR)/%.c $(IDIR)/$(DEP)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+msm: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+	mv $@ $(BDIR)/$@
+
+.PHONY: clean
+
 clean:
-	rm -rf *o bin/msm
+	rm -rf bin/*.o bin/msm
+
+# End of file

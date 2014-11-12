@@ -3,6 +3,10 @@
 interpolant.h - centered b-spline phi
 */
 
+#include "all.h"
+#include "memory.h"
+#include "output.h"			//	remove?
+
 #define PHI_DATA		"phi.dat"
 
 #define PHI_DATA_LEN	strlen(PHI_DATA)

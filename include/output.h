@@ -3,6 +3,8 @@
 output.h - program output functions
 */
 
+#include "all.h"
+
 #define GP_DATA_TMP			"tmp_data.dat"
 
 /*

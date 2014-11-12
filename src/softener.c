@@ -3,6 +3,6 @@
 softener.c - 
 */
 
-
+#include "softener.h"
 
 //	End of file

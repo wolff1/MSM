@@ -9,7 +9,7 @@ Files needed:
 					command file in code)
 */
 
-#include "all.h"
+#include "output.h"
 
 /*
 Display 2D data only
@@ -113,7 +113,7 @@ void save2d(int data_points, double* x, double* f, char* save_file)
 		bytes = fwrite(buf, sizeofchar, buflen, fp);
 		if (bytes < buflen)
 		{
-			printf("<%d> bytes written to temp file <%s> instead of <%d>\n",
+			printf("<%lu> bytes written to temp file <%s> instead of <%lu>\n",
 					bytes, save_file, buflen);
 			break;
 		}
