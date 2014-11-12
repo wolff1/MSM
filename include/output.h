@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-program output functions
+output.h - program output functions
 */
 
 #define GP_DATA_TMP			"tmp_data.dat"

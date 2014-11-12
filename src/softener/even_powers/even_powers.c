@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-gamma.cpp - the softening function used to split the kernel
+even_powers.c - the softening function used to split the kernel
 */
 
 #include "all.h"

@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-gamma.h - the softening function used to split the kernel
+even_powers.h - the softening function used to split the kernel
 */
 
 #define GAMMA_DATA			"gamma.dat"

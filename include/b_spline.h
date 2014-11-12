@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-operator related routine(s)
+b_spline.h - operator related routine(s)
 */
 
 /*

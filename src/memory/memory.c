@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-utility functions
+memory.c - utility functions
 */
 
 #include "all.h"

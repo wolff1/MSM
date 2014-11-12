@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-program output functions
+output.c - program output functions
 
 Files needed:
 	command_file	(may have generic template stored, or create in code)

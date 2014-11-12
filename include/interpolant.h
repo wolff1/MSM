@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-centered b-spline phi
+interpolant.h - centered b-spline phi
 */
 
 #define PHI_DATA		"phi.dat"

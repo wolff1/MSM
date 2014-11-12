@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-utility functions
+memory.h - utility functions
 */
 
 #define	MAX(x,y)	((x > y) ? (x) : (y))
