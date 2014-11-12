@@ -2,7 +2,7 @@
 /*
 Routines related to operator(s)
 */
-#include "stdafx.h"
+#include "all.h"
 
 /*
 void compute_blurring_operator(short degree)

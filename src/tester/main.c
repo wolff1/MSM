@@ -3,8 +3,8 @@
 Defines the entry point for the console application.
 */
 
-#include "stdafx.h"
-#include "phiC1.h"	// Remove eventually
+#include "all.h"
+#include "c1_spline.h"	// Remove eventually
 
 void test_mkl_MMM(void);
 void mkl_memory_check(void);

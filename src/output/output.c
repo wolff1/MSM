@@ -9,7 +9,7 @@ Files needed:
 					command file in code)
 */
 
-#include "stdafx.h"
+#include "all.h"
 
 /*
 Display 2D data only

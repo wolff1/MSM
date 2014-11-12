@@ -3,7 +3,7 @@
 C1 phi (CUBIC ONLY)
 */
 
-#include "stdafx.h"
+#include "all.h"
 
 // These are for the CUBIC "shifted-powers" version
 double c[2][4] = {{0.0, -0.5, 2.0, 1.5},
@@ -130,6 +130,7 @@ Simple interface to output nesting coefficients to user.
 */
 void print_nesting_coefficientsC1(void)
 {
+	short		i = 0;
 	short		p = 0;
 	double*		J = NULL;
 
@@ -144,7 +145,7 @@ void print_nesting_coefficientsC1(void)
 	// Calculate the coefficients to display
 	compute_g2fgC1(p, J);
 
-	for (short i = 0; i <= p; i++)
+	for (i = 0; i <= p; i++)
 	{
 		printf("J[%hd] = %lf\n", i, J[i]);
 	}

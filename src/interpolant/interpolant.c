@@ -3,7 +3,7 @@
 centered b-spline phi
 */
 
-#include "stdafx.h"
+#include "all.h"
 
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant
@@ -323,6 +323,7 @@ Simple interface to output nesting coefficients to user.
 */
 void print_nesting_coefficients(void)
 {
+	short		i = 0;
 	short		p = 0;
 	double*		J = NULL;
 
@@ -337,7 +338,7 @@ void print_nesting_coefficients(void)
 	// Calculate the coefficients to display
 	compute_g2fg(p, J);
 
-	for (short i = 0; i <= p/2; i++)
+	for (i = 0; i <= p/2; i++)
 	{
 		printf("J[%hd] = %lf\n", i, J[i]);
 	}

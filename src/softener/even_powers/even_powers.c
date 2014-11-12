@@ -3,7 +3,7 @@
 gamma.cpp - the softening function used to split the kernel
 */
 
-#include "stdafx.h"
+#include "all.h"
 
 /*
 Solves for coefficients of gamma

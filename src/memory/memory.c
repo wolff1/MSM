@@ -3,7 +3,7 @@
 utility functions
 */
 
-#include "stdafx.h"
+#include "all.h"
 
 /*
 NOTE: https://software.intel.com/en-us/node/433552 for data alignment
