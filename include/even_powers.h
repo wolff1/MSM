@@ -7,6 +7,7 @@ even_powers.h - the softening function used to split the kernel
 #include "memory.h"
 #include "output.h"			//	remove?
 #include "interpolant.h"	//	remove?
+#include "b_spline.h"		//	remove?
 
 #define GAMMA_DATA			"gamma.dat"
 #define THETA_DATA			"theta.dat"

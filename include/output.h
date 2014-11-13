@@ -4,6 +4,7 @@ output.h - program output functions
 */
 
 #include "all.h"
+#include "memory.h"
 
 #define GP_DATA_TMP			"tmp_data.dat"
 
