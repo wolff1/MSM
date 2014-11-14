@@ -27,24 +27,4 @@ g2fg is (p + 1)-vector
 */
 void compute_g2fgC1(short p, double* g2fg);
 
-/*** DRIVER FUNCTIONS BELOW ***/
-
-/*
-*/
-void driverC1(void);
-
-/*
-Tests phi and phi' without regard to method or scaling.
-*/
-void phi_test_allC1(void);
-
-/*
-Simple interface to output nesting coefficients to user.
-*/
-void print_nesting_coefficientsC1(void);
-
-/*
-*/
-void phi_nesting_testC1(void);
-
 // End of file

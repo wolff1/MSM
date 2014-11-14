@@ -6,6 +6,7 @@ b_spline.h - operator related routine(s)
 #include "all.h"
 #include "memory.h"
 #include "interpolant.h"	//	remove?
+#include "polynomial.h"
 
 /*
 void compute_B(short degree)
@@ -60,32 +61,5 @@ void compute_omega(short p, short n, double* omega);
 compute omega' values
 */
 void compute_omega_prime(short p, short mu, double* omegap);
-
-//	DRIVERS BELOW
-
-/*
-driver to test compute_blurring_operator
-*/
-void test_blurring_operator(void);
-
-/*
-driver to test polynomial multiplication routine
-*/
-void test_mpoly(void);
-
-/*
-driver to test building the omega values
-*/
-void test_omega(void);
-
-/*
-driver to test building the omega' values
-*/
-void test_omegap(void);
-
-/*
-driver to test conversion from delta^2 to shifts
-*/
-void test_convert_to_shifts(void);
 
 // End of file

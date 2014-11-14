@@ -18,6 +18,8 @@ interpolant.h - centered b-spline phi
 */
 double phi(short p, double x, double* dphi);
 
+void new_phi(short p, double** g2p, short n, double* x, double* phi, double* dphi);
+
 /*
 Compute the coefficients for the B-spines which allow them to be
 nested from a grid to a finer grid.
@@ -26,21 +28,5 @@ p such that p-1 is degree of B-spline
 g2fg is (p/2 + 1)-vector
 */
 void compute_g2fg(short p, double* g2fg);
-
-/*** DRIVER FUNCTIONS BELOW ***/
-
-/*
-Tests phi and phi' without regard to method or scaling.
-*/
-void phi_test_all(void);
-
-/*
-Simple interface to output nesting coefficients to user.
-*/
-void print_nesting_coefficients(void);
-
-/*
-*/
-void phi_nesting_test(void);
 
 // End of file
