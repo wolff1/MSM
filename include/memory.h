@@ -3,25 +3,32 @@
 memory.h - utility functions
 */
 
+#ifndef	MEMORY_H
+#define	MEMORY_H
+
 #include "all.h"
 
 #define MEM_ALIGN	64
 
 /*
-Allocate and zero memory for 2D array of type double
+Dynamically allocate memory and zero it out
 */
-double** dynarr_d(unsigned long rows, unsigned long cols);
-
-/*
-Allocate and zero memory for vector (1D array) whose elements
-have size "size"
-*/
-void* dynvec(unsigned long rows, size_t size);
+void* dynmem(size_t size);
 
 /*
 Free allocated memory
 */
 void dynfree(void* ptr);
+
+/*
+Create 2D array of type double
+*/
+double** dynarr_d(unsigned long rows, unsigned long cols);
+
+/*
+Create vector (1D array) whose elements have size "size"
+*/
+void* dynvec(unsigned long rows, size_t size);
 
 /*
 Display elements of 2D array
@@ -49,5 +56,7 @@ void bibst_lss(long max_itr, double tol,
 				short A_len, double* A,
 				short b_len, short b_nnz, double* b,
 				short x_len, double* x);
+
+#endif
 
 // End of file

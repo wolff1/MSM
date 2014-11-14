@@ -3,6 +3,9 @@
 b_spline.h - operator related routine(s)
 */
 
+#ifndef	B_SPLINE_H
+#define	B_SPLINE_H
+
 #include "all.h"
 #include "memory.h"
 #include "interpolant.h"	//	remove?
@@ -61,5 +64,7 @@ void compute_omega(short p, short n, double* omega);
 compute omega' values
 */
 void compute_omega_prime(short p, short mu, double* omegap);
+
+#endif
 
 // End of file

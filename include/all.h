@@ -4,6 +4,9 @@
 // are changed infrequently
 //
 
+#ifndef ALL_H
+#define ALL_H
+
 #pragma once
 
 #include <stdio.h>
@@ -19,5 +22,7 @@
 #define	MAX(x,y)	((x > y) ? (x) : (y))
 #define	MIN(x,y)	((x < y) ? (x) : (y))
 #define	PI			3.14159265358979323846
+
+#endif
 
 // End of file

@@ -13,7 +13,28 @@ NOTE: https://software.intel.com/sites/products/documentation/hpc/mkl/mklman/
 */
 
 /*
-Allocate and zero memory for 2D array of type double
+Dynamically allocate memory and zero it out
+*/
+void* dynmem(size_t size)
+{
+	//void*	ptr = calloc(size, sizeof(...));
+	void*	ptr = mkl_malloc(size, MEM_ALIGN);
+	assert(ptr != NULL);
+	memset(ptr, 0, size);
+	return ptr;
+}
+
+/*
+Free allocated memory
+*/
+void dynfree(void* ptr)
+{
+	//free(ptr);
+	mkl_free(ptr);
+}
+
+/*
+Create 2D array of type double
 */
 double** dynarr_d(unsigned long rows, unsigned long cols)
 {
@@ -22,10 +43,7 @@ double** dynarr_d(unsigned long rows, unsigned long cols)
 	double* buf = NULL;
 
 	// Allocate pointer buffer
-	//ptr = (double**) calloc(rows, sizeof(double*));
-	ptr = (double**) mkl_malloc(rows*sizeof(double*), MEM_ALIGN);
-	assert(ptr != NULL);
-	memset(ptr, 0, rows*sizeof(double*));
+	ptr = (double**) dynvec(rows, sizeof(double));
 
 	// Allocate data buffer
 	buf = (double*) dynvec(rows*cols, sizeof(double));
@@ -40,29 +58,11 @@ double** dynarr_d(unsigned long rows, unsigned long cols)
 }
 
 /*
-Allocate and zero memory for vector (1D array) whose elements
-have size "size"
+Create vector (1D array) whose elements have size "size"
 */
 void* dynvec(unsigned long rows, size_t size)
 {
-	void* ptr = NULL;
-
-	// Allocate pointer buffer
-	//ptr = (double*) calloc(rows, sizeof(double));
-	ptr = mkl_malloc(rows*size, MEM_ALIGN);
-	assert(ptr != NULL);
-	memset(ptr, 0, rows*size);
-
-	return ptr;
-}
-
-/*
-Free allocated memory
-*/
-void dynfree(void* ptr)
-{
-	//free(ptr);	// Consider mkl_free()
-	mkl_free(ptr);
+	return dynmem(rows*size);
 }
 
 /*

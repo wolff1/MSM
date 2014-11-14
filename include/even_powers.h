@@ -3,11 +3,11 @@
 even_powers.h - the softening function used to split the kernel
 */
 
+#ifndef	EVEN_POWERS_H
+#define	EVEN_POWERS_H
+
 #include "all.h"
 #include "memory.h"
-#include "output.h"			//	remove?
-#include "interpolant.h"	//	remove?
-#include "b_spline.h"		//	remove?
 
 #define GAMMA_DATA			"gamma.dat"
 #define THETA_DATA			"theta.dat"
@@ -48,5 +48,7 @@ c is coefficient vector for gamma
 k is degree of continuity of gamma
 */
 double thetap(double *c, short k, double x, double* dtheta);
+
+#endif
 
 // End of file

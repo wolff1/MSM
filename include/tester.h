@@ -3,12 +3,17 @@
 tester.h - 
 */
 
+#ifndef TESTER_H
+#define TESTER_H
+
 #include "all.h"
 #include "b_spline.h"
 #include "c1_spline.h"
 #include "even_powers.h"
 #include "interpolant.h"
 #include "memory.h"
+#include "msm.h"
+#include "method.h"
 #include "output.h"
 #include "polynomial.h"
 #include "softener.h"
@@ -45,5 +50,6 @@ void gamma_test_all(void);
 void test_sinc(void);
 void test_preprocessing(void);
 
+#endif
 
 //	End of file

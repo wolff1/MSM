@@ -3,6 +3,9 @@
 c1_spline.h - C1 phi
 */
 
+#ifndef	C1_SPLINE_H
+#define	C1_SPLINE_H
+
 #include "all.h"
 #include "memory.h"
 #include "output.h"		//	remove?
@@ -26,5 +29,7 @@ p such that p-1 is degree of interpolant
 g2fg is (p + 1)-vector
 */
 void compute_g2fgC1(short p, double* g2fg);
+
+#endif
 
 // End of file

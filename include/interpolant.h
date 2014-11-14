@@ -3,13 +3,28 @@
 interpolant.h - centered b-spline phi
 */
 
+#ifndef	INTERPOLANT_H
+#define	INTERPOLANT_H
+
 #include "all.h"
 #include "memory.h"
-#include "output.h"			//	remove?
 
 #define PHI_DATA		"phi.dat"
 
 #define PHI_DATA_LEN	strlen(PHI_DATA)
+
+typedef struct
+{
+	//	Members
+	short		p;
+	double*		g2p;
+	double*		g2fg;
+	double*		g2g;
+	double*		tg2g;
+	//	Methods
+	void*		initialize;
+	void*		evaluate;
+} INTERPOLANT;
 
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant
@@ -28,5 +43,7 @@ p such that p-1 is degree of B-spline
 g2fg is (p/2 + 1)-vector
 */
 void compute_g2fg(short p, double* g2fg);
+
+#endif
 
 // End of file

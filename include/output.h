@@ -3,6 +3,9 @@
 output.h - program output functions
 */
 
+#ifndef	OUTPUT_H
+#define OUTPUT_H
+
 #include "all.h"
 #include "memory.h"
 
@@ -74,5 +77,7 @@ Driver for gnuplot to display data from data_file according to
 	(uses standard system() process control function)
 */
 void plotf2d(char* command_file, char* data_file);
+
+#endif
 
 // End of file

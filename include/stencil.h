@@ -3,6 +3,9 @@
 stencil.h - 
 */
 
+#ifndef STENCIL_H
+#define	STENCIL_H
+
 #include "all.h"
 #include "memory.h"
 #include "even_powers.h"
@@ -48,5 +51,7 @@ void stencil_free(STENCIL* s);
 void stencil_naive(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Ki);
 void stencil_shift_infinite(STENCIL* s, short degree, double* omegap, STENCIL* K);
 void stencil_naive_top(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Kt);
+
+#endif
 
 //	End of file
