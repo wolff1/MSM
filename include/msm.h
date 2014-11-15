@@ -20,6 +20,7 @@ typedef struct
 	double		a;
 	double		h;
 	short		p;
+	short		k;
 } MSM_PARAMETERS;
 
 typedef struct
@@ -43,8 +44,8 @@ typedef struct
 	MSM_PARAMETERS		prm;
 	MSM_OPTIONS			opt;
 	MSM_GRIDS			grd;
-	INTERPOLANT			itp;
-	SOFTENER			sft;
+	INTERPOLANT*		itp;
+	SOFTENER*			sft;
 } MSM;
 
 //	EXTERNAL Methods

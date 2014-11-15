@@ -15,12 +15,17 @@ typedef struct
 	SOFTENER		cmn;
 } EVEN_POWERS;
 
+//	EXTERNAL Methods
+void even_powers_initialize(void* Softener);
+void even_powers_uninitialize(void* Softener);
+
+//	INTERNAL Methods
 /*
 Solves for coefficients of gamma
 k is degree of continuity
 x is k+1 vector to hold coefficients
 */
-void even_powers_initialize(void* Softener, short k, double* x);
+void gamma_init(short k, double* x);
 
 /*
 Evaluate gamma and gamma' at position x

@@ -10,6 +10,7 @@ void msm_initialize(void* Method)
 {
 	size_t		Size = 0;
 	void*		Init = NULL;
+	void*		Ptr = NULL;
 	MSM*		Msm = (MSM*) Method;
 
 	assert(Msm != NULL);
@@ -21,11 +22,14 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Set up MSM parameters
+	Msm->prm.k = 4;
 
 	//	Set up MSM options
 
 	//	Compute components which will not change throughout the simulation
-/*	//	Initialize Interpolant
+/*
+	//	Initialize Interpolant
+	Msm->itp = NULL;
 	if (1)
 	{	//	B_SPLINE interpolant
 		Size = sizeof(B_SPLINE);
@@ -34,12 +38,14 @@ void msm_initialize(void* Method)
 	interpolant_initialize(&Msm->itp, Size, Init);
 */
 	//	Initialize Softener
+	Msm->sft = NULL;
 	if (1)
 	{	//	EVEN_POWERS softening (aka "Taylor")
 		Size = sizeof(EVEN_POWERS);
 		Init = &even_powers_initialize;
 	}
-	softener_initialize(&Msm->sft, Size, Init);
+	softener_initialize(&Ptr, Size, Init, Msm->prm.k);
+	Msm->sft = (SOFTENER*) Ptr;
 }
 
 void msm_preprocess(void* Method)
@@ -96,6 +102,9 @@ void msm_uninitialize(void* Method)
 
 	assert(Msm != NULL);
 	printf("Un-initializing MSM!\n");
+
+	//	Uninitialize SOFTENER
+	(*Msm->sft->uninitialize)(Msm->sft);
 
 	dynfree(Msm);
 }

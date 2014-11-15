@@ -5,12 +5,47 @@ even_powers.c - the softening function used to split the kernel
 
 #include "even_powers.h"
 
+//	FIXME - Redo init, gamma, theta to use object instead of passing *c, k, ...
+//	FIXME - Redo gamma, theta to take vector input and output vectors
+
+//	EXTERNAL Methods
+void even_powers_initialize(void* Softener)
+{
+	EVEN_POWERS*		Ep = (EVEN_POWERS*) Softener;
+
+	assert(Ep != NULL);
+	printf("\tEVEN_POWERS initialization!\n");
+
+	//	Set up COMMON function pointers
+	Ep->cmn.gamma = &_gamma;
+	Ep->cmn.theta = &theta;
+	Ep->cmn.uninitialize = &even_powers_uninitialize;
+
+	// Compute coefficients of the softening function
+	Ep->cmn.p2p = (double*) dynvec(Ep->cmn.k+1,sizeof(double));
+	gamma_init(Ep->cmn.k, Ep->cmn.p2p);
+}
+
+void even_powers_uninitialize(void* Softener)
+{
+	EVEN_POWERS*		Ep = (EVEN_POWERS*) Softener;
+
+	assert(Ep != NULL);
+	printf("\tUn-initializing EVEN_POWERS!\n");
+
+	//	Free coefficients of the softening function
+	dynfree(Ep->cmn.p2p);
+
+	//	Free EVEN_POWERS object memory
+	dynfree(Ep);
+}
+
 /*
 Solves for coefficients of gamma
 k is degree of continuity
 b will return k+1 vector of coefficients
 */
-void even_powers_initialize(void* Softener, short k, double* x)
+void gamma_init(short k, double* x)
 {
 	double** A = NULL;	// Coefficient matrix
 	double* b = x;		// Alias output parameter x
@@ -21,9 +56,6 @@ void even_powers_initialize(void* Softener, short k, double* x)
 
 	// b will first act as RHS, then return coefficients to caller
 	assert(b != NULL);
-
-	//	Set up function pointers
-
 
 	// Allocate memory for A
 	A = dynarr_d(k+1, k+1);
