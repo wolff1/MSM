@@ -82,31 +82,31 @@ void msm_evaluate(void* Method)
 
 	if (Msm->opt.ComputeShortRange)
 	{
-		short_range(Msm);
+		msm_short_range(Msm);
 	}
 
 	if (Msm->opt.ComputeLongRange)
 	{
 		if (Msm->opt.IsN)
 		{
-			anterpolate(Msm);
-			restrict(Msm);
-			direct(Msm);
-			direct_top(Msm);
-			prolongate(Msm);
-			interpolate(Msm);
+			msm_anterpolate(Msm);
+			msm_restrict(Msm);
+			msm_direct(Msm);
+			msm_direct_top(Msm);
+			msm_prolongate(Msm);
+			msm_interpolate(Msm);
 		}
 
 		if (Msm->opt.IsNLogN)
 		{
-			anterpolate(Msm);
-			direct_top(Msm);
-			interpolate(Msm);
+			msm_anterpolate(Msm);
+			msm_direct_top(Msm);
+			msm_interpolate(Msm);
 		}
 
 		if (Msm->opt.ComputeExclusions)
 		{
-			exclude(Msm);
+			msm_exclude(Msm);
 		}
 	}
 }
@@ -128,35 +128,35 @@ void msm_uninitialize(void* Method)
 }
 
 //	INTERNAL Methods
-void short_range(MSM* msm)
+void msm_short_range(MSM* msm)
 {
 }
 
-void anterpolate(MSM* msm)
+void msm_anterpolate(MSM* msm)
 {
 }
 
-void restrict(MSM* msm)
+void msm_restrict(MSM* msm)
 {
 }
 
-void direct(MSM* msm)
+void msm_direct(MSM* msm)
 {
 }
 
-void direct_top(MSM* msm)
+void msm_direct_top(MSM* msm)
 {
 }
 
-void prolongate(MSM* msm)
+void msm_prolongate(MSM* msm)
 {
 }
 
-void interpolate(MSM* msm)
+void msm_interpolate(MSM* msm)
 {
 }
 
-void exclude(MSM* msm)
+void msm_exclude(MSM* msm)
 {
 }
 

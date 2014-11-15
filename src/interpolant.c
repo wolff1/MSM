@@ -1,6 +1,7 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-centered b-spline phi
+interpolant.c - Parent (abstract) class for interpolants. Children must
+				implement the interfaces in order for MSM to work.
 */
 
 #include "interpolant.h"

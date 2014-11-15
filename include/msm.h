@@ -55,14 +55,14 @@ void msm_evaluate(void* Msm);
 void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods
-void short_range(MSM* Msm);
-void anterpolate(MSM* Msm);
-void restrict(MSM* Msm);
-void direct(MSM* Msm);
-void direct_top(MSM* Msm);
-void prolongate(MSM* Msm);
-void interpolate(MSM* Msm);
-void exclude(MSM* Msm);
+void msm_short_range(MSM* Msm);
+void msm_anterpolate(MSM* Msm);
+void msm_restrict(MSM* Msm);
+void msm_direct(MSM* Msm);
+void msm_direct_top(MSM* Msm);
+void msm_prolongate(MSM* Msm);
+void msm_interpolate(MSM* Msm);
+void msm_exclude(MSM* Msm);
 
 #endif
 

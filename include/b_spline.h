@@ -25,6 +25,8 @@ void b_spline_evaluate(void* Interpolant);
 void b_spline_uninitialize(void* Interpolant);
 
 //	INTERNAL Methods
+void b_spline_compute_omega(B_SPLINE* Bs);
+void b_spline_compute_omega_prime(B_SPLINE* Bs);
 void b_spline_compute_g2p(B_SPLINE* Bs);
 void b_spline_compute_g2fg(B_SPLINE* Bs);
 void b_spline_compute_g2g(B_SPLINE* Bs);

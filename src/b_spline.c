@@ -18,6 +18,8 @@ void b_spline_initialize(void* Interpolant)
 	Bs->cmn.uninitialize = &b_spline_uninitialize;
 
 	//	Set up the B_SPLINE interpolant
+	b_spline_compute_omega(Bs);
+	b_spline_compute_omega_prime(Bs);
 	b_spline_compute_g2p(Bs);
 	b_spline_compute_g2fg(Bs);
 	b_spline_compute_g2g(Bs);
@@ -49,6 +51,14 @@ void b_spline_uninitialize(void* Interpolant)
 }
 
 //	INTERNAL Methods
+void b_spline_compute_omega(B_SPLINE* Bs)
+{
+}
+
+void b_spline_compute_omega_prime(B_SPLINE* Bs)
+{
+}
+
 void b_spline_compute_g2p(B_SPLINE* Bs)
 {
 }

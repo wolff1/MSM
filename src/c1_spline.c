@@ -5,10 +5,6 @@ c1_spline.c - C1 phi (CUBIC ONLY)
 
 #include "c1_spline.h"
 
-// These are for the CUBIC "shifted-powers" version
-double c[2][4] = {{0.0, -0.5, 2.0, 1.5},
-				  {0.0, 0.0, -0.5,-0.5}};
-
 //	EXTERNAL Methods
 void c1_spline_initialize(void* Interpolant)
 {
@@ -74,6 +70,10 @@ void c1_spline_compute_tg2g(C1_SPLINE* C1)
 */
 double phiC1(int p, double x, double* dphi)
 {
+	// These are for the CUBIC "shifted-powers" version
+	double c[2][4] = {{0.0, -0.5, 2.0, 1.5},
+					  {0.0, 0.0, -0.5,-0.5}};
+
 	double	f = 0.0;
 	double	df = 0.0;
 	double	signx = 0.0;
