@@ -17,8 +17,8 @@ typedef struct
 
 //	EXTERNAL Methods
 void even_powers_initialize(void* Softener);
-void even_powers_soften(void* Softener, long Len, double* X, double* FX, double* DFX);
-void even_powers_split(void* Softener, long Len, double* X, double* FX, double* DFX);
+void even_powers_soften(void* Softener, long Len, double* X, double* F, double* DF);
+void even_powers_split(void* Softener, long Len, double* X, double* F, double* DF);
 void even_powers_uninitialize(void* Softener);
 
 //	INTERNAL Methods

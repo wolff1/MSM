@@ -494,7 +494,7 @@ void test_blurring_operator(void)
 	// Dynamically allocate memory for blurring operator
 	B = (double*) dynvec(p_2,sizeof(double));
 
-	compute_blurring_operator(p_2-1, B);
+	b_spline_compute_blurring_operator(p_2-1, B);
 
 	// Print c_n
 	printf("B = (%f", B[0]);
@@ -591,7 +591,7 @@ void test_convert_to_shifts(void)
 		printf("\n");
 
 		// Convert cd to s
-		convert_delta2_to_shifts(i, cd, s);
+		b_spline_convert_delta2_to_shifts(i, cd, s);
 
 		// display result
 		for (j = 0; j <= i; j++)

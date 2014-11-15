@@ -6,7 +6,7 @@ b_spline.c - Routines for initializing, using, and uninitializing B-splines
 #include "b_spline.h"
 
 //	EXTERNAL Methods
-void b_spline_initialize(void* Interpolant)
+void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 {
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
@@ -18,11 +18,16 @@ void b_spline_initialize(void* Interpolant)
 	Bs->cmn.evaluate = &b_spline_evaluate;
 	Bs->cmn.uninitialize = &b_spline_uninitialize;
 
+	//	Initialize Members
+	Bs->mu = MsmParams->mu;
+	Bs->omega = NULL;
+	Bs->omegap = NULL;
+
 	//	Set up the B_SPLINE interpolant
-	b_spline_compute_omega(Bs);
-	b_spline_compute_omega_prime(Bs);
 	b_spline_compute_g2p(Bs);
 	b_spline_compute_g2fg(Bs);
+	b_spline_compute_omega(Bs);
+	b_spline_compute_omega_prime(Bs);
 //	b_spline_compute_g2g(Bs);		//	Happens in preprocess
 //	b_spline_compute_tg2g(Bs);		//	Happens in preprocess
 }
@@ -41,11 +46,51 @@ void b_spline_compute_tg2g(void* Interpolant)
 	printf("\tB_SPLINE compute_tg2g\n");
 }
 
-void b_spline_evaluate(void* Interpolant)
+void b_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF)
 {
-	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
+    long		i = 0;
+    short		j = 0;
+	short		p = 0;
+    short		p_2 = 0;
+    short		k = 0;
+    double		xp = 0.0;
+    double		s = 0.0;
+	double**	g2p = NULL;
+	B_SPLINE*	Bs = (B_SPLINE*) Interpolant;
+
 	assert(Bs != NULL);
+    assert(X != NULL);
+    assert(F != NULL);
+    assert(DF != NULL);
 	printf("\tB_SPLINE evaluate\n");
+
+	g2p = Bs->cmn.g2p;
+	p = Bs->cmn.p;
+	p_2 = p/2;
+
+    for (i = 0; i < Len; i++)
+    {
+        F[i] = 0.0;
+        DF[i] = 0.0;
+        s = (X[i] > 0.0 ? 1.0 : -1.0);
+        xp = fabs(X[i]);
+
+        if (xp < p_2)
+        {
+            k = floor(xp);
+            xp = xp - k - 1;
+
+            F[i] = g2p[k][p-1];
+            DF[i] = g2p[k][p-1]*(p-1);
+            for (j = p-2; j > 0; j--)
+            {
+                F[i] = F[i]*xp + g2p[k][j];
+                DF[i] = DF[i]*xp + g2p[k][j]*j;
+            }
+            F[i] = F[i]*xp + g2p[k][0];
+            DF[i] = DF[i]*s;
+        }
+    }
 }
 
 void b_spline_uninitialize(void* Interpolant)
@@ -56,40 +101,356 @@ void b_spline_uninitialize(void* Interpolant)
 
 	dynfree(Bs->omega);
 	dynfree(Bs->omegap);
+	dynfree(Bs->cmn.g2p[0]);
 	dynfree(Bs->cmn.g2p);
 	dynfree(Bs->cmn.g2fg);
-	dynfree(Bs->cmn.g2g);
-	dynfree(Bs->cmn.tg2g);
+//	dynfree(Bs->cmn.g2g);
+//	dynfree(Bs->cmn.tg2g);
 	dynfree(Bs);
 }
 
 //	INTERNAL Methods
-void b_spline_compute_omega(B_SPLINE* Bs)
+void b_spline_evaluate_recurrence(B_SPLINE* Bs, double x, double* f, double* df)
 {
-	assert(Bs != NULL);
-	printf("\tB_SPLINE compute_omega\n");
-}
+	short		p = 0;
+	double**	Q = NULL;
+	double**	Qp = NULL;
+	double		u = 0.0;
+	short		k = 0;
+	short		v = 0;
 
-void b_spline_compute_omega_prime(B_SPLINE* Bs)
-{
 	assert(Bs != NULL);
-	printf("\tB_SPLINE compute_omega_prime\n");
+	p = Bs->cmn.p;
+
+	// Initialize return variables
+	*f = 0.0;
+	*df = 0.0;
+
+	if (fabs(x) < (double)(p/2.0))
+	{
+		// Dynamically create memory for Q and Qp 2D arrays
+		Q = dynarr_d(p,p);		// Q(u)
+		Qp = dynarr_d(p,p);		// Q'(u)
+		u = x + (double)p/2.0;	// b/c centered B-spline
+
+		// Start with k = 1 (Q_1 is the indicator function on [0,1[)
+		k = 1;
+		for (v = 0; v <= p-k; v++)
+		{
+			Q[0][v] = ((u-(double)v) < 1.0 && (u-(double)v) >= 0.0);
+		}
+
+		// use recurrance to build up to k=p-1
+		for (k = 2; k <= p; k++)
+		{
+			for (v = 0; v <= p-k; v++)
+			{
+				Qp[k-1][v] = Q[k-2][v] - Q[k-2][v+1];
+				Q [k-1][v] = (k*Q[k-2][v+1] + (u-(double)v)*Qp[k-1][v])/(k-1);
+			}
+		}
+
+		// Set return variables
+		*f = Q[p-1][0];
+		*df = Qp[p-1][0];
+
+		// Free dynamically allocated memory for Q and Qp 2D arrays
+		dynfree(Q[0]);		// Free the data buffer memory
+		dynfree(Qp[0]);
+		dynfree(Q);			// Free the pointer-pointer memory
+		dynfree(Qp);
+	}
 }
 
 void b_spline_compute_g2p(B_SPLINE* Bs)
 {
+    short       p = 0;
+    double**    g2p = NULL;
+    short       p_2 = 0;
+    short       i = 0;
+    short       j = 0;
+    short       k = 0;
+    double      x = 0.0;
+    double      xmk = 0.0;
+    double      dx = 0;
+    double**    A = NULL;
+    double*     b = NULL;
+	lapack_int  rc = 0;
+	lapack_int* piv = NULL;
+
 	assert(Bs != NULL);
 	printf("\tB_SPLINE compute_g2p\n");
+
+	p = Bs->cmn.p;
+	p_2 = p/2;
+    dx = 1.0/(p_2-2+1);
+
+	g2p = (double**) dynarr_d(p_2,p);
+    A = (double**) dynarr_d(p,p);
+    b = (double*) dynvec(p, sizeof(double));
+
+    for (k = 0; k < p_2; k++)
+    {
+        x = k;
+        for (j = 0; j < p_2; j++)
+        {
+            //  down column -> different values of x
+//            printf("k=%hd, j=%hd, x=%f\n", k, j, x);
+            xmk = x - (k+1);
+
+            //  across powers in row
+            A[j][0] = 1.0;
+            A[j+p_2][0] = 0.0;
+            A[j+p_2][1] = 1.0;
+            for (i = 1; i < p-1; i++)
+            {
+                A[j][i] = A[j][i-1]*xmk;
+                A[j+p_2][i+1] = (i+1)*A[j][i];
+            }
+            A[j][p-1] = A[j][p-2]*xmk;
+
+            //  right hand side of linear system
+//            b[j] = phi(p, x, &b[j+p_2]);
+			b_spline_evaluate_recurrence(Bs, x, &b[j], &b[j+p_2]);
+            x += dx;
+        }
+
+        //  Solve Ax = b with x being g2p[k]
+        // NOTE: b is overwritten with x, A is overwritten with LU
+        piv = (lapack_int*) dynvec(p,sizeof(lapack_int));
+        rc = LAPACKE_dgesv(LAPACK_ROW_MAJOR, (lapack_int) p, (lapack_int) 1,
+                            A[0], (lapack_int) p, piv, b, (lapack_int) 1);
+        dynfree(piv);
+        assert(rc == 0); // zero is SUCCESS
+
+        for (i = 0; i < p; i++)
+        {
+            g2p[k][i] = b[i];
+        }
+    }
+
+	//	Point the B-spline object to the g2p coefficients
+	Bs->cmn.g2p = g2p;
+//	display_dynarr_d(Bs->cmn.g2p, Bs->cmn.p/2, Bs->cmn.p);
+
+	//	Free dynamically allocated memory
+	dynfree(A[0]);
+    dynfree(A);
+    dynfree(b);
 }
 
 void b_spline_compute_g2fg(B_SPLINE* Bs)
 {
+	double*		g2fg = NULL;
+	short		n = 0;
+	short		p = 0;
+	short		p_2 = 0;
+	long		num = 0;			// numerator
+	long		den = 0;			// denominator
+
 	assert(Bs != NULL);
 	printf("\tB_SPLINE compute_g2fg\n");
+
+	p = Bs->cmn.p;
+	p_2 = (short)p/2;
+	num = p;
+	den = p_2;
+
+	g2fg = (double*) dynvec(p_2+1,sizeof(double));
+
+	// Account for 2^(1-p) in denominator once
+	for (n = 1; n < p; n++)
+	{
+		den *= 2;
+	}
+
+	// Build initial state of "p choose p/2"
+	for (n = 1; n < p_2; n++) // exclude p_2 b/c it is in num and den
+	{
+		num *= (p-n);	// [(p)(p-1)(p-2)...(p/2+1)]
+		den *= n;		// [(p/2)(p/2-1)...(2)(1)]*[2^(p-1)]
+	}
+	g2fg[0] = (double) num / (double) den;
+
+	// Compute [p choose p/2 + n] with 1 <= n <= p/2
+	for (n = 1; n <= p_2; n++)
+	{
+		g2fg[n] = (g2fg[n-1]*(double)(p_2-n+1)) / (double)(p_2+n);
+	}
+
+	//	Point B-spline object to newly computed nesting coefficients
+	Bs->cmn.g2fg = g2fg;
+//	display_vector_d(Bs->cmn.g2fg, Bs->cmn.p/2+1);
 }
 
+void b_spline_compute_omega(B_SPLINE* Bs)
+{
+	short		i = 0;
+	short		p = 0;
+	short		p_2 = 0;
+	short		n = 10;
+	double*		X = NULL;
+	double*		B = NULL;
+	double*		DB = NULL;
+	double*		Psi = NULL;
+
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_omega\n");
+
+	p = Bs->cmn.p;
+	p_2 = p/2;
+
+	// Dynamically allocate memory
+	X = (double*) dynvec(p_2, sizeof(double));
+	B = (double*) dynvec(p_2, sizeof(double));
+	DB = (double*) dynvec(p_2, sizeof(double));
+	Psi = (double*) dynvec(1,sizeof(double));
+	Bs->omega = (double*) dynvec(n, sizeof(double));
+
+	//	Compute B(E)
+	for (i = 0; i < p_2; i++)
+	{
+		X[i] = (double)i;
+	}
+	b_spline_evaluate(&Bs->cmn, p_2, X, B, DB);
+
+	//	Set up Psi
+	Psi[0] = 1.0;
+
+	//	Solve for omega
+    bibst_lss(-1, pow(2.0,-53), p_2, B, 1, 1, Psi, n, Bs->omega);
+//	display_vector_d(Bs->omega, n);
+
+	// Free dynamically allocated memory
+	dynfree(X);
+	dynfree(B);
+	dynfree(DB);
+	dynfree(Psi);
+}
+
+void b_spline_compute_omega_prime(B_SPLINE* Bs)
+{
+	short		i = 0;
+	short		p = 0;
+	short		p_2 = 0;
+	short		mu = 0;
+	double*		B = NULL;
+	double*		B2 = NULL;
+    double*     B2E = NULL;
+	double*		A2 = NULL; // A^2 ~= B^{-2}
+	double*		Ctmp = NULL;
+	double*		C = NULL;
+	double*		CE = NULL;
+	double*		AE = NULL;
+    double*     c = NULL;
+	double*		pd = NULL;
+	double*		pE = NULL;
+	double*		c_full = NULL;
+	double*		p_full = NULL;
+	double*		high_terms = NULL;
+	double*		omegap = NULL;
+
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_omega_prime\n");
+
+	p = Bs->cmn.p;
+	p_2 = p/2;
+	mu = Bs->mu;
+
+	// Dynamically allocate memory
+	B = (double*) dynvec(p_2, sizeof(double));
+	B2 = (double*) dynvec(p-1, sizeof(double));
+    B2E = (double*) dynvec(p-1, sizeof(double));
+	A2 = (double*) dynvec(p_2, sizeof(double));
+	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
+	C = (double*) dynvec(p-2, sizeof(double));
+	CE = (double*) dynvec(p-2, sizeof(double));
+    c = (double*) dynvec(mu+1, sizeof(double));
+	pd = (double*) dynvec(p_2+1,sizeof(double));
+	pE = (double*) dynvec(p_2+1,sizeof(double));
+	c_full = (double*) dynvec(2*mu+1,sizeof(double));
+	p_full = (double*) dynvec(p+1,sizeof(double));
+	high_terms = (double*) dynvec(p+2*mu+1,sizeof(double));
+	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
+
+	//	Compute B_p
+	b_spline_compute_blurring_operator(p_2-1, B);
+
+	//	Compute B^2
+	mpoly(p_2-1, B, p_2-1, B, B2);
+
+	//	Compute B^{-2} = 1 / B^2 = 1 / 1 - D => D = 1 - B^2
+	b_spline_compute_operator_inverse(p-2, B2, p_2-1, A2);
+
+	//	compute (A^2)(B^2) in order to get -C
+	mpoly(p-2, B2, p_2-1, A2, Ctmp);
+	//	keep only (delta^2)^{p/2} and higher
+	for (i = p_2; i <= p+p_2-3; i++)
+	{
+		C[i-p_2] = -Ctmp[i];
+	}
+
+	//	convert C(delta^2) to C(E)
+	b_spline_convert_delta2_to_shifts(p-3, C, CE);
+
+	//	convert A^2(delta^2) to A(E) = omega'
+	b_spline_convert_delta2_to_shifts(p_2-1, A2, omegap);
+
+	// Solve bi-infinite linear system involving B^2(E) and C(E)
+    b_spline_convert_delta2_to_shifts(p-2, B2, B2E);
+    bibst_lss(-1, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, mu+1, c);
+
+	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
+	pd[p_2] = 1.0;
+	b_spline_convert_delta2_to_shifts(p_2,pd,pE);
+
+	// convolve (c,pE) after forming full, symmetric operator
+	c_full[mu] = c[0];
+	for (i = 1; i <= mu; i++)
+	{
+		c_full[mu+i] = c[i];
+		c_full[mu-i] = c[i];
+	}
+
+	p_full[p_2] = pE[0];
+	for (i = 1; i <= p_2; i++)
+	{
+		p_full[p_2+i] = pE[i];
+		p_full[p_2-i] = pE[i];
+	}
+
+	mpoly(2*mu, c_full, p, p_full, high_terms);
+
+	//	add previous step to omega'
+	for (i = 0; i <= p_2+mu; i++)
+	{
+		omegap[i] += high_terms[p_2+mu+i];
+	}
+
+	//	Set B-spline object to point to newly computed omega' values
+	Bs->omegap = omegap;
+//	display_vector_d(Bs->omegap, p_2+mu+1);
+
+	// Free dynamically allocated memory
+	dynfree(B);
+	dynfree(B2);
+    dynfree(B2E);
+	dynfree(A2);
+	dynfree(Ctmp);
+	dynfree(C);
+	dynfree(CE);
+    dynfree(c);
+	dynfree(pd);
+	dynfree(pE);
+	dynfree(c_full);
+	dynfree(p_full);
+	dynfree(high_terms);
+}
+
+void b_spline_compute_blurring_operator(short degree, double* B)
+{
 /*
-void compute_blurring_operator(short degree)
+void b_spline_compute_blurring_operator(short degree)
 where
 	degree is the max degree of the operator in s^2 and
 	B is the blurring operator.
@@ -108,8 +469,6 @@ NOTE:
 		or
 		http://en.wikipedia.org/wiki/Formal_power_series#Dividing_series
 */
-void compute_blurring_operator(short degree, double* B)
-{
 	double*		a = NULL;
 	double**	c = NULL;
 	double		f = 1.0;	// factorial
@@ -160,6 +519,8 @@ void compute_blurring_operator(short degree, double* B)
 	dynfree(c);
 }
 
+void b_spline_compute_operator_inverse(short O_degree, const double* O, short I_degree, double* I)
+{
 /*
 Use O^{-1} = 1 / O = 1 / 1 - D -> D = 1 - O
 Then use geometric series
@@ -168,9 +529,6 @@ O^{-1} = 1 + D + D^2 + D^3 + ... + D^{I_degree}
 NOTE:	O ("oh", not zero) is the input operator
 		I ("eye") is the inverse, I = O^{-1}
 */
-void compute_operator_inverse(short O_degree, const double* O,
-							  short I_degree, double* I)
-{
 	short		i = 0;
 	short		imax = MIN(O_degree,I_degree);
 	short		k = 0;
@@ -224,6 +582,8 @@ void compute_operator_inverse(short O_degree, const double* O,
 	dynfree(ID);
 }
 
+void b_spline_convert_delta2_to_shifts(short cd_degree, const double* cd, double* s)
+{
 /*
 Convert an operator from delta^2 to shifts: E-2+E
 
@@ -238,8 +598,6 @@ NOTE:
 The kth term of (E-2+E)^n is given by:
 s_k = ((-1)^(mod(n+k,2)))*nchoosek(2*n,k+n)
 */
-void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s)
-{
 	short		n = 0;
 	short		k = 0;
 	double		f = 1.0;	//	(2n)!
@@ -272,206 +630,47 @@ void convert_delta2_to_shifts(short cd_degree, const double* cd, double* s)
 	}
 }
 
+//*****************************************************//
+//*****DELETE EVERYTHING FROM HERE DOWN EVENTUALLY*****//
+//*****************************************************//
+
 /*
-compute omega values
-NOTE:
-	B has degree p-1
+Compute the coefficients for the B-spines which allow them to be
+nested from a grid to a finer grid.
+
+p such that p-1 is degree of B-spline
+g2fg is (p/2 + 1)-vector
 */
-void compute_omega(short p, short n, double* omega)
+void compute_g2fg(short p, double* g2fg)
 {
-	short		i = 0;
-	short		p_2 = p/2;
-	double*		B = NULL;
-	double*		Psi = NULL;
+	short		n = 0;
+	short		p_2 = (short)p/2;
+	long		num = p;			// numerator
+	long		den = p_2;			// denominator
 
-	assert(p%2 == 0);
-	assert(n >= 0);
-	assert(omega != NULL);
+	assert(g2fg != NULL);
 
-	// Dynamically allocate memory
-	B = (double*) dynvec(p_2, sizeof(double));
-	Psi = (double*) dynvec(1,sizeof(double));
-
-	//	Compute B(E)
-	for (i = 0; i < p_2; i++)
+	// Account for 2^(1-p) in denominator once
+	for (n = 1; n < p; n++)
 	{
-		B[i] = phi(p,(double)i,NULL);
+		den *= 2;
 	}
 
-	//	Set up Psi
-	Psi[0] = 1.0;
+	// Build initial state of "p choose p/2"
+	for (n = 1; n < p_2; n++) // exclude p_2 b/c it is in num and den
+	{
+		num *= (p-n);	// [(p)(p-1)(p-2)...(p/2+1)]
+		den *= n;		// [(p/2)(p/2-1)...(2)(1)]*[2^(p-1)]
+	}
+	g2fg[0] = (double) num / (double) den;
 
-	//	Solve for omega
-    bibst_lss(-1, pow(2.0,-53), p_2, B, 1, 1, Psi, n, omega);
-/*
-    for (i = 0; i < p_2; i++)
-    {
-        printf("c[%d] = %f\n", i, omega[i]);
-    }
-*/
-	// Free dynamically allocated memory
-	dynfree(B);
-	dynfree(Psi);
+	// Compute [p choose p/2 + n] with 1 <= n <= p/2
+	for (n = 1; n <= p_2; n++)
+	{
+		g2fg[n] = (g2fg[n-1]*(double)(p_2-n+1)) / (double)(p_2+n);
+	}
 }
 
-/*
-compute omega' values
-NOTE:
-	B has degree p-1
-	B2 has degree 2p-2
-	A2 has degree p-1
-	omega' has degree p/2+mu
-*/
-void compute_omega_prime(short p, short mu, double* omegap)
-{
-	short		i = 0;
-	short		p_2 = p/2;
-	double*		B = NULL;
-	double*		B2 = NULL;
-    double*     B2E = NULL;
-	double*		A2 = NULL; // A^2 ~= B^{-2}
-	double*		Ctmp = NULL;
-	double*		C = NULL;
-	double*		CE = NULL;
-	double*		AE = NULL;
-    double*     c = NULL;
-	double*		pd = NULL;
-	double*		pE = NULL;
-	double*		c_full = NULL;
-	double*		p_full = NULL;
-	double*		high_terms = NULL;
-
-	assert(p%2 == 0);
-	assert(mu >= 0);
-	assert(omegap != NULL);
-
-	// Dynamically allocate memory
-	B = (double*) dynvec(p_2, sizeof(double));
-	B2 = (double*) dynvec(p-1, sizeof(double));
-    B2E = (double*) dynvec(p-1, sizeof(double));
-	A2 = (double*) dynvec(p_2, sizeof(double));
-	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
-	C = (double*) dynvec(p-2, sizeof(double));
-	CE = (double*) dynvec(p-2, sizeof(double));
-    c = (double*) dynvec(mu+1, sizeof(double));
-	pd = (double*) dynvec(p_2+1,sizeof(double));
-	pE = (double*) dynvec(p_2+1,sizeof(double));
-	c_full = (double*) dynvec(2*mu+1,sizeof(double));
-	p_full = (double*) dynvec(p+1,sizeof(double));
-	high_terms = (double*) dynvec(p+2*mu+1,sizeof(double));
-
-	//	Compute B_p
-	compute_blurring_operator(p_2-1, B);
-/*
-	printf("Blurring (1D):\n");
-	for (i = 0; i < p_2; i++)
-	{
-		printf("%02hd - %f\n", i, B[i]);
-	}
-	printf("\n");
-*/
-	//	Compute B^2
-	mpoly(p_2-1, B, p_2-1, B, B2);
-/*
-	printf("Blurring (2D):\n");
-	for (i = 0; i < p-1; i++)
-	{
-		printf("%02hd - %f\n", i, B2[i]);
-	}
-	printf("\n");
-*/
-	//	Compute B^{-2} = 1 / B^2 = 1 / 1 - D => D = 1 - B^2
-	compute_operator_inverse(p-2, B2, p_2-1, A2);
-/*
-	printf("Antiblurring (2D):\n");
-	for (i = 0; i <= p_2-1; i++)
-	{
-		printf("%02hd - %f\n", i, A2[i]);
-	}
-	printf("\n");
-*/
-	//	compute (A^2)(B^2) in order to get -C
-	mpoly(p-2, B2, p_2-1, A2, Ctmp);
-	//	keep only (delta^2)^{p/2} and higher
-	for (i = p_2; i <= p+p_2-3; i++)
-	{
-		C[i-p_2] = -Ctmp[i];
-	}
-
-	//	convert C(delta^2) to C(E)
-	convert_delta2_to_shifts(p-3, C, CE);
-/*
-	for (i = 0; i <= p-3; i++)
-	{
-		printf("CE[%d] = %f\n", i, CE[i]);
-	}
-	printf("\n");
-*/
-	//	convert A^2(delta^2) to A(E) = omega'
-	convert_delta2_to_shifts(p_2-1, A2, omegap);
-/*
-	for (i = 0; i <= p_2-1; i++)
-	{
-		printf("omega'[%d] = %f\n", i, omegap[i]);
-	}
-	printf("\n");
-*/
-	// Solve bi-infinite linear system involving B^2(E) and C(E)
-    convert_delta2_to_shifts(p-2, B2, B2E);
-    bibst_lss(-1, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, mu+1, c);
-/*
-    for (i = 0; i <= p+mu; i++)
-    {
-        printf("c[%d] = %f\n", i, c[i]);
-    }
-*/
-	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
-	pd[p_2] = 1.0;
-	convert_delta2_to_shifts(p_2,pd,pE);
-/*
-	display_vector_d(pE,p_2+1);
-*/
-	// convolve (c,pE) after forming full, symmetric operator
-	c_full[mu] = c[0];
-	for (i = 1; i <= mu; i++)
-	{
-		c_full[mu+i] = c[i];
-		c_full[mu-i] = c[i];
-	}
-//display_vector_d(c_full,2*mu+1);
-	p_full[p_2] = pE[0];
-	for (i = 1; i <= p_2; i++)
-	{
-		p_full[p_2+i] = pE[i];
-		p_full[p_2-i] = pE[i];
-	}
-//display_vector_d(p_full,p+1);
-	mpoly(2*mu, c_full, p, p_full, high_terms);
-//display_vector_d(high_terms,p+2*mu+1);
-
-	//	add previous step to omega'
-	for (i = 0; i <= p_2+mu; i++)
-	{
-		omegap[i] += high_terms[p_2+mu+i];
-	}
-
-	// Free dynamically allocated memory
-	dynfree(B);
-	dynfree(B2);
-    dynfree(B2E);
-	dynfree(A2);
-	dynfree(Ctmp);
-	dynfree(C);
-	dynfree(CE);
-    dynfree(c);
-	dynfree(pd);
-	dynfree(pE);
-	dynfree(c_full);
-	dynfree(p_full);
-	dynfree(high_terms);
-}
-
-//	INTERNAL Methods
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant
 	x is the independent variable
@@ -566,40 +765,202 @@ void new_phi(short p, double** g2p, short n, double* x, double* phi, double* dph
 }
 
 /*
-Compute the coefficients for the B-spines which allow them to be
-nested from a grid to a finer grid.
-
-p such that p-1 is degree of B-spline
-g2fg is (p/2 + 1)-vector
+compute omega values
+NOTE:
+	B has degree p-1
 */
-void compute_g2fg(short p, double* g2fg)
+void compute_omega(short p, short n, double* omega)
 {
-	short		n = 0;
-	short		p_2 = (short)p/2;
-	long		num = p;			// numerator
-	long		den = p_2;			// denominator
+	short		i = 0;
+	short		p_2 = p/2;
+	double*		B = NULL;
+	double*		Psi = NULL;
 
-	assert(g2fg != NULL);
+	assert(p%2 == 0);
+	assert(n >= 0);
+	assert(omega != NULL);
 
-	// Account for 2^(1-p) in denominator once
-	for (n = 1; n < p; n++)
+	// Dynamically allocate memory
+	B = (double*) dynvec(p_2, sizeof(double));
+	Psi = (double*) dynvec(1,sizeof(double));
+
+	//	Compute B(E)
+	for (i = 0; i < p_2; i++)
 	{
-		den *= 2;
+		B[i] = phi(p,(double)i,NULL);
 	}
 
-	// Build initial state of "p choose p/2"
-	for (n = 1; n < p_2; n++) // exclude p_2 b/c it is in num and den
-	{
-		num *= (p-n);	// [(p)(p-1)(p-2)...(p/2+1)]
-		den *= n;		// [(p/2)(p/2-1)...(2)(1)]*[2^(p-1)]
-	}
-	g2fg[0] = (double) num / (double) den;
+	//	Set up Psi
+	Psi[0] = 1.0;
 
-	// Compute [p choose p/2 + n] with 1 <= n <= p/2
-	for (n = 1; n <= p_2; n++)
+	//	Solve for omega
+    bibst_lss(-1, pow(2.0,-53), p_2, B, 1, 1, Psi, n, omega);
+/*
+    for (i = 0; i < p_2; i++)
+    {
+        printf("c[%d] = %f\n", i, omega[i]);
+    }
+*/
+	// Free dynamically allocated memory
+	dynfree(B);
+	dynfree(Psi);
+}
+
+/*
+compute omega' values
+NOTE:
+	B has degree p-1
+	B2 has degree 2p-2
+	A2 has degree p-1
+	omega' has degree p/2+mu
+*/
+void compute_omega_prime(short p, short mu, double* omegap)
+{
+	short		i = 0;
+	short		p_2 = p/2;
+	double*		B = NULL;
+	double*		B2 = NULL;
+    double*     B2E = NULL;
+	double*		A2 = NULL; // A^2 ~= B^{-2}
+	double*		Ctmp = NULL;
+	double*		C = NULL;
+	double*		CE = NULL;
+	double*		AE = NULL;
+    double*     c = NULL;
+	double*		pd = NULL;
+	double*		pE = NULL;
+	double*		c_full = NULL;
+	double*		p_full = NULL;
+	double*		high_terms = NULL;
+
+	assert(p%2 == 0);
+	assert(mu >= 0);
+	assert(omegap != NULL);
+
+	// Dynamically allocate memory
+	B = (double*) dynvec(p_2, sizeof(double));
+	B2 = (double*) dynvec(p-1, sizeof(double));
+    B2E = (double*) dynvec(p-1, sizeof(double));
+	A2 = (double*) dynvec(p_2, sizeof(double));
+	Ctmp = (double*) dynvec(p+p_2-2, sizeof(double));
+	C = (double*) dynvec(p-2, sizeof(double));
+	CE = (double*) dynvec(p-2, sizeof(double));
+    c = (double*) dynvec(mu+1, sizeof(double));
+	pd = (double*) dynvec(p_2+1,sizeof(double));
+	pE = (double*) dynvec(p_2+1,sizeof(double));
+	c_full = (double*) dynvec(2*mu+1,sizeof(double));
+	p_full = (double*) dynvec(p+1,sizeof(double));
+	high_terms = (double*) dynvec(p+2*mu+1,sizeof(double));
+
+	//	Compute B_p
+	b_spline_compute_blurring_operator(p_2-1, B);
+/*
+	printf("Blurring (1D):\n");
+	for (i = 0; i < p_2; i++)
 	{
-		g2fg[n] = (g2fg[n-1]*(double)(p_2-n+1)) / (double)(p_2+n);
+		printf("%02hd - %f\n", i, B[i]);
 	}
+	printf("\n");
+*/
+	//	Compute B^2
+	mpoly(p_2-1, B, p_2-1, B, B2);
+/*
+	printf("Blurring (2D):\n");
+	for (i = 0; i < p-1; i++)
+	{
+		printf("%02hd - %f\n", i, B2[i]);
+	}
+	printf("\n");
+*/
+	//	Compute B^{-2} = 1 / B^2 = 1 / 1 - D => D = 1 - B^2
+	b_spline_compute_operator_inverse(p-2, B2, p_2-1, A2);
+/*
+	printf("Antiblurring (2D):\n");
+	for (i = 0; i <= p_2-1; i++)
+	{
+		printf("%02hd - %f\n", i, A2[i]);
+	}
+	printf("\n");
+*/
+	//	compute (A^2)(B^2) in order to get -C
+	mpoly(p-2, B2, p_2-1, A2, Ctmp);
+	//	keep only (delta^2)^{p/2} and higher
+	for (i = p_2; i <= p+p_2-3; i++)
+	{
+		C[i-p_2] = -Ctmp[i];
+	}
+
+	//	convert C(delta^2) to C(E)
+	b_spline_convert_delta2_to_shifts(p-3, C, CE);
+/*
+	for (i = 0; i <= p-3; i++)
+	{
+		printf("CE[%d] = %f\n", i, CE[i]);
+	}
+	printf("\n");
+*/
+	//	convert A^2(delta^2) to A(E) = omega'
+	b_spline_convert_delta2_to_shifts(p_2-1, A2, omegap);
+/*
+	for (i = 0; i <= p_2-1; i++)
+	{
+		printf("omega'[%d] = %f\n", i, omegap[i]);
+	}
+	printf("\n");
+*/
+	// Solve bi-infinite linear system involving B^2(E) and C(E)
+    b_spline_convert_delta2_to_shifts(p-2, B2, B2E);
+    bibst_lss(-1, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, mu+1, c);
+/*
+    for (i = 0; i <= p+mu; i++)
+    {
+        printf("c[%d] = %f\n", i, c[i]);
+    }
+*/
+	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
+	pd[p_2] = 1.0;
+	b_spline_convert_delta2_to_shifts(p_2,pd,pE);
+/*
+	display_vector_d(pE,p_2+1);
+*/
+	// convolve (c,pE) after forming full, symmetric operator
+	c_full[mu] = c[0];
+	for (i = 1; i <= mu; i++)
+	{
+		c_full[mu+i] = c[i];
+		c_full[mu-i] = c[i];
+	}
+//display_vector_d(c_full,2*mu+1);
+	p_full[p_2] = pE[0];
+	for (i = 1; i <= p_2; i++)
+	{
+		p_full[p_2+i] = pE[i];
+		p_full[p_2-i] = pE[i];
+	}
+//display_vector_d(p_full,p+1);
+	mpoly(2*mu, c_full, p, p_full, high_terms);
+//display_vector_d(high_terms,p+2*mu+1);
+
+	//	add previous step to omega'
+	for (i = 0; i <= p_2+mu; i++)
+	{
+		omegap[i] += high_terms[p_2+mu+i];
+	}
+
+	// Free dynamically allocated memory
+	dynfree(B);
+	dynfree(B2);
+    dynfree(B2E);
+	dynfree(A2);
+	dynfree(Ctmp);
+	dynfree(C);
+	dynfree(CE);
+    dynfree(c);
+	dynfree(pd);
+	dynfree(pE);
+	dynfree(c_full);
+	dynfree(p_full);
+	dynfree(high_terms);
 }
 
 // End of file

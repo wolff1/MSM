@@ -17,14 +17,6 @@ msm.h -
 
 typedef struct
 {
-	double		a;
-	double		h;
-	short		p;
-	short		k;
-} MSM_PARAMETERS;
-
-typedef struct
-{
 	char		ComputeShortRange;
 	char		ComputeLongRange;
 	char		ComputeExclusions;

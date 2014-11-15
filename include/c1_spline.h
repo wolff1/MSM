@@ -17,10 +17,10 @@ typedef struct
 } C1_SPLINE;
 
 //	EXTERNAL Methods
-void c1_spline_initialize(void* Interpolant);
+void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams);
 void c1_spline_compute_g2g(void* Interpolant);
 void c1_spline_compute_tg2g(void* Interpolant);
-void c1_spline_evaluate(void* Interpolant);
+void c1_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF);
 void c1_spline_uninitialize(void* Interpolant);
 
 //	INTERNAL Methods

@@ -10,11 +10,22 @@ interpolant.h - Parent (abstract) class for interpolants. Children must
 #include "all.h"
 #include "memory.h"
 
+//	THERE MUST BE A BETTER PLACE FOR THIS THAN HERE
+//		-> Conflict because needed in MSM and INTERPOLANT
+typedef struct
+{
+	double		a;
+	double		h;
+	short		p;
+	short		k;
+	short		mu;
+} MSM_PARAMETERS;
+
 typedef struct
 {
 	//	Members
 	short		p;
-	double*		g2p;
+	double**	g2p;
 	double*		g2fg;
 	double*		g2g;
 	double*		tg2g;
@@ -22,12 +33,12 @@ typedef struct
 	//	Methods
 	void		(*compute_g2g)(void*);
 	void		(*compute_tg2g)(void*);
-	void		(*evaluate)(void*);
+	void		(*evaluate)(void*, long, double*, double*, double*);
 	void		(*uninitialize)(void*);
 } INTERPOLANT;
 
 //	EXTERNAL Methods
-void interpolant_initialize(void** Interpolant, size_t Size, void* Init(void*), short p);
+void interpolant_initialize(void** Interpolant, size_t Size, void* Init(void*,MSM_PARAMETERS*), MSM_PARAMETERS* MsmParams);
 
 #endif
 

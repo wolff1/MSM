@@ -6,7 +6,7 @@ c1_spline.c - C1 phi (CUBIC ONLY)
 #include "c1_spline.h"
 
 //	EXTERNAL Methods
-void c1_spline_initialize(void* Interpolant)
+void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
 	assert(C1 != NULL);
@@ -37,7 +37,7 @@ void c1_spline_compute_tg2g(void* Interpolant)
 	printf("\tC1_SPLINE compute_tg2g\n");
 }
 
-void c1_spline_evaluate(void* Interpolant)
+void c1_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
 	assert(C1 != NULL);
@@ -50,10 +50,11 @@ void c1_spline_uninitialize(void* Interpolant)
 	assert(C1 != NULL);
 	printf("\tUn-initializing C1_SPLINE!\n");
 
-	dynfree(C1->cmn.g2p);
-	dynfree(C1->cmn.g2fg);
-	dynfree(C1->cmn.g2g);
-	dynfree(C1->cmn.tg2g);
+	//dynfree(C1->cmn.g2p[0]);
+	//dynfree(C1->cmn.g2p);
+	//dynfree(C1->cmn.g2fg);
+	//dynfree(C1->cmn.g2g);
+	//dynfree(C1->cmn.tg2g);
 	dynfree(C1);
 }
 

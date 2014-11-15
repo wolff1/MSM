@@ -26,6 +26,7 @@ void msm_initialize(void* Method)
 	Msm->prm.h = 2.5;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
+	Msm->prm.mu = 10;
 
 	//	Initialize MSM options
 	Msm->opt.ComputeExclusions = 1;
@@ -47,7 +48,7 @@ void msm_initialize(void* Method)
 		Size = sizeof(C1_SPLINE);
 		Init = &c1_spline_initialize;
 	}
-	interpolant_initialize(&Ptr, Size, Init, Msm->prm.p);
+	interpolant_initialize(&Ptr, Size, Init, &Msm->prm);
 	Msm->itp = (INTERPOLANT*) Ptr;
 
 	//	Initialize SOFTENER
@@ -133,9 +134,6 @@ void msm_short_range(MSM* Msm)
 
 void msm_anterpolate(MSM* Msm)
 {
-	//	REMOVE
-	(*Msm->itp->evaluate)(Msm->itp);
-	//	REMOVE
 }
 
 void msm_restrict(MSM* Msm)
@@ -156,9 +154,6 @@ void msm_prolongate(MSM* Msm)
 
 void msm_interpolate(MSM* Msm)
 {
-	//	REMOVE
-	(*Msm->itp->evaluate)(Msm->itp);
-	//	REMOVE
 }
 
 void msm_exclude(MSM* Msm)

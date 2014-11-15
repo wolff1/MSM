@@ -21,7 +21,7 @@ void even_powers_initialize(void* Softener)
 	even_powers_compute_p2p(Ep);
 }
 
-void even_powers_soften(void* Softener, long Len, double* X, double* FX, double* DFX)
+void even_powers_soften(void* Softener, long Len, double* X, double* F, double* DF)
 {	// aka "gamma"
 	double			XX = 0.0;
 	double*			c = NULL;
@@ -32,8 +32,8 @@ void even_powers_soften(void* Softener, long Len, double* X, double* FX, double*
 
 	assert(Ep != NULL);
 	assert(X != NULL);
-	assert(FX != NULL);
-	assert(DFX != NULL);
+	assert(F != NULL);
+	assert(DF != NULL);
 
 	k = Ep->cmn.k;
 	c = Ep->cmn.p2p;
@@ -43,59 +43,59 @@ void even_powers_soften(void* Softener, long Len, double* X, double* FX, double*
 		// gamma is a spline which becomes f(x) = 1/x for x >= 1.0
 		if (X[i] >= 1.0)
 		{
-			FX[i] = 1.0/X[i];
-			DFX[i] = -FX[i]*FX[i];	//	-f*f = -1.0/(x*x);
+			F[i] = 1.0/X[i];
+			DF[i] = -F[i]*F[i];	//	-f*f = -1.0/(x*x);
 		}
 		else
 		{
 			XX = X[i]*X[i];
 			// Use Horner's rule to evaluate polynomial
-			FX[i] = c[k];			// Even powers
-			DFX[i] = c[k]*(2*k);	// Odd powers
+			F[i] = c[k];			// Even powers
+			DF[i] = c[k]*(2*k);	// Odd powers
 			for (j = k-1; j >= 1; j--)
 			{
-				FX[i] = FX[i]*XX + c[j];
-				DFX[i] = DFX[i]*XX + c[j]*(2*j);
+				F[i] = F[i]*XX + c[j];
+				DF[i] = DF[i]*XX + c[j]*(2*j);
 			}
-			FX[i] = FX[i]*XX + c[0];
-			DFX[i] = DFX[i]*X[i];
+			F[i] = F[i]*XX + c[0];
+			DF[i] = DF[i]*X[i];
 		}
 	}
 }
 
-void even_powers_split(void* Softener, long Len, double* X, double* FX, double* DFX)
+void even_powers_split(void* Softener, long Len, double* X, double* F, double* DF)
 {	//	aka "theta"
 	long			i = 0;
 	double*			X_2 = NULL;
-	double*			FX_2 = NULL;
-	double*			DFX_2 = NULL;
+	double*			F_2 = NULL;
+	double*			DF_2 = NULL;
 
 	assert(Softener != NULL);
 	assert(X != NULL);
-	assert(FX != NULL);
-	assert(DFX != NULL);
+	assert(F != NULL);
+	assert(DF != NULL);
 
 	X_2 = (double*) dynvec(Len, sizeof(double));
-	FX_2 = (double*) dynvec(Len, sizeof(double));
-	DFX_2 = (double*) dynvec(Len, sizeof(double));
+	F_2 = (double*) dynvec(Len, sizeof(double));
+	DF_2 = (double*) dynvec(Len, sizeof(double));
 
 	for (i = 0; i < Len; i++)
 	{
 		X_2[i] = 0.5*X[i];
 	}
 
-	even_powers_soften(Softener, Len, X, FX, DFX);
-	even_powers_soften(Softener, Len, X_2, FX_2, DFX_2);
+	even_powers_soften(Softener, Len, X, F, DF);
+	even_powers_soften(Softener, Len, X_2, F_2, DF_2);
 
 	for (i = 0; i < Len; i++)
 	{
-		FX[i] = FX[i] - 0.5*FX_2[i];
-		DFX[i] = DFX[i] - 0.25*DFX_2[i];
+		F[i] = F[i] - 0.5*F_2[i];
+		DF[i] = DF[i] - 0.25*DF_2[i];
 	}
 
 	dynfree(X_2);
-	dynfree(FX_2);
-	dynfree(DFX_2);
+	dynfree(F_2);
+	dynfree(DF_2);
 }
 
 void even_powers_uninitialize(void* Softener)
