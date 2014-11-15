@@ -38,7 +38,7 @@ void msm_initialize(void* Method)
 	//	Initialize Interpolant
 	Ptr = NULL;
 	Msm->itp = NULL;
-	if (1)
+	if (0)
 	{	//	B_SPLINE interpolant
 		Size = sizeof(B_SPLINE);
 		Init = &b_spline_initialize;
@@ -66,17 +66,17 @@ void msm_initialize(void* Method)
 void msm_preprocess(void* Method)
 {
 	MSM*		Msm = (MSM*) Method;
-
 	assert(Msm != NULL);
 	printf("MSM Preprocessing!\n");
 
 	//	Compute Interpolant coefficients
+	(*Msm->itp->compute_g2g)(Msm->itp);
+	(*Msm->itp->compute_tg2g)(Msm->itp);
 }
 
 void msm_evaluate(void* Method)
 {
 	MSM*		Msm = (MSM*) Method;
-
 	assert(Msm != NULL);
 	printf("MSM Evaluation!\n");
 
@@ -114,7 +114,6 @@ void msm_evaluate(void* Method)
 void msm_uninitialize(void* Method)
 {
 	MSM*		Msm = (MSM*) Method;
-
 	assert(Msm != NULL);
 	printf("Un-initializing MSM!\n");
 

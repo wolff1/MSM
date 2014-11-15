@@ -9,33 +9,44 @@ c1_spline.c - C1 phi (CUBIC ONLY)
 void c1_spline_initialize(void* Interpolant)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
-
 	assert(C1 != NULL);
 	printf("\tC1_SPLINE initialization!\n");
 
 	//	Set up COMMON function pointers
+	C1->cmn.compute_g2g = &c1_spline_compute_g2g;
+	C1->cmn.compute_tg2g = &c1_spline_compute_tg2g;
 	C1->cmn.evaluate = &c1_spline_evaluate;
 	C1->cmn.uninitialize = &c1_spline_uninitialize;
 
 	//	Set up the C1_SPLINE interpolant
 	c1_spline_compute_g2p(C1);
 	c1_spline_compute_g2fg(C1);
-	c1_spline_compute_g2g(C1);
-	c1_spline_compute_tg2g(C1);
+}
+
+void c1_spline_compute_g2g(void* Interpolant)
+{
+	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+	assert(C1 != NULL);
+	printf("\tC1_SPLINE compute_g2g\n");
+}
+
+void c1_spline_compute_tg2g(void* Interpolant)
+{
+	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+	assert(C1 != NULL);
+	printf("\tC1_SPLINE compute_tg2g\n");
 }
 
 void c1_spline_evaluate(void* Interpolant)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
-
 	assert(C1 != NULL);
-
+	printf("\tC1_SPLINE evaluate\n");
 }
 
 void c1_spline_uninitialize(void* Interpolant)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
-
 	assert(C1 != NULL);
 	printf("\tUn-initializing C1_SPLINE!\n");
 
@@ -49,18 +60,14 @@ void c1_spline_uninitialize(void* Interpolant)
 //	INTERNAL Methods
 void c1_spline_compute_g2p(C1_SPLINE* C1)
 {
+	assert(C1 != NULL);
+	printf("\tC1_SPLINE compute_g2p\n");
 }
 
 void c1_spline_compute_g2fg(C1_SPLINE* C1)
 {
-}
-
-void c1_spline_compute_g2g(C1_SPLINE* C1)
-{
-}
-
-void c1_spline_compute_tg2g(C1_SPLINE* C1)
-{
+	assert(C1 != NULL);
+	printf("\tC1_SPLINE compute_g2fg\n");
 }
 
 /*

@@ -20,6 +20,8 @@ typedef struct
 	double*		tg2g;
 
 	//	Methods
+	void		(*compute_g2g)(void*);
+	void		(*compute_tg2g)(void*);
 	void		(*evaluate)(void*);
 	void		(*uninitialize)(void*);
 } INTERPOLANT;

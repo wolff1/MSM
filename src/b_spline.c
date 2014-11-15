@@ -9,11 +9,12 @@ b_spline.c - Routines for initializing, using, and uninitializing B-splines
 void b_spline_initialize(void* Interpolant)
 {
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
-
 	assert(Bs != NULL);
 	printf("\tB_SPLINE initialization!\n");
 
 	//	Set up COMMON function pointers
+	Bs->cmn.compute_g2g = &b_spline_compute_g2g;
+	Bs->cmn.compute_tg2g = &b_spline_compute_tg2g;
 	Bs->cmn.evaluate = &b_spline_evaluate;
 	Bs->cmn.uninitialize = &b_spline_uninitialize;
 
@@ -22,22 +23,34 @@ void b_spline_initialize(void* Interpolant)
 	b_spline_compute_omega_prime(Bs);
 	b_spline_compute_g2p(Bs);
 	b_spline_compute_g2fg(Bs);
-	b_spline_compute_g2g(Bs);
-	b_spline_compute_tg2g(Bs);
+//	b_spline_compute_g2g(Bs);		//	Happens in preprocess
+//	b_spline_compute_tg2g(Bs);		//	Happens in preprocess
+}
+
+void b_spline_compute_g2g(void* Interpolant)
+{
+	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_g2g\n");
+}
+
+void b_spline_compute_tg2g(void* Interpolant)
+{
+	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_tg2g\n");
 }
 
 void b_spline_evaluate(void* Interpolant)
 {
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
-
 	assert(Bs != NULL);
-
+	printf("\tB_SPLINE evaluate\n");
 }
 
 void b_spline_uninitialize(void* Interpolant)
 {
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
-
 	assert(Bs != NULL);
 	printf("\tUn-initializing B_SPLINE!\n");
 
@@ -53,26 +66,26 @@ void b_spline_uninitialize(void* Interpolant)
 //	INTERNAL Methods
 void b_spline_compute_omega(B_SPLINE* Bs)
 {
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_omega\n");
 }
 
 void b_spline_compute_omega_prime(B_SPLINE* Bs)
 {
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_omega_prime\n");
 }
 
 void b_spline_compute_g2p(B_SPLINE* Bs)
 {
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_g2p\n");
 }
 
 void b_spline_compute_g2fg(B_SPLINE* Bs)
 {
-}
-
-void b_spline_compute_g2g(B_SPLINE* Bs)
-{
-}
-
-void b_spline_compute_tg2g(B_SPLINE* Bs)
-{
+	assert(Bs != NULL);
+	printf("\tB_SPLINE compute_g2fg\n");
 }
 
 /*

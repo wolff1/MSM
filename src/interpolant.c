@@ -12,8 +12,6 @@ void interpolant_initialize(void** Interpolant, size_t Size, void* Init(void*), 
 	assert(*Interpolant == NULL);
 
 	//	Dynamically allocate zero-ed out memory for *Interpolant
-	assert(*Interpolant == NULL);
-
 	*Interpolant = dynmem(Size);
 
 	//	Initialize Members

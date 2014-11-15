@@ -10,8 +10,6 @@ void softener_initialize(void** Softener, size_t Size, void* Init(void*), short 
 	assert(*Softener == NULL);
 
 	//	Dynamically allocate zero-ed out memory for *Softener
-	assert(*Softener == NULL);
-
 	*Softener = dynmem(Size);
 
 	//	Initialize Members

@@ -39,9 +39,6 @@ typedef struct
 	double*			data;
 } STENCIL;
 
-/*
-stencil operations below:
-*/
 void stencil_initialize(STENCIL* s, long size, short shape);
 void stencil_populate(STENCIL* s, double* c, short k, short function_type,
 						double h_a);
