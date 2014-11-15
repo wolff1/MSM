@@ -10,6 +10,7 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 {
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
+	assert(MsmParams != NULL);
 	printf("\tB_SPLINE initialization!\n");
 
 	//	Set up COMMON function pointers
@@ -37,6 +38,16 @@ void b_spline_compute_g2g(void* Interpolant)
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
 	printf("\tB_SPLINE compute_g2g\n");
+/*
+	//	Pre-processing (Intermediate levels)
+	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
+	//stencil_display(&theta, h/a);
+
+	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
+	//stencil_display(&g2g, 1.0);
+
+	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g);
+*/
 }
 
 void b_spline_compute_tg2g(void* Interpolant)
@@ -44,6 +55,16 @@ void b_spline_compute_tg2g(void* Interpolant)
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
 	printf("\tB_SPLINE compute_tg2g\n");
+/*
+	//	Pre-processing (Top level)
+	stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
+	//stencil_display(&gamma, h/a);
+
+	stencil_shift_infinite(&gamma, p_2+mu, omegap, &tg2g);
+	//stencil_display(&tg2g, 1.0);
+
+	stencil_naive_top(p, a, h, p_2+mu, omegap, k, c, &tg2g);
+*/
 }
 
 void b_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF)
@@ -98,6 +119,12 @@ void b_spline_uninitialize(void* Interpolant)
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
 	printf("\tUn-initializing B_SPLINE!\n");
+
+	//	Free the dynamically allocated stencil memory
+	stencil_free(&Bs->cmn.GammaI);
+	stencil_free(&Bs->cmn.GammaT);
+	stencil_free(&Bs->cmn.g2g);
+	stencil_free(&Bs->cmn.tg2g);
 
 	dynfree(Bs->omega);
 	dynfree(Bs->omegap);

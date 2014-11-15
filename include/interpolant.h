@@ -9,6 +9,7 @@ interpolant.h - Parent (abstract) class for interpolants. Children must
 
 #include "all.h"
 #include "memory.h"
+#include "stencil.h"
 
 //	THERE MUST BE A BETTER PLACE FOR THIS THAN HERE
 //		-> Conflict because needed in MSM and INTERPOLANT
@@ -19,6 +20,7 @@ typedef struct
 	short		p;
 	short		k;
 	short		mu;
+	double		D;
 } MSM_PARAMETERS;
 
 typedef struct
@@ -27,8 +29,10 @@ typedef struct
 	short		p;
 	double**	g2p;
 	double*		g2fg;
-	double*		g2g;
-	double*		tg2g;
+	STENCIL		g2g;
+	STENCIL		tg2g;
+	STENCIL		GammaI;
+	STENCIL		GammaT;
 
 	//	Methods
 	void		(*compute_g2g)(void*);

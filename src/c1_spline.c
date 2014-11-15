@@ -10,6 +10,7 @@ void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
 	assert(C1 != NULL);
+	assert(MsmParams != NULL);
 	printf("\tC1_SPLINE initialization!\n");
 
 	//	Set up COMMON function pointers
@@ -49,6 +50,12 @@ void c1_spline_uninitialize(void* Interpolant)
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
 	assert(C1 != NULL);
 	printf("\tUn-initializing C1_SPLINE!\n");
+
+	//	Free the dynamically allocated stencil memory
+	stencil_free(&C1->cmn.GammaI);
+	stencil_free(&C1->cmn.GammaT);
+	stencil_free(&C1->cmn.g2g);
+	stencil_free(&C1->cmn.tg2g);
 
 	//dynfree(C1->cmn.g2p[0]);
 	//dynfree(C1->cmn.g2p);
