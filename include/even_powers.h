@@ -17,9 +17,17 @@ typedef struct
 
 //	EXTERNAL Methods
 void even_powers_initialize(void* Softener);
+void even_powers_soften(void* Softener, long Len, double* X, double* FX, double* DFX);
+void even_powers_split(void* Softener, long Len, double* X, double* FX, double* DFX);
 void even_powers_uninitialize(void* Softener);
 
 //	INTERNAL Methods
+void even_powers_compute_p2p(EVEN_POWERS* Ep);
+
+//*****************************************************//
+//*****DELETE EVERYTHING FROM HERE DOWN EVENTUALLY*****//
+//*****************************************************//
+
 void gamma_init(short k, double* x);
 double _gamma(double *c, short k, double x, double* dgamma);
 double theta_star(double *c, short k, double x, double* dtheta_star);

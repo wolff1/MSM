@@ -11,7 +11,7 @@ void simulator(void);
 
 int main(int argc, char* argv[])
 {
-	int choice = 1;
+	int				choice = 1;
 
 	while (choice > 0)
 	{
@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 		printf("*14 - Produce Figure 2 (sinc)    *\n");
 		printf("*15 - Test Preprocessing         *\n");
 		printf("*16 - Test Simulator             *\n");
+		printf("*17 - Test Softening (vector)    *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -104,6 +105,9 @@ int main(int argc, char* argv[])
 			case 16:
 				simulator();
 				break;
+
+			case 17:
+				test_softener(NULL);
 
 			case 0:	// Exit
 				break;

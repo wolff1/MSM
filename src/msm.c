@@ -16,29 +16,28 @@ void msm_initialize(void* Method)
 	assert(Msm != NULL);
 	printf("Initializing MSM!\n");
 
-	//	Set up COMMON function pointers
+	//	Initialize COMMON function pointers
 	Msm->cmn.preprocess = &msm_preprocess;
 	Msm->cmn.evaluate = &msm_evaluate;
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
-	//	Set up MSM parameters
+	//	Initialize MSM parameters
 	Msm->prm.a = 12.5;
 	Msm->prm.h = 2.5;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
 
-	//	Set up MSM options
+	//	Initialize MSM options
 	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
 	Msm->opt.IsN = 1;
 	Msm->opt.IsNLogN = 1;
 
-	//	Compute components which will not change throughout the simulation
-	//	Initialize Interpolant
+	//	Initialize INTERPOLANT
 	Ptr = NULL;
 	Msm->itp = NULL;
-	if (0)
+	if (1)
 	{	//	B_SPLINE interpolant
 		Size = sizeof(B_SPLINE);
 		Init = &b_spline_initialize;
@@ -51,7 +50,7 @@ void msm_initialize(void* Method)
 	interpolant_initialize(&Ptr, Size, Init, Msm->prm.p);
 	Msm->itp = (INTERPOLANT*) Ptr;
 
-	//	Initialize Softener
+	//	Initialize SOFTENER
 	Ptr = NULL;
 	Msm->sft = NULL;
 	if (1)
@@ -123,39 +122,46 @@ void msm_uninitialize(void* Method)
 	//	Uninitialize INTERPOLANT
 	(*Msm->itp->uninitialize)(Msm->itp);
 
+	//	Free dynamic memory allocated for MSM object
 	dynfree(Msm);
 }
 
 //	INTERNAL Methods
-void msm_short_range(MSM* msm)
+void msm_short_range(MSM* Msm)
 {
 }
 
-void msm_anterpolate(MSM* msm)
+void msm_anterpolate(MSM* Msm)
+{
+	//	REMOVE
+	(*Msm->itp->evaluate)(Msm->itp);
+	//	REMOVE
+}
+
+void msm_restrict(MSM* Msm)
 {
 }
 
-void msm_restrict(MSM* msm)
+void msm_direct(MSM* Msm)
 {
 }
 
-void msm_direct(MSM* msm)
+void msm_direct_top(MSM* Msm)
 {
 }
 
-void msm_direct_top(MSM* msm)
+void msm_prolongate(MSM* Msm)
 {
 }
 
-void msm_prolongate(MSM* msm)
+void msm_interpolate(MSM* Msm)
 {
+	//	REMOVE
+	(*Msm->itp->evaluate)(Msm->itp);
+	//	REMOVE
 }
 
-void msm_interpolate(MSM* msm)
-{
-}
-
-void msm_exclude(MSM* msm)
+void msm_exclude(MSM* Msm)
 {
 }
 

@@ -16,8 +16,8 @@ typedef struct
 	double*		p2p;
 
 	//	Methods
-	double		(*gamma)(double*, short, double, double*);
-	double		(*theta)(double*, short, double, double*);
+	void		(*soften)(void*, long, double*, double*, double*);
+	void		(*split)(void*, long, double*, double*, double*);
 	void		(*uninitialize)(void*);
 } SOFTENER;
 

@@ -1611,4 +1611,64 @@ void test_preprocessing(void)
 	stencil_free(&tg2g);
 }
 
+void test_softener(SOFTENER* s)
+{
+	long		Samples = 100;
+	long		Len = Samples + 1;
+	long		i = 0;
+	double*		X = NULL;
+	double*		FX = NULL;
+	double*		DFX = NULL;
+	double		fx = 0.0;
+	double		dfx = 0.0;
+	void		(*MyGamma)(void*,long,double*,double*,double*);
+	void		(*MyTheta)(void*,long,double*,double*,double*);
+	void*		Init = NULL;
+	SOFTENER*	t = NULL;
+
+	if (s == NULL)
+	{
+		Init = &even_powers_initialize;
+		softener_initialize((void**)&t, sizeof(EVEN_POWERS), Init, 4);
+		s = t;
+	}
+
+	X = (double*) dynvec(Len, sizeof(double));
+	FX = (double*) dynvec(Len, sizeof(double));
+	DFX = (double*) dynvec(Len, sizeof(double));
+
+	for (i = 0; i < Len; i++)
+	{
+		X[i] = (double) 2.5*i / (double) Samples;
+	}
+
+	MyTheta = s->split;
+	(*MyTheta)(s, Len, X, FX, DFX);
+
+	for (i = 0; i < Len; i++)
+	{
+		fx = theta(s->p2p, s->k, X[i], &dfx);
+		printf("i=%03ld, x=%f |f-F| = %e, |df-DF| = %e\n", i, X[i], fabs(fx-FX[i]), fabs(dfx-DFX[i]));
+	}
+
+	printf("\n");
+	MyGamma = s->soften;
+	(*MyGamma)(s, Len, X, FX, DFX);
+
+	for (i = 0; i < Len; i++)
+	{
+		fx = _gamma(s->p2p, s->k, X[i], &dfx);
+		printf("i=%03ld, x=%f |f-F| = %e, |df-DF| = %e\n", i, X[i], fabs(fx-FX[i]), fabs(dfx-DFX[i]));
+	}
+
+	if (t != NULL)
+	{
+		t->uninitialize(t);
+	}
+
+	dynfree(X);
+	dynfree(FX);
+	dynfree(DFX);
+}
+
 //	End of file

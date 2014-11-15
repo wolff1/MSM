@@ -45,6 +45,7 @@ void splitting_test(void);
 void plot_splittings(int samples, int nlev, double a, double d,
 						double* X, double** F);
 void gamma_test_all(void);
+void test_softener(SOFTENER* s);
 
 //	**** OTHER ****
 void test_sinc(void);
