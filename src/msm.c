@@ -8,6 +8,8 @@ msm.c -
 //	EXTERNAL Methods
 void msm_initialize(void* Method)
 {
+	size_t		Size = 0;
+	void*		Init = NULL;
 	MSM*		Msm = (MSM*) Method;
 
 	assert(Msm != NULL);
@@ -18,9 +20,26 @@ void msm_initialize(void* Method)
 	Msm->cmn.evaluate = &msm_evaluate;
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
+	//	Set up MSM parameters
+
+	//	Set up MSM options
+
 	//	Compute components which will not change throughout the simulation
-	//		->	Initialize Interpolant
-	//		->	Initialize Softener
+/*	//	Initialize Interpolant
+	if (1)
+	{	//	B_SPLINE interpolant
+		Size = sizeof(B_SPLINE);
+		Init = &b_spline_initialize;
+	}
+	interpolant_initialize(&Msm->itp, Size, Init);
+*/
+	//	Initialize Softener
+	if (1)
+	{	//	EVEN_POWERS softening (aka "Taylor")
+		Size = sizeof(EVEN_POWERS);
+		Init = &even_powers_initialize;
+	}
+	softener_initialize(&Msm->sft, Size, Init);
 }
 
 void msm_preprocess(void* Method)

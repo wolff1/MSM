@@ -10,7 +10,7 @@ Solves for coefficients of gamma
 k is degree of continuity
 b will return k+1 vector of coefficients
 */
-void gamma_init(short k, double* x)
+void even_powers_initialize(void* Softener, short k, double* x)
 {
 	double** A = NULL;	// Coefficient matrix
 	double* b = x;		// Alias output parameter x
@@ -21,6 +21,9 @@ void gamma_init(short k, double* x)
 
 	// b will first act as RHS, then return coefficients to caller
 	assert(b != NULL);
+
+	//	Set up function pointers
+
 
 	// Allocate memory for A
 	A = dynarr_d(k+1, k+1);

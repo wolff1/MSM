@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-method.c - 
+method.c - Routines for the generic METHOD class
 */
 
 #include "method.h"

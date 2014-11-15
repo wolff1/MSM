@@ -6,7 +6,6 @@ main.c - entry point for the tester
 #include "tester.h"
 
 void test_mkl_MMM(void);
-void mkl_memory_check(void);
 
 void simulator(void);
 
@@ -170,29 +169,6 @@ void test_mkl_MMM(void)
 	dynfree(C);
 }
 
-/*
-Use internal MKL functions to check for a memory leak
-*/
-void mkl_memory_check(void)
-{
-	MKL_INT64	AllocatedBytes;
-	int			N_AllocatedBuffers;
-
-	/**************************************************************************/
-	// I'm not entirely sure which buffers this is freeing
-	// This should only be called after last MKL usage
-	mkl_free_buffers();
-
-	AllocatedBytes = mkl_mem_stat(&N_AllocatedBuffers);
-	if (AllocatedBytes > 0)
-	{
-		printf("MKL memory leak!\n");
-		printf("After mkl_free_buffers there are %ld bytes in %d buffers\n",
-			(long) AllocatedBytes, N_AllocatedBuffers);
-	}
-
-}
-
 void simulator(void)
 {
 	//	Generic Variables
@@ -205,11 +181,6 @@ void simulator(void)
 	{	//	MSM
 		Size = sizeof(MSM);
 		Init = &msm_initialize;
-	}
-	else
-	{	//	other method
-		Size = 0;
-		Init = NULL;
 	}
 
 	//	Initialize method

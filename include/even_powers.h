@@ -7,20 +7,20 @@ even_powers.h - the softening function used to split the kernel
 #define	EVEN_POWERS_H
 
 #include "all.h"
+#include "softener.h"
 #include "memory.h"
 
-#define GAMMA_DATA			"gamma.dat"
-#define THETA_DATA			"theta.dat"
-
-#define GAMMA_DATA_LEN		strlen(GAMMA_DATA)
-#define THETA_DATA_LEN		strlen(THETA_DATA)
+typedef struct
+{
+	SOFTENER		cmn;
+} EVEN_POWERS;
 
 /*
 Solves for coefficients of gamma
 k is degree of continuity
 x is k+1 vector to hold coefficients
 */
-void gamma_init(short k, double* x);
+void even_powers_initialize(void* Softener, short k, double* x);
 
 /*
 Evaluate gamma and gamma' at position x

@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-method.h - 
+method.h - Definition for the generic METHOD class
 */
 
 #ifndef	METHOD_H

@@ -11,6 +11,10 @@ msm.h -
 #include "softener.h"
 #include "method.h"
 
+#include "even_powers.h"
+#include "b_spline.h"
+#include "c1_spline.h"
+
 typedef struct
 {
 	double		a;
@@ -44,20 +48,20 @@ typedef struct
 } MSM;
 
 //	EXTERNAL Methods
-void msm_initialize(void* msm);
-void msm_preprocess(void* msm);
-void msm_evaluate(void* msm);
-void msm_uninitialize(void* msm);
+void msm_initialize(void* Msm);
+void msm_preprocess(void* Msm);
+void msm_evaluate(void* Msm);
+void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods
-void short_range(MSM* msm);
-void anterpolate(MSM* msm);
-void restrict(MSM* msm);
-void direct(MSM* msm);
-void direct_top(MSM* msm);
-void prolongate(MSM* msm);
-void interpolate(MSM* msm);
-void exclude(MSM* msm);
+void short_range(MSM* Msm);
+void anterpolate(MSM* Msm);
+void restrict(MSM* Msm);
+void direct(MSM* Msm);
+void direct_top(MSM* Msm);
+void prolongate(MSM* Msm);
+void interpolate(MSM* Msm);
+void exclude(MSM* Msm);
 
 #endif
 

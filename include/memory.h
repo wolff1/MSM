@@ -21,6 +21,11 @@ Free allocated memory
 void dynfree(void* ptr);
 
 /*
+A routine which checks for leaked memory
+*/
+void mkl_memory_check(void);
+
+/*
 Create 2D array of type double
 */
 double** dynarr_d(unsigned long rows, unsigned long cols);

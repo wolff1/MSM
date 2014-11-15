@@ -34,6 +34,29 @@ void dynfree(void* ptr)
 }
 
 /*
+Use internal MKL functions to check for a memory leak
+*/
+void mkl_memory_check(void)
+{
+	MKL_INT64	AllocatedBytes;
+	int			N_AllocatedBuffers;
+
+	/**************************************************************************/
+	// I'm not entirely sure which buffers this is freeing
+	// This should only be called after last MKL usage
+	mkl_free_buffers();
+
+	AllocatedBytes = mkl_mem_stat(&N_AllocatedBuffers);
+	if (AllocatedBytes > 0)
+	{
+		printf("MKL memory leak!\n");
+		printf("After mkl_free_buffers there are %ld bytes in %d buffers\n",
+			(long) AllocatedBytes, N_AllocatedBuffers);
+	}
+
+}
+
+/*
 Create 2D array of type double
 */
 double** dynarr_d(unsigned long rows, unsigned long cols)

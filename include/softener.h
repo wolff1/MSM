@@ -7,17 +7,21 @@ softener.h -
 #define	SOFTENER_H
 
 #include "all.h"
+#include "memory.h"
 
 typedef struct
 {
 	//	Members
 	short		k;
 	double*		p2p;
+
 	//	Methods
-	void*		initialize;
-	void*		gamma;
-	void*		theta;
+	void		(*gamma);
+	void		(*theta);
 } SOFTENER;
+
+//	EXTERNAL Methods
+void softener_initialize(void* Softener, size_t Size, void* Init(void*));
 
 #endif
 

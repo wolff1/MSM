@@ -54,6 +54,12 @@ how-to-detect-reliably-mac-os-x-ios-linux-windows-in-c-preprocessor
 #define	GP_CMD_DIR_LEN			strlen(GP_CMD_DIR)
 #define	GP_TERM_LEN				strlen(GP_TERM)
 
+#define GAMMA_DATA			"gamma.dat"
+#define THETA_DATA			"theta.dat"
+
+#define GAMMA_DATA_LEN		strlen(GAMMA_DATA)
+#define THETA_DATA_LEN		strlen(THETA_DATA)
+
 /*
 Display 2D data only
 	(uses auxiliary tmp file w/ standard I/O routines)
