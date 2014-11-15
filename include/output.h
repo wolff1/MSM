@@ -56,9 +56,13 @@ how-to-detect-reliably-mac-os-x-ios-linux-windows-in-c-preprocessor
 
 #define GAMMA_DATA			"gamma.dat"
 #define THETA_DATA			"theta.dat"
+#define PHI_DATA			"phi.dat"
+#define PHI_DATA_C1			"phiC1.dat"
 
 #define GAMMA_DATA_LEN		strlen(GAMMA_DATA)
 #define THETA_DATA_LEN		strlen(THETA_DATA)
+#define PHI_DATA_LEN		strlen(PHI_DATA)
+#define PHI_DATA_C1_LEN		strlen(PHI_DATA_C1)
 
 /*
 Display 2D data only

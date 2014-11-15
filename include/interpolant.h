@@ -9,10 +9,6 @@ interpolant.h - centered b-spline phi
 #include "all.h"
 #include "memory.h"
 
-#define PHI_DATA		"phi.dat"
-
-#define PHI_DATA_LEN	strlen(PHI_DATA)
-
 typedef struct
 {
 	//	Members

@@ -10,10 +10,6 @@ c1_spline.h - C1 phi
 #include "memory.h"
 #include "output.h"		//	remove?
 
-#define PHI_DATA_C1		"phiC1.dat"
-
-#define PHI_DATA_C1_LEN	strlen(PHI_DATA_C1)
-
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant
 	x is the independent variable
