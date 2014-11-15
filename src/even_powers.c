@@ -21,7 +21,7 @@ void even_powers_initialize(void* Softener)
 	Ep->cmn.theta = &theta;
 	Ep->cmn.uninitialize = &even_powers_uninitialize;
 
-	// Compute coefficients of the softening function
+	// Set up the EVEN_POWERS softener
 	Ep->cmn.p2p = (double*) dynvec(Ep->cmn.k+1,sizeof(double));
 	gamma_init(Ep->cmn.k, Ep->cmn.p2p);
 }

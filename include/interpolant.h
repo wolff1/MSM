@@ -17,28 +17,14 @@ typedef struct
 	double*		g2fg;
 	double*		g2g;
 	double*		tg2g;
+
 	//	Methods
-	void*		initialize;
-	void*		evaluate;
+	void		(*evaluate)(void*);
+	void		(*uninitialize)(void*);
 } INTERPOLANT;
 
-/*
-	p gives the order of accuracy and p-1 is the degree of the interpolant
-	x is the independent variable
-	*dphi is output parameter which will contain the derivative of phi at x
-*/
-double phi(short p, double x, double* dphi);
-
-void new_phi(short p, double** g2p, short n, double* x, double* phi, double* dphi);
-
-/*
-Compute the coefficients for the B-spines which allow them to be
-nested from a grid to a finer grid.
-
-p such that p-1 is degree of B-spline
-g2fg is (p/2 + 1)-vector
-*/
-void compute_g2fg(short p, double* g2fg);
+//	EXTERNAL Methods
+void interpolant_initialize(void** Interpolant, size_t Size, void* Init(void*), short p);
 
 #endif
 

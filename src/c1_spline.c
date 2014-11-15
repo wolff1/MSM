@@ -9,6 +9,64 @@ c1_spline.c - C1 phi (CUBIC ONLY)
 double c[2][4] = {{0.0, -0.5, 2.0, 1.5},
 				  {0.0, 0.0, -0.5,-0.5}};
 
+//	EXTERNAL Methods
+void c1_spline_initialize(void* Interpolant)
+{
+	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+
+	assert(C1 != NULL);
+	printf("\tC1_SPLINE initialization!\n");
+
+	//	Set up COMMON function pointers
+	C1->cmn.evaluate = &c1_spline_evaluate;
+	C1->cmn.uninitialize = &c1_spline_uninitialize;
+
+	//	Set up the C1_SPLINE interpolant
+	c1_spline_compute_g2p(C1);
+	c1_spline_compute_g2fg(C1);
+	c1_spline_compute_g2g(C1);
+	c1_spline_compute_tg2g(C1);
+}
+
+void c1_spline_evaluate(void* Interpolant)
+{
+	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+
+	assert(C1 != NULL);
+
+}
+
+void c1_spline_uninitialize(void* Interpolant)
+{
+	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+
+	assert(C1 != NULL);
+	printf("\tUn-initializing C1_SPLINE!\n");
+
+	dynfree(C1->cmn.g2p);
+	dynfree(C1->cmn.g2fg);
+	dynfree(C1->cmn.g2g);
+	dynfree(C1->cmn.tg2g);
+	dynfree(C1);
+}
+
+//	INTERNAL Methods
+void c1_spline_compute_g2p(C1_SPLINE* C1)
+{
+}
+
+void c1_spline_compute_g2fg(C1_SPLINE* C1)
+{
+}
+
+void c1_spline_compute_g2g(C1_SPLINE* C1)
+{
+}
+
+void c1_spline_compute_tg2g(C1_SPLINE* C1)
+{
+}
+
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant
 	x is the independent variable

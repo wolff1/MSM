@@ -8,7 +8,24 @@ c1_spline.h - C1 phi
 
 #include "all.h"
 #include "memory.h"
-#include "output.h"		//	remove?
+#include "interpolant.h"
+
+typedef struct
+{
+	//	Members
+	INTERPOLANT		cmn;
+} C1_SPLINE;
+
+//	EXTERNAL Methods
+void c1_spline_initialize(void* Interpolant);
+void c1_spline_evaluate(void* Interpolant);
+void c1_spline_uninitialize(void* Interpolant);
+
+//	INTERNAL Methods
+void c1_spline_compute_g2p(C1_SPLINE* C1);
+void c1_spline_compute_g2fg(C1_SPLINE* C1);
+void c1_spline_compute_g2g(C1_SPLINE* C1);
+void c1_spline_compute_tg2g(C1_SPLINE* C1);
 
 /*
 	p gives the order of accuracy and p-1 is the degree of the interpolant

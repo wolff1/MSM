@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-b_spline.h - operator related routine(s)
+b_spline.h - Structure for initializing, using, and uninitializing B-splines
 */
 
 #ifndef	B_SPLINE_H
@@ -10,6 +10,25 @@ b_spline.h - operator related routine(s)
 #include "memory.h"
 #include "interpolant.h"	//	remove?
 #include "polynomial.h"
+
+typedef struct
+{
+	//	Members
+	INTERPOLANT		cmn;
+	double*			omega;
+	double*			omegap;
+} B_SPLINE;
+
+//	EXTERNAL Methods
+void b_spline_initialize(void* Interpolant);
+void b_spline_evaluate(void* Interpolant);
+void b_spline_uninitialize(void* Interpolant);
+
+//	INTERNAL Methods
+void b_spline_compute_g2p(B_SPLINE* Bs);
+void b_spline_compute_g2fg(B_SPLINE* Bs);
+void b_spline_compute_g2g(B_SPLINE* Bs);
+void b_spline_compute_tg2g(B_SPLINE* Bs);
 
 /*
 void compute_B(short degree)
@@ -64,6 +83,25 @@ void compute_omega(short p, short n, double* omega);
 compute omega' values
 */
 void compute_omega_prime(short p, short mu, double* omegap);
+
+//	INTERNAL Methods
+/*
+	p gives the order of accuracy and p-1 is the degree of the interpolant
+	x is the independent variable
+	*dphi is output parameter which will contain the derivative of phi at x
+*/
+double phi(short p, double x, double* dphi);
+
+void new_phi(short p, double** g2p, short n, double* x, double* phi, double* dphi);
+
+/*
+Compute the coefficients for the B-spines which allow them to be
+nested from a grid to a finer grid.
+
+p such that p-1 is degree of B-spline
+g2fg is (p/2 + 1)-vector
+*/
+void compute_g2fg(short p, double* g2fg);
 
 #endif
 
