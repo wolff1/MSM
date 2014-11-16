@@ -212,8 +212,8 @@ void b_spline_evaluate_recurrence(B_SPLINE* Bs, double x, double* f, double* df)
 
 void b_spline_compute_g2p(B_SPLINE* Bs)
 {
-    short       p = 0;
     double**    g2p = NULL;
+    short       p = 0;
     short       p_2 = 0;
     short       i = 0;
     short       j = 0;
