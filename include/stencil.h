@@ -8,7 +8,7 @@ stencil.h -
 
 #include "all.h"
 #include "memory.h"
-#include "even_powers.h"
+#include "softener.h"
 
 #define	STENCIL_STORAGE(L)		(L+1)*(L+2)*(L+3)/6
 #define	STENCIL_MAP_Z(z)		(z)*(z+1)*(z+2)/6
@@ -32,22 +32,22 @@ stencil.h -
 
 typedef struct
 {
-	short			shape;
-	long			size;	//	= zmax
-	long*			ymax;
-	long*			xmax;
-	double*			data;
+	short			Shape;
+	long			Size;	//	= zmax
+	long*			YMax;
+	long*			XMax;
+	double*			Data;
 } STENCIL;
 
-void stencil_initialize(STENCIL* s, long size, short shape);
-void stencil_populate(STENCIL* s, double* c, short k, short function_type,
-						double h_a);
+void stencil_initialize(STENCIL** t, long Size, short Shape);
+void stencil_populate(STENCIL* s, SOFTENER* Softener, short FunctionType, double Scale);
+void stencil_shift(STENCIL* s, short Degree, double* OmegaPrime, STENCIL* K);
+void stencil_shift_infinite(STENCIL* s, short Degree, double* OmegaPrime, STENCIL* K);
 void stencil_display(STENCIL* s, double h_a);
-void stencil_shift(STENCIL* s, short degree, double* omega_prime, STENCIL* K);
 void stencil_free(STENCIL* s);
-void stencil_naive(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Ki);
-void stencil_shift_infinite(STENCIL* s, short degree, double* omegap, STENCIL* K);
-void stencil_naive_top(short p, double a, double h, short degree, double* omegap, short k, double* c, STENCIL* Kt);
+
+//void stencil_naive(short p, double a, double h, short Degree, double* OmegaPrime, short k, double* c, STENCIL* Ki);
+//void stencil_naive_top(short p, double a, double h, short Degree, double* OmegaPrime, short k, double* c, STENCIL* Kt);
 
 #endif
 

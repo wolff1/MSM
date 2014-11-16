@@ -17,6 +17,7 @@ typedef struct
 {
 	double		a;
 	double		h;
+	double		alpha;
 	short		p;
 	short		k;
 	short		mu;
@@ -29,14 +30,12 @@ typedef struct
 	short		p;
 	double**	g2p;
 	double*		g2fg;
-	STENCIL		g2g;
-	STENCIL		tg2g;
-	STENCIL		GammaI;
-	STENCIL		GammaT;
+	STENCIL*	g2g;
+	STENCIL*	tg2g;
 
 	//	Methods
-	void		(*compute_g2g)(void*);
-	void		(*compute_tg2g)(void*);
+	void		(*compute_g2g)(void*, SOFTENER*, MSM_PARAMETERS*);
+	void		(*compute_tg2g)(void*, SOFTENER*, MSM_PARAMETERS*);
 	void		(*evaluate)(void*, long, double*, double*, double*);
 	void		(*uninitialize)(void*);
 } INTERPOLANT;

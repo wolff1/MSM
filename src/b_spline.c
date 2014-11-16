@@ -23,6 +23,8 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	Bs->mu = MsmParams->mu;
 	Bs->omega = NULL;
 	Bs->omegap = NULL;
+	Bs->GammaIntermediate = NULL;
+	Bs->GammaTop = NULL;
 
 	//	Set up the B_SPLINE interpolant
 	b_spline_compute_g2p(Bs);
@@ -33,38 +35,62 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 //	b_spline_compute_tg2g(Bs);		//	Happens in preprocess
 }
 
-void b_spline_compute_g2g(void* Interpolant)
+void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams)
 {
+	long			Size = 0;
+	double			Scale = 1.0;
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
+
 	assert(Bs != NULL);
+	assert(Softener != NULL);
+	assert(MsmParams != NULL);
 	printf("\tB_SPLINE compute_g2g\n");
-/*
+
 	//	Pre-processing (Intermediate levels)
-	stencil_populate(&theta, c, k, STENCIL_FUNCTION_TYPE_THETA, h/a);
-	//stencil_display(&theta, h/a);
+	Size = (long) ceil(2.0*MsmParams->alpha);
+	Scale = MsmParams->h/MsmParams->a;
 
-	stencil_shift(&theta, p_2 + mu, omegap, &g2g);
-	//stencil_display(&g2g, 1.0);
+	//	Compute Gamma sequence (defined by theta function) for intermediate level grid(s)
+	stencil_initialize(&Bs->GammaIntermediate, Size, STENCIL_SHAPE_SPHERE);
+	stencil_populate(Bs->GammaIntermediate, Softener, STENCIL_FUNCTION_TYPE_THETA, Scale);
+//	stencil_display(Bs->GammaIntermediate, MsmParams->h/MsmParams->a);
 
-	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g);
-*/
+	//	Compute K^l by shifting Gamma sequence
+	stencil_initialize(&Bs->cmn.g2g, Bs->GammaIntermediate->Size, Bs->GammaIntermediate->Shape);
+	stencil_shift(Bs->GammaIntermediate, Bs->cmn.p/2 + Bs->mu, Bs->omegap, Bs->cmn.g2g);
+	stencil_free(Bs->GammaIntermediate);	//	We only need g2g, so its OK to delete Gamma sequence (FIXME - Save to file in case we need to enlarge later?)
+//	stencil_display(Bs->cmn.g2g, 1.0);
+
+//	stencil_naive(p, a, h, p_2+mu, omegap, k, c, &g2g);
 }
 
-void b_spline_compute_tg2g(void* Interpolant)
+void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams)
 {
+	long			Size = 0;
+	double			Scale = 1.0;
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
+
 	assert(Bs != NULL);
+	assert(Softener != NULL);
+	assert(MsmParams != NULL);
 	printf("\tB_SPLINE compute_tg2g\n");
-/*
+
 	//	Pre-processing (Top level)
-	stencil_populate(&gamma, c, k, STENCIL_FUNCTION_TYPE_GAMMA, h/a);
-	//stencil_display(&gamma, h/a);
+	Size = (long) ceil(MsmParams->D);
+	Scale = MsmParams->h/MsmParams->a;
 
-	stencil_shift_infinite(&gamma, p_2+mu, omegap, &tg2g);
-	//stencil_display(&tg2g, 1.0);
+	//	Compute Gamma sequence (defined by gamma function) for top level grid
+	stencil_initialize(&Bs->GammaTop, Size + (Bs->cmn.p/2 + Bs->mu), STENCIL_SHAPE_CUBE);
+	stencil_populate(Bs->GammaTop, Softener, STENCIL_FUNCTION_TYPE_GAMMA, Scale);
+//	stencil_display(Bs->GammaTop, MsmParams->h/MsmParams->a);
 
-	stencil_naive_top(p, a, h, p_2+mu, omegap, k, c, &tg2g);
-*/
+	//	Compute K^L by shifting Gamma sequence
+	stencil_initialize(&Bs->cmn.tg2g, Size, Bs->GammaTop->Shape);
+	stencil_shift_infinite(Bs->GammaTop, Bs->cmn.p/2 + Bs->mu, Bs->omegap, Bs->cmn.tg2g);
+	stencil_free(Bs->GammaTop);	//	We only need g2g, so its OK to delete Gamma sequence (FIXME - Save to file in case we need to enlarge later?)
+//	stencil_display(Bs->cmn.tg2g, 1.0);
+
+//	stencil_naive_top(p, a, h, p_2+mu, omegap, k, c, &tg2g);
 }
 
 void b_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF)
@@ -120,19 +146,14 @@ void b_spline_uninitialize(void* Interpolant)
 	assert(Bs != NULL);
 	printf("\tUn-initializing B_SPLINE!\n");
 
-	//	Free the dynamically allocated stencil memory
-	stencil_free(&Bs->cmn.GammaI);
-	stencil_free(&Bs->cmn.GammaT);
-	stencil_free(&Bs->cmn.g2g);
-	stencil_free(&Bs->cmn.tg2g);
-
+	//	Free the dynamically allocated memory
+	stencil_free(Bs->cmn.g2g);
+	stencil_free(Bs->cmn.tg2g);
 	dynfree(Bs->omega);
 	dynfree(Bs->omegap);
 	dynfree(Bs->cmn.g2p[0]);
 	dynfree(Bs->cmn.g2p);
 	dynfree(Bs->cmn.g2fg);
-//	dynfree(Bs->cmn.g2g);
-//	dynfree(Bs->cmn.tg2g);
 	dynfree(Bs);
 }
 

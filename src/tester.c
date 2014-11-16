@@ -1552,6 +1552,9 @@ void test_preprocessing(void)
 	STENCIL			g2g;
 	STENCIL			tg2g;
 
+	void*			Init = NULL;
+	SOFTENER*		s = NULL;
+	
 	//	Get parameters from user
 	printf("Please enter p: ");
 	scanf("%hd", &p);
@@ -1567,6 +1570,9 @@ void test_preprocessing(void)
 
 	printf("Enter h: "); // alpha = a/h, radius = 2*alpha
 	scanf("%lf", &h);
+/*
+	Init = &even_powers_initialize;
+	softener_initialize((void**)&s, sizeof(EVEN_POWERS), Init, k);
 
 	//	Compute computed values
 	p_2 = p/2;
@@ -1609,6 +1615,7 @@ void test_preprocessing(void)
 	stencil_free(&gamma);
 	stencil_free(&g2g);
 	stencil_free(&tg2g);
+*/
 }
 
 void test_softener(SOFTENER* s)

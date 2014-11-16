@@ -19,10 +19,8 @@ void interpolant_initialize(void** Interpolant, size_t Size, void* Init(void*,MS
 	((INTERPOLANT*)(*Interpolant))->p = MsmParams->p;
 	((INTERPOLANT*)(*Interpolant))->g2p = NULL;
 	((INTERPOLANT*)(*Interpolant))->g2fg = NULL;
-	stencil_initialize(&((INTERPOLANT*)(*Interpolant))->GammaI, (long) ceil(2.0*MsmParams->a / MsmParams->h), STENCIL_SHAPE_SPHERE);
-	stencil_initialize(&((INTERPOLANT*)(*Interpolant))->GammaT, (long) ceil(MsmParams->D), STENCIL_SHAPE_CUBE);
-	stencil_initialize(&((INTERPOLANT*)(*Interpolant))->g2g, ((INTERPOLANT*)(*Interpolant))->GammaI.size, ((INTERPOLANT*)(*Interpolant))->GammaI.shape);
-	stencil_initialize(&((INTERPOLANT*)(*Interpolant))->tg2g, ((INTERPOLANT*)(*Interpolant))->GammaT.size, ((INTERPOLANT*)(*Interpolant))->GammaT.shape);
+	((INTERPOLANT*)(*Interpolant))->g2g = NULL;
+	((INTERPOLANT*)(*Interpolant))->tg2g = NULL;
 
 	//	Initialize Interpolant by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!

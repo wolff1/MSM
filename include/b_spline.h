@@ -18,12 +18,14 @@ typedef struct
 	short			mu;
 	double*			omega;
 	double*			omegap;
+	STENCIL*		GammaIntermediate;
+	STENCIL*		GammaTop;
 } B_SPLINE;
 
 //	EXTERNAL Methods
 void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams);
-void b_spline_compute_g2g(void* Interpolant);
-void b_spline_compute_tg2g(void* Interpolant);
+void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams);
+void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams);
 void b_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF);
 void b_spline_uninitialize(void* Interpolant);
 

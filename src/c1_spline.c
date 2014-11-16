@@ -24,18 +24,46 @@ void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	c1_spline_compute_g2fg(C1);
 }
 
-void c1_spline_compute_g2g(void* Interpolant)
+void c1_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams)
 {
+	long			Size = 0;
+	double			Scale = 1.0;
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+
 	assert(C1 != NULL);
+	assert(Softener != NULL);
+	assert(MsmParams != NULL);
 	printf("\tC1_SPLINE compute_g2g\n");
+
+	//	Pre-processing (Intermediate levels)
+	Size = (long) ceil(2.0*MsmParams->alpha);
+	Scale = MsmParams->h/MsmParams->a;
+
+	//	Compute K^l sequence (defined by theta function) for intermediate level grid(s)
+	stencil_initialize(&C1->cmn.g2g, Size, STENCIL_SHAPE_SPHERE);
+	stencil_populate(C1->cmn.g2g, Softener, STENCIL_FUNCTION_TYPE_THETA, Scale);
+//	stencil_display(C1->cmn.g2g, MsmParams->h/MsmParams->a);
 }
 
-void c1_spline_compute_tg2g(void* Interpolant)
+void c1_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams)
 {
+	long			Size = 0;
+	double			Scale = 1.0;
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
+
 	assert(C1 != NULL);
+	assert(Softener != NULL);
+	assert(MsmParams != NULL);
 	printf("\tC1_SPLINE compute_tg2g\n");
+
+	//	Pre-processing (Top level)
+	Size = (long) ceil(MsmParams->D);
+	Scale = MsmParams->h/MsmParams->a;
+
+	//	Compute K^L sequence (defined by gamma function) for top level grid
+	stencil_initialize(&C1->cmn.tg2g, Size, STENCIL_SHAPE_CUBE);
+	stencil_populate(C1->cmn.tg2g, Softener, STENCIL_FUNCTION_TYPE_GAMMA, Scale);
+//	stencil_display(C1->cmn.tg2g, MsmParams->h/MsmParams->a);
 }
 
 void c1_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF)
@@ -51,12 +79,9 @@ void c1_spline_uninitialize(void* Interpolant)
 	assert(C1 != NULL);
 	printf("\tUn-initializing C1_SPLINE!\n");
 
-	//	Free the dynamically allocated stencil memory
-	stencil_free(&C1->cmn.GammaI);
-	stencil_free(&C1->cmn.GammaT);
-	stencil_free(&C1->cmn.g2g);
-	stencil_free(&C1->cmn.tg2g);
-
+	//	Free the dynamically allocated memory
+	stencil_free(C1->cmn.g2g);
+	stencil_free(C1->cmn.tg2g);
 	//dynfree(C1->cmn.g2p[0]);
 	//dynfree(C1->cmn.g2p);
 	//dynfree(C1->cmn.g2fg);
