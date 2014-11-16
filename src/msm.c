@@ -40,7 +40,7 @@ void msm_initialize(void* Method)
 	//	Initialize INTERPOLANT
 	Ptr = NULL;
 	Msm->itp = NULL;
-	if (0)
+	if (1)
 	{	//	B_SPLINE interpolant
 		Size = sizeof(B_SPLINE);
 		Init = &b_spline_initialize;

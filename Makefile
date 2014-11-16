@@ -24,10 +24,10 @@ LIBS	= -mkl
 CC		= icc
 CFLAGS	= -Wall -Wshadow -I$(IDIR)
 
-_DEPS	= all.h b_spline.h c1_spline.h even_powers.h interpolant.h memory.h output.h softener.h tester.h
+_DEPS	= all.h b_spline.h c1_spline.h even_powers.h interpolant.h memory.h method.h msm.h output.h polynomial.h softener.h stencil.h tester.h
 DEPS	= $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ	= b_spline.o c1_spline.o interpolant.o memory.o output.o even_powers.o softener.o main.o
+_OBJ	= b_spline.o c1_spline.o even_powers.o interpolant.o main.o memory.o method.o msm.o output.o polynomial.o softener.o stencil.o tester.o
 OBJ		= $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: $(SDIR)/%.c $(IDIR)/$(DEP)
