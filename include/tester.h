@@ -18,7 +18,7 @@ tester.h -
 #include "polynomial.h"
 #include "softener.h"
 #include "stencil.h"
-
+/*
 //	**** POLYNOMIAL ****
 void test_mpoly(void);
 
@@ -50,7 +50,7 @@ void test_softener(SOFTENER* s);
 //	**** OTHER ****
 void test_sinc(void);
 void test_preprocessing(void);
-
+*/
 #endif
 
 //	End of file

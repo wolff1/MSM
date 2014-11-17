@@ -46,9 +46,6 @@ void stencil_shift_infinite(STENCIL* s, short Degree, double* OmegaPrime, STENCI
 void stencil_display(STENCIL* s, double h_a);
 void stencil_free(STENCIL* s);
 
-//void stencil_naive(short p, double a, double h, short Degree, double* OmegaPrime, short k, double* c, STENCIL* Ki);
-//void stencil_naive_top(short p, double a, double h, short Degree, double* OmegaPrime, short k, double* c, STENCIL* Kt);
-
 #endif
 
 //	End of file

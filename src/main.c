@@ -16,6 +16,49 @@ int main(int argc, char* argv[])
 	while (choice > 0)
 	{
 		printf("************** MENU **************\n");
+		printf("* 1 - Test Simulator             *\n");
+		printf("**********************************\n");
+		printf("* 0 - Exit                       *\n");
+		printf("**********************************\n");
+		printf("Your selection: ");
+		scanf("%d", &choice);
+
+		// Give them what they want.
+		switch (choice)
+		{
+			case 1:	//	Test the simulator
+				simulator();
+				break;
+
+			case 0:	// Exit
+				break;
+
+			default:	// Invalid
+				printf("You selected <%d> which is INVALID\n", choice);
+				choice = 1;
+		}
+
+		if (choice > 0)
+		{
+			// Put some space before next menu is displayed
+			printf("\n\n");
+		}
+	}
+
+	// Use MKL functions to check for memory leak
+	mkl_memory_check();
+
+	return 0;
+}
+
+/*
+int main(int argc, char* argv[])
+{
+	int				choice = 1;
+
+	while (choice > 0)
+	{
+		printf("************** MENU **************\n");
 		printf("* 1 - Display Phi Test           *\n");
 		printf("* 2 - Test MKL MMM               *\n");
 		printf("* 3 - Display Gamma Tests        *\n");
@@ -129,10 +172,12 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+*/
 
 /*
 Use MKL and CBLAS to do matrix-matrix multiplication
 */
+
 void test_mkl_MMM(void)
 {
 	MKL_INT64	AllocatedBytes;

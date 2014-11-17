@@ -27,9 +27,6 @@ void c1_spline_uninitialize(void* Interpolant);
 void c1_spline_compute_g2p(C1_SPLINE* C1);
 void c1_spline_compute_g2fg(C1_SPLINE* C1);
 
-double phiC1(int p, double x, double* dphi);
-void compute_g2fgC1(short p, double* g2fg);
-
 #endif
 
 // End of file

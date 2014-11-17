@@ -24,16 +24,6 @@ void even_powers_uninitialize(void* Softener);
 //	INTERNAL Methods
 void even_powers_compute_p2p(EVEN_POWERS* Ep);
 
-//*****************************************************//
-//*****DELETE EVERYTHING FROM HERE DOWN EVENTUALLY*****//
-//*****************************************************//
-
-void gamma_init(short k, double* x);
-double _gamma(double *c, short k, double x, double* dgamma);
-double theta_star(double *c, short k, double x, double* dtheta_star);
-double theta(double *c, short k, double x, double* dtheta);
-double thetap(double *c, short k, double x, double* dtheta);
-
 #endif
 
 // End of file

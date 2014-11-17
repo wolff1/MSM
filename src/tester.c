@@ -6,7 +6,7 @@ tester.c -
 #include "all.h"
 #include "tester.h"
 
-
+#if 0
 //	**** POLYNOMIAL ****
 void test_mpoly(void)
 {
@@ -1677,5 +1677,6 @@ void test_softener(SOFTENER* s)
 	dynfree(FX);
 	dynfree(DFX);
 }
+#endif
 
 //	End of file
