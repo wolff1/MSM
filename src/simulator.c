@@ -30,6 +30,7 @@ void simulator_run(SIMULATOR* Simulator)
 {
 	//	Build list of simulations to run
 	short					i = 0;
+	size_t					MethodSize = 0;
 	void*					Init = NULL;
 	SIMULATION_DOMAIN*		SimulationDomain = NULL;
 	METHOD*					Method = NULL;
@@ -66,17 +67,17 @@ void simulator_run(SIMULATOR* Simulator)
 		//		Create and initialize method?
 		if (SelectedMethod == 1)	//	MSM
 		{
-			Method = NULL;
 			Init = &msm_initialize;
-			method_initialize((void**)&Method, sizeof(MSM), Init);
+			MethodSize = sizeof(MSM);
 		}
 		else						//	NAIVE
 		{
-			Method = NULL;
 			Init = &naive_initialize;
-			method_initialize((void*)&Method, sizeof(NAIVE), Init);
+			MethodSize = sizeof(NAIVE);
 		}
 
+		Method = NULL;
+		method_initialize((void*)&Method, MethodSize, Init);
 		Method->Id = i;
 		Method->preprocess(Method);
 		Simulator->Methods[i] = Method;

@@ -21,10 +21,8 @@ void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, M
 	(*Simulation)->TimeSteps = TimeSteps;
 
 	//	Make *separate* copies of Domain and Method
-//	simulation_domain_initialize(&Simulation->Domain);
+	//		-> They've already been initialized (i.e. preprocessing, etc)
 //	domain_copy(Domain, &Simulation->Domain);
-
-//	method_initialize(&Simulation->Method, sizeof(1), NULL);
 //	method_copy(Method, &Simulation->Method);
 }
 
@@ -37,13 +35,12 @@ void simulation_run(SIMULATION* Simulation)
 	{
 		if (0/*Domain enlarged*/)
 		{
-			Simulation->Method->preprocess(&Simulation->Method);
+			Simulation->Method->preprocess(Simulation->Method);
 		}
 
-		//Simulation->Method.evaluate(&Simulation->Method);
+//		Simulation->Method->evaluate(Simulation->Method);
 		simulation_step(Simulation);
 	}
-	//Sim->Method.uninitialize(&Sim->Method); //<--- happens in simulator
 }
 
 void simulation_uninitialize(SIMULATION* Simulation)
