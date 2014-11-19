@@ -3,6 +3,8 @@
 tester.h - 
 */
 
+//	NOTE:		CURRENTLY UNUSED!
+
 #ifndef TESTER_H
 #define TESTER_H
 

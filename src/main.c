@@ -3,11 +3,13 @@
 main.c - entry point for the tester
 */
 
-#include "tester.h"
+#include "msm.h"
+#include "simulator.h"
 
 void test_mkl_MMM(void);
 
-void simulator(void);
+void test_msm_preprocessing(void);
+void test_simulator(void);
 
 int main(int argc, char* argv[])
 {
@@ -16,7 +18,8 @@ int main(int argc, char* argv[])
 	while (choice > 0)
 	{
 		printf("************** MENU **************\n");
-		printf("* 1 - Test Simulator             *\n");
+		printf("* 1 - Test MSM Preprocessing     *\n");
+		printf("* 2 - Simulator                  *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -26,8 +29,12 @@ int main(int argc, char* argv[])
 		// Give them what they want.
 		switch (choice)
 		{
-			case 1:	//	Test the simulator
-				simulator();
+			case 1:	//	Test the preprocessing routines
+				test_msm_preprocessing();
+				break;
+
+			case 2:	//	Test the simulator
+				test_simulator();
 				break;
 
 			case 0:	// Exit
@@ -218,7 +225,7 @@ void test_mkl_MMM(void)
 	dynfree(C);
 }
 
-void simulator(void)
+void test_msm_preprocessing(void)
 {
 	//	Generic Variables
 	void*		Ptr = NULL;
@@ -240,6 +247,15 @@ void simulator(void)
 	(*Method->preprocess)(Method);
 	(*Method->evaluate)(Method);
 	(*Method->uninitialize)(Method);
+}
+
+void test_simulator(void)
+{
+	SIMULATOR	MySimulator;
+
+	simulator_initialize(&MySimulator);
+	simulator_run(&MySimulator);
+	simulator_uninitialize(&MySimulator);
 }
 
 // End of file

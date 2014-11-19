@@ -21,4 +21,11 @@ void method_initialize(void** Method, size_t Size, void* Init(void*))
 	(*Init)(*Method);
 }
 
+void method_uninitialize(void* Method)
+{
+	assert(Method != NULL);
+
+	((METHOD*) Method)->uninitialize(Method);
+}
+
 //	End of file

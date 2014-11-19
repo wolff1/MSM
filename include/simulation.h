@@ -12,6 +12,7 @@ simulation.h -
 
 typedef struct
 {
+	short					Id;
 	SIMULATION_DOMAIN		Domain;
 	METHOD					Method;
 	long					TimeSteps;
@@ -19,12 +20,12 @@ typedef struct
 } SIMULATION;
 
 //	EXTERNAL Methods
-void simulation_initialize(SIMULATION* Sim);
-void simulation_run(SIMULATION* Sim);
-void simulation_uninitialize(SIMULATION* Sim);
+void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method);
+void simulation_run(SIMULATION* Simulation);
+void simulation_uninitialize(SIMULATION* Simulation);
 
 //	INTERNAL Methods
-void simulation_step(SIMULATION* Sim);
+void simulation_step(SIMULATION* Simulation);
 
 #endif
 

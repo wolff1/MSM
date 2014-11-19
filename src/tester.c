@@ -3,6 +3,8 @@
 tester.c - 
 */
 
+//	NOTE:		CURRENTLY UNUSED!
+
 #include "all.h"
 #include "tester.h"
 

@@ -11,19 +11,27 @@ simulator.h -
 #include "method.h"
 #include "simulation.h"
 
+#include "msm.h"
+
 typedef struct
 {
-	SIMULATION_DOMAIN*		Domain;
-	METHOD*					Method;
-	SIMULATION*				Simulation;
+	short					NumDomains;
+	short					NumMethods;
+	short					NumSimulations;
+	SIMULATION_DOMAIN**		Domains;
+	METHOD**				Methods;
+	SIMULATION**			Simulations;
 //	OUTPUT*					Output;
 } SIMULATOR;
 
 //	EXTERNAL Methods
-void simulator_initialize(SIMULATOR* Sim);
-void simulator_run(SIMULATOR* Sim);
-void simulator_run_all(SIMULATOR* Sim);
-void simulator_uninitialize(SIMULATOR* Sim);
+void simulator_initialize(SIMULATOR* Simulator);
+void simulator_run(SIMULATOR* Simulator);
+void simulator_uninitialize(SIMULATOR* Simulator);
+
+//	INTERNAL Methods
+void simulator_run_simulations(SIMULATOR* Simulator);
+void simulator_run_simulation(SIMULATOR* Simulator, short Index);
 
 #endif
 

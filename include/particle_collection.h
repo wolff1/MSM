@@ -7,6 +7,7 @@ particle_collection.h -
 #define PARTICLE_COLLECTION_H
 
 #include "all.h"
+#include "memory.h"
 #include "particle.h"
 
 typedef struct

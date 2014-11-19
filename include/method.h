@@ -12,6 +12,7 @@ method.h - Definition for the generic METHOD class
 typedef struct
 {
 	//	Members
+	short		Id;
 	double		U;
 	double**	f;
 
@@ -23,6 +24,7 @@ typedef struct
 
 //	EXTERNAL Methods
 void method_initialize(void** Method, size_t Size, void* Init(void*));
+void method_uninitialize(void* Method);
 
 #endif
 
