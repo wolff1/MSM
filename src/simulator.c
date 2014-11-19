@@ -6,20 +6,24 @@ simulator.c -
 #include "simulator.h"
 
 //	EXTERNAL Methods
-void simulator_initialize(SIMULATOR* Simulator)
+void simulator_initialize(SIMULATOR** Simulator)
 {
 	//	A simulator object contains a) simulations, b) domains, c) methods, and d) other stuff
 	//	A simulation is the repeated application of a specific method to a certain domain
 	//	A domain is a system of particles, and any other relevant information
 	//	A method computes the forces and electrostatic energy within a domain
-	Simulator->NumDomains = 0;
-	Simulator->Domains = NULL;
+	assert(*Simulator == NULL);
 
-	Simulator->NumMethods = 0;
-	Simulator->Methods = NULL;
+	(*Simulator) = (SIMULATOR*) dynmem(sizeof(SIMULATOR));
 
-	Simulator->NumSimulations = 0;
-	Simulator->Simulations = NULL;
+	(*Simulator)->NumDomains = 0;
+	(*Simulator)->Domains = NULL;
+
+	(*Simulator)->NumMethods = 0;
+	(*Simulator)->Methods = NULL;
+
+	(*Simulator)->NumSimulations = 0;
+	(*Simulator)->Simulations = NULL;
 }
 
 void simulator_run(SIMULATOR* Simulator)
@@ -32,6 +36,8 @@ void simulator_run(SIMULATOR* Simulator)
 	SIMULATION*				Simulation = NULL;
 	short					DomainIdx = 0;
 	short					MethodIdx = 0;
+	char					DomainFileName[128] = {0};
+	short					SelectedMethod = 0;
 
 	printf("How many domains? ");
 	scanf("%hd", &Simulator->NumDomains);
@@ -40,10 +46,12 @@ void simulator_run(SIMULATOR* Simulator)
 	{
 		//	Which domain? (consider filename to be unique)
 		//		Create and initialize domain?
+		printf("Enter the file name for domain #%hd: ", i);
+		scanf("%s", DomainFileName);
+
 		SimulationDomain = NULL;
-		simulation_domain_initialize(&SimulationDomain);
+		simulation_domain_initialize(&SimulationDomain, i, DomainFileName);
 		Simulator->Domains[i] = SimulationDomain;
-		Simulator->Domains[i]->Id = i;
 	}
 
 	printf("How many methods? ");
@@ -51,16 +59,27 @@ void simulator_run(SIMULATOR* Simulator)
 	Simulator->Methods = (METHOD**) dynmem(Simulator->NumMethods*sizeof(METHOD*));
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
+		printf("Please enter which method (NAIVE=0,MSM=1) for method #%hd: ", i);
+		scanf("%hd", &SelectedMethod);
+
 		//	Which method? (consider combination of parameters to be unique)
 		//		Create and initialize method?
-		if (1/*MSM*/)
+		if (SelectedMethod == 1)	//	MSM
 		{
 			Method = NULL;
 			Init = &msm_initialize;
 			method_initialize((void**)&Method, sizeof(MSM), Init);
 		}
+		else						//	NAIVE
+		{
+			Method = NULL;
+			Init = &naive_initialize;
+			method_initialize((void*)&Method, sizeof(NAIVE), Init);
+		}
+
+		Method->Id = i;
+		Method->preprocess(Method);
 		Simulator->Methods[i] = Method;
-		Simulator->Methods[i]->Id = i;
 	}
 
 	//	Assume each method will be used for each domain
@@ -73,9 +92,8 @@ void simulator_run(SIMULATOR* Simulator)
 
 		//	Create simulation (these could happen in parallel with OpenMP)
 		Simulation = NULL;
-		simulation_initialize(&Simulation, Simulator->Domains[DomainIdx], Simulator->Methods[MethodIdx]);
+		simulation_initialize(&Simulation, Simulator->Domains[DomainIdx], Simulator->Methods[MethodIdx], i, 1);	//FIXME <-- 1 is TimeSteps
 		Simulator->Simulations[i] = Simulation;
-		Simulator->Simulations[i]->Id = i;
 	}
 
 	//	Then, run the simulations
@@ -108,6 +126,8 @@ void simulator_uninitialize(SIMULATOR* Simulator)
 	}
 	dynfree(Simulator->Simulations);
 	Simulator->NumSimulations = 0;
+
+	dynfree(Simulator);
 }
 
 //	INTERNAL Methods

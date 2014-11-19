@@ -12,6 +12,7 @@ simulator.h -
 #include "simulation.h"
 
 #include "msm.h"
+#include "naive.h"
 
 typedef struct
 {
@@ -25,7 +26,7 @@ typedef struct
 } SIMULATOR;
 
 //	EXTERNAL Methods
-void simulator_initialize(SIMULATOR* Simulator);
+void simulator_initialize(SIMULATOR** Simulator);
 void simulator_run(SIMULATOR* Simulator);
 void simulator_uninitialize(SIMULATOR* Simulator);
 

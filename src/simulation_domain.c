@@ -6,13 +6,22 @@ domain.c -
 #include "simulation_domain.h"
 
 //	EXTERNAL Methods
-void simulation_domain_initialize(SIMULATION_DOMAIN** Domain)
+void simulation_domain_initialize(SIMULATION_DOMAIN** Domain, short Id, char* FileName)
 {
 	//	A domain is a system of particles, and any other relevant information
 	PARTICLE_COLLECTION*		Pc = NULL;
 	assert(*Domain == NULL);
+/*
+	short					Id;
+	PARTICLE_COLLECTION*	Particles;
+	PARTICLE				MinimumCoordinates;
+	PARTICLE				CenterCoordinates;
+	PARTICLE				MaximumCoordinates;
+	double					Radius;
+*/
+	(*Domain) = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
 
-	*Domain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
+	(*Domain)->Id = Id;
 	particle_collection_initialize(&Pc);
 	(*Domain)->Particles = Pc;
 }

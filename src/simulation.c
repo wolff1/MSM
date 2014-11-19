@@ -6,7 +6,7 @@ simulation.c -
 #include "simulation.h"
 
 //	EXTERNAL Methods
-void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method)
+void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method, short Id, long TimeSteps)
 {
 	//	A simulation is the repeated application of a specific method to a certain domain
 	//	A domain is a system of particles, and any other relevant information
@@ -14,9 +14,18 @@ void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, M
 	assert(*Simulation == NULL);
 	assert(Domain != NULL);
 	assert(Method != NULL);
-	*Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
-	(*Simulation)->TimeSteps = 1;
-	Method->preprocess((void*)Method);
+
+	(*Simulation) = (SIMULATION*) dynmem(sizeof(SIMULATION));
+
+	(*Simulation)->Id = Id;
+	(*Simulation)->TimeSteps = TimeSteps;
+
+	//	Make *separate* copies of Domain and Method
+//	simulation_domain_initialize(&Simulation->Domain);
+//	domain_copy(Domain, &Simulation->Domain);
+
+//	method_initialize(&Simulation->Method, sizeof(1), NULL);
+//	method_copy(Method, &Simulation->Method);
 }
 
 void simulation_run(SIMULATION* Simulation)
@@ -26,9 +35,9 @@ void simulation_run(SIMULATION* Simulation)
 
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{
-		if (0/* OR Domain enlarged*/)
+		if (0/*Domain enlarged*/)
 		{
-			Simulation->Method.preprocess(&Simulation->Method);
+			Simulation->Method->preprocess(&Simulation->Method);
 		}
 
 		//Simulation->Method.evaluate(&Simulation->Method);
@@ -40,6 +49,8 @@ void simulation_run(SIMULATION* Simulation)
 void simulation_uninitialize(SIMULATION* Simulation)
 {
 	//	Free dynamically allocated memory
+//	simulation_domain_uninitialize(Simulation->Domain);
+//	method_uninitialize(Simulation->Method);
 	dynfree(Simulation);
 }
 

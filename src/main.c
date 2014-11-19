@@ -251,11 +251,11 @@ void test_msm_preprocessing(void)
 
 void test_simulator(void)
 {
-	SIMULATOR	MySimulator;
+	SIMULATOR*	MySimulator = NULL;
 
 	simulator_initialize(&MySimulator);
-	simulator_run(&MySimulator);
-	simulator_uninitialize(&MySimulator);
+	simulator_run(MySimulator);
+	simulator_uninitialize(MySimulator);
 }
 
 // End of file
