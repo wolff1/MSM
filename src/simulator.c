@@ -22,6 +22,7 @@ void simulator_run(SIMULATOR* Sim)
 void simulator_run_all(SIMULATOR* Sim)
 {
 	//	Start all simulations within the simulator
+	//		-> Use OpenMP to multi-thread simulations at this level?
 }
 
 void simulator_uninitialize(SIMULATOR* Sim)

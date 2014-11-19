@@ -9,7 +9,6 @@ domain.c -
 void simulation_domain_initialize(SIMULATION_DOMAIN* Domain)
 {
 	//	A domain is a system of particles, and any other relevant information
-	//	A method computes the forces and electrostatic energy within a domain
 }
 
 void simulation_domain_compute_forces(SIMULATION_DOMAIN* Domain)

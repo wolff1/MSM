@@ -16,7 +16,6 @@ typedef struct
 	SIMULATION_DOMAIN*		Domain;
 	METHOD*					Method;
 	SIMULATION*				Simulation;
-	long					TimeSteps;
 //	OUTPUT*					Output;
 } SIMULATOR;
 
