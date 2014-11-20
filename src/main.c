@@ -244,7 +244,7 @@ void test_msm_preprocessing(void)
 	Method = (METHOD*) Ptr;
 
 	//	Run simulation
-	(*Method->preprocess)(Method);
+	(*Method->preprocess)(Method, 10.0);
 	(*Method->evaluate)(Method);
 	(*Method->uninitialize)(Method);
 }

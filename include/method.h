@@ -17,13 +17,14 @@ typedef struct
 	double**	f;
 
 	//	Methods
-	void		(*preprocess)(void*);
+	void		(*preprocess)(void*,double);
 	void		(*evaluate)(void*);
 	void		(*uninitialize)(void*);
 } METHOD;
 
 //	EXTERNAL Methods
 void method_initialize(void** Method, size_t Size, void* Init(void*), short Id);
+void method_copy(METHOD* SrcMethod, METHOD* DstMethod);
 void method_uninitialize(void* Method);
 
 #endif

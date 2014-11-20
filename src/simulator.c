@@ -77,7 +77,7 @@ void simulator_run(SIMULATOR* Simulator)
 		}
 		Method = NULL;
 		method_initialize((void*)&Method, MethodSize, Init, i);
-		Method->preprocess(Method);
+		Method->preprocess(Method, 10.0);	//	<--- FIXME - THIS DOESN'T BELONG HERE
 		Simulator->Methods[i] = Method;
 	}
 

@@ -11,6 +11,9 @@ void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, M
 	//	A simulation is the repeated application of a specific method to a certain domain
 	//	A domain is a system of particles, and any other relevant information
 	//	A method computes the forces and electrostatic energy within a domain
+	METHOD*					TmpMethod = NULL;
+	SIMULATION_DOMAIN*		TmpDomain = NULL;
+
 	assert(*Simulation == NULL);
 	assert(Domain != NULL);
 	assert(Method != NULL);
@@ -19,11 +22,16 @@ void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, M
 
 	(*Simulation)->Id = Id;
 	(*Simulation)->TimeSteps = TimeSteps;
-
+/*
 	//	Make *separate* copies of Domain and Method
-	//		-> They've already been initialized (i.e. preprocessing, etc)
+	TmpMethod = (METHOD*) dynmem(sizeof(METHOD));
+	method_copy(Method, TmpMethod);
+	(*Simulation)->Method = TmpMethod;
+
+	TmpDomain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
 //	domain_copy(Domain, &Simulation->Domain);
-//	method_copy(Method, &Simulation->Method);
+	(*Simulation)->Domain = TmpDomain;
+*/
 }
 
 void simulation_run(SIMULATION* Simulation)
@@ -31,15 +39,19 @@ void simulation_run(SIMULATION* Simulation)
 	//	Compute forces and electrostatic energy of domain using method
 	long		i = 0;
 
+	//	Method preprocessing, if necessary
+//	Simulation->Method->preprocess(Simulation->Method, Simulation->Domain->Radius);
+
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{
-		if (0/*Domain enlarged*/)
-		{
-			Simulation->Method->preprocess(Simulation->Method);
-		}
-
 //		Simulation->Method->evaluate(Simulation->Method);
 		simulation_step(Simulation);
+
+		if (0/*Domain enlarged*/)
+		{
+			//	Resize K
+			Simulation->Method->preprocess(Simulation->Method, Simulation->Domain->Radius);
+		}
 	}
 }
 

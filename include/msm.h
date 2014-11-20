@@ -42,7 +42,7 @@ typedef struct
 
 //	EXTERNAL Methods
 void msm_initialize(void* Msm);
-void msm_preprocess(void* Msm);
+void msm_preprocess(void* Msm, double DomainRadius);
 void msm_evaluate(void* Msm);
 void msm_uninitialize(void* Msm);
 

@@ -19,7 +19,7 @@ void naive_initialize(void* Method)
 	Naive->cmn.uninitialize = &naive_uninitialize;
 }
 
-void naive_preprocess(void* Method)
+void naive_preprocess(void* Method, double DomainRadius)
 {
 	NAIVE*		Naive = (NAIVE*) Method;
 	assert(Naive != NULL);

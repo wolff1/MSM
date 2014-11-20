@@ -22,11 +22,23 @@ void method_initialize(void** Method, size_t Size, void* Init(void*), short Id)
 	(*Init)(*Method);
 }
 
+void method_copy(METHOD* SrcMethod, METHOD* DstMethod)
+{
+	//	Members
+	DstMethod->Id = SrcMethod->Id;
+	DstMethod->U = SrcMethod->U;
+	DstMethod->f = SrcMethod->f;
+	//	Methods
+	DstMethod->preprocess = SrcMethod->preprocess;
+	DstMethod->evaluate = SrcMethod->evaluate;
+	DstMethod->uninitialize = SrcMethod->uninitialize;
+}
+
 void method_uninitialize(void* Method)
 {
 	assert(Method != NULL);
 
-	((METHOD*) Method)->uninitialize(Method);
+	((METHOD*) Method)->uninitialize(Method);	//	<--- FIXME - THIS MAY NOT BE A GOOD IDEA
 }
 
 //	End of file

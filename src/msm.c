@@ -65,14 +65,14 @@ void msm_initialize(void* Method)
 	Msm->sft = (SOFTENER*) Ptr;
 }
 
-void msm_preprocess(void* Method)
+void msm_preprocess(void* Method, double DomainRadius)
 {
 	MSM*		Msm = (MSM*) Method;
 	assert(Msm != NULL);
 	printf("MSM Preprocessing!\n");
 
 	//	Compute Interpolant coefficients
-	Msm->prm.D = 10.0;
+	Msm->prm.D = DomainRadius;
 	(*Msm->itp->compute_g2g)(Msm->itp, Msm->sft, &Msm->prm);
 	(*Msm->itp->compute_tg2g)(Msm->itp, Msm->sft, &Msm->prm);
 }
