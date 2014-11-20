@@ -20,7 +20,7 @@ typedef struct
 } SIMULATION;
 
 //	EXTERNAL Methods
-void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method, short Id, long TimeSteps);
+void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method, short Id, long TimeSteps);
 void simulation_run(SIMULATION* Simulation);
 void simulation_uninitialize(SIMULATION* Simulation);
 

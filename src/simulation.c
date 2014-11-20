@@ -6,7 +6,7 @@ simulation.c -
 #include "simulation.h"
 
 //	EXTERNAL Methods
-void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method, short Id, long TimeSteps)
+void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, METHOD* Method, short Id, long TimeSteps)
 {
 	//	A simulation is the repeated application of a specific method to a certain domain
 	//	A domain is a system of particles, and any other relevant information
@@ -14,14 +14,12 @@ void simulation_initialize(SIMULATION** Simulation, SIMULATION_DOMAIN* Domain, M
 	METHOD*					TmpMethod = NULL;
 	SIMULATION_DOMAIN*		TmpDomain = NULL;
 
-	assert(*Simulation == NULL);
+	assert(Simulation != NULL);
 	assert(Domain != NULL);
 	assert(Method != NULL);
 
-	(*Simulation) = (SIMULATION*) dynmem(sizeof(SIMULATION));
-
-	(*Simulation)->Id = Id;
-	(*Simulation)->TimeSteps = TimeSteps;
+	Simulation->Id = Id;
+	Simulation->TimeSteps = TimeSteps;
 /*
 	//	Make *separate* copies of Domain and Method
 	TmpMethod = (METHOD*) dynmem(sizeof(METHOD));
@@ -60,7 +58,6 @@ void simulation_uninitialize(SIMULATION* Simulation)
 	//	Free dynamically allocated memory
 //	simulation_domain_uninitialize(Simulation->Domain);
 //	method_uninitialize(Simulation->Method);
-	dynfree(Simulation);
 }
 
 //	INTERNAL Methods

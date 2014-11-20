@@ -6,24 +6,22 @@ simulator.c -
 #include "simulator.h"
 
 //	EXTERNAL Methods
-void simulator_initialize(SIMULATOR** Simulator)
+void simulator_initialize(SIMULATOR* Simulator)
 {
 	//	A simulator object contains a) simulations, b) domains, c) methods, and d) other stuff
 	//	A simulation is the repeated application of a specific method to a certain domain
 	//	A domain is a system of particles, and any other relevant information
 	//	A method computes the forces and electrostatic energy within a domain
-	assert(*Simulator == NULL);
+	assert(Simulator != NULL);
 
-	(*Simulator) = (SIMULATOR*) dynmem(sizeof(SIMULATOR));
+	Simulator->NumDomains = 0;
+	Simulator->Domains = NULL;
 
-	(*Simulator)->NumDomains = 0;
-	(*Simulator)->Domains = NULL;
+	Simulator->NumMethods = 0;
+	Simulator->Methods = NULL;
 
-	(*Simulator)->NumMethods = 0;
-	(*Simulator)->Methods = NULL;
-
-	(*Simulator)->NumSimulations = 0;
-	(*Simulator)->Simulations = NULL;
+	Simulator->NumSimulations = 0;
+	Simulator->Simulations = NULL;
 }
 
 void simulator_run(SIMULATOR* Simulator)
@@ -50,8 +48,8 @@ void simulator_run(SIMULATOR* Simulator)
 		printf("Enter the file name for domain #%hd: ", i);
 		scanf("%s", DomainFileName);
 
-		SimulationDomain = NULL;
-		simulation_domain_initialize(&SimulationDomain, i, DomainFileName);
+		SimulationDomain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
+		simulation_domain_initialize(SimulationDomain, i, DomainFileName);
 		Simulator->Domains[i] = SimulationDomain;
 	}
 
@@ -75,8 +73,8 @@ void simulator_run(SIMULATOR* Simulator)
 			Init = &naive_initialize;
 			MethodSize = sizeof(NAIVE);
 		}
-		Method = NULL;
-		method_initialize((void*)&Method, MethodSize, Init, i);
+		Method = (METHOD*) dynmem(MethodSize);
+		method_initialize((void*)Method, Init, i);
 		Method->preprocess(Method, 10.0);	//	<--- FIXME - THIS DOESN'T BELONG HERE
 		Simulator->Methods[i] = Method;
 	}
@@ -90,8 +88,8 @@ void simulator_run(SIMULATOR* Simulator)
 		MethodIdx = i % Simulator->NumMethods;
 
 		//	Create simulation (these could happen in parallel with OpenMP)
-		Simulation = NULL;
-		simulation_initialize(&Simulation, Simulator->Domains[DomainIdx], Simulator->Methods[MethodIdx], i, 1);	//FIXME <-- 1 is TimeSteps
+		Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
+		simulation_initialize(Simulation, Simulator->Domains[DomainIdx], Simulator->Methods[MethodIdx], i, 1);	//FIXME <-- 1 is TimeSteps
 		Simulator->Simulations[i] = Simulation;
 	}
 
@@ -107,6 +105,7 @@ void simulator_uninitialize(SIMULATOR* Simulator)
 	for (i = 0; i < Simulator->NumDomains; i++)
 	{
 		simulation_domain_uninitialize(Simulator->Domains[i]);
+		dynfree(Simulator->Domains[i]);
 	}
 	dynfree(Simulator->Domains);
 	Simulator->NumDomains = 0;
@@ -114,7 +113,7 @@ void simulator_uninitialize(SIMULATOR* Simulator)
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
 		method_uninitialize(Simulator->Methods[i]);
-
+		dynfree(Simulator->Methods[i]);
 	}
 	dynfree(Simulator->Methods);
 	Simulator->NumMethods = 0;
@@ -122,11 +121,10 @@ void simulator_uninitialize(SIMULATOR* Simulator)
 	for (i = 0; i < Simulator->NumSimulations; i++)
 	{
 		simulation_uninitialize(Simulator->Simulations[i]);
+		dynfree(Simulator->Simulations[i]);
 	}
 	dynfree(Simulator->Simulations);
 	Simulator->NumSimulations = 0;
-
-	dynfree(Simulator);
 }
 
 //	INTERNAL Methods

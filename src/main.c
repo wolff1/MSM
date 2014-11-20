@@ -240,22 +240,26 @@ void test_msm_preprocessing(void)
 	}
 
 	//	Initialize method
-	method_initialize(&Ptr, Size, Init, 0);
+	Ptr = (METHOD*) dynmem(Size);
+	method_initialize(Ptr, Init, 0);
 	Method = (METHOD*) Ptr;
 
 	//	Run simulation
 	(*Method->preprocess)(Method, 10.0);
 	(*Method->evaluate)(Method);
 	(*Method->uninitialize)(Method);
+	dynfree(Method);
 }
 
 void test_simulator(void)
 {
-	SIMULATOR*	MySimulator = NULL;
+	SIMULATOR*	MySimulator = (SIMULATOR*) dynmem(sizeof(SIMULATOR));
 
-	simulator_initialize(&MySimulator);
+	simulator_initialize(MySimulator);
 	simulator_run(MySimulator);
 	simulator_uninitialize(MySimulator);
+
+	dynfree(MySimulator);
 }
 
 // End of file

@@ -6,23 +6,21 @@ domain.c -
 #include "simulation_domain.h"
 
 //	EXTERNAL Methods
-void simulation_domain_initialize(SIMULATION_DOMAIN** Domain, short Id, char* FileName)
+void simulation_domain_initialize(SIMULATION_DOMAIN* Domain, short Id, char* FileName)
 {
 	//	A domain is a system of particles, and any other relevant information
-	assert(*Domain == NULL);
+	assert(Domain != NULL);
 
-	(*Domain) = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
+	Domain->Id = Id;
+	strncpy(Domain->Name, FileName, MAXLEN_DOMAIN_NAME_STR);
+	Domain->MinimumCoordinates.x = DBL_MAX;
+	Domain->MinimumCoordinates.y = DBL_MAX;
+	Domain->MinimumCoordinates.z = DBL_MAX;
+	Domain->MaximumCoordinates.x = -DBL_MAX;
+	Domain->MaximumCoordinates.y = -DBL_MAX;
+	Domain->MaximumCoordinates.z = -DBL_MAX;
 
-	(*Domain)->Id = Id;
-	strncpy((*Domain)->Name, FileName, MAXLEN_DOMAIN_NAME_STR);
-	(*Domain)->MinimumCoordinates.x = DBL_MAX;
-	(*Domain)->MinimumCoordinates.y = DBL_MAX;
-	(*Domain)->MinimumCoordinates.z = DBL_MAX;
-	(*Domain)->MaximumCoordinates.x = -DBL_MAX;
-	(*Domain)->MaximumCoordinates.y = -DBL_MAX;
-	(*Domain)->MaximumCoordinates.z = -DBL_MAX;
-
-	simulation_domain_input_particles(*Domain);
+	simulation_domain_input_particles(Domain);
 
 //	printf("MIN = (%f,%f,%f)\n", (*Domain)->MinimumCoordinates.x,(*Domain)->MinimumCoordinates.y,(*Domain)->MinimumCoordinates.z);
 //	printf("CTR = (%f,%f,%f)\n", (*Domain)->CenterCoordinates.x,(*Domain)->CenterCoordinates.y,(*Domain)->CenterCoordinates.z);
@@ -39,7 +37,7 @@ void simulation_domain_uninitialize(SIMULATION_DOMAIN* Domain)
 {
 	//	Free dynamically allocated memory
 	particle_collection_uninitialize(Domain->Particles);
-	dynfree(Domain);
+	dynfree(Domain->Particles);
 }
 
 //	INTERNAL Methods
@@ -86,7 +84,8 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 		}
 
 		//	Now that we know how many particles, set up particle_collection
-		particle_collection_initialize(&Pc, N, UnitConverter);
+		Pc = (PARTICLE_COLLECTION*) dynmem(sizeof(PARTICLE_COLLECTION));
+		particle_collection_initialize(Pc, N, UnitConverter);
 
 		//	Read rest of file(s)
 		for (i = 0; i < Pc->N; i++)

@@ -38,9 +38,6 @@ void naive_uninitialize(void* Method)
 	NAIVE*		Naive = (NAIVE*) Method;
 	assert(Naive != NULL);
 	printf("Un-initializing NAIVE!\n");
-
-	//	Free dynamic memory allocated for NAIVE object
-	dynfree(Naive);
 }
 
 //	INTERNAL Methods

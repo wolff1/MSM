@@ -5,21 +5,18 @@ method.c - Routines for the generic METHOD class
 
 #include "method.h"
 
-void method_initialize(void** Method, size_t Size, void* Init(void*), short Id)
-{	//	NOTE: Method is ADDRESS of a void*
-	assert(*Method == NULL);
-
-	//	Dynamically allocate zero-ed out memory for *Method
-	*Method = dynmem(Size);
+void method_initialize(void* Method, void* Init(void*), short Id)
+{
+	assert(Method != NULL);
 
 	//	Initialize Members
-	((METHOD*) *Method)->Id = Id;
-	((METHOD*) *Method)->U = 0.0;
-	((METHOD*) *Method)->f = NULL;	//	Allocated in [method]_evaluate()
+	((METHOD*) Method)->Id = Id;
+	((METHOD*) Method)->U = 0.0;
+	((METHOD*) Method)->f = NULL;	//	Allocated in [method]_evaluate()
 
 	//	Initialize Method by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!
-	(*Init)(*Method);
+	(*Init)(Method);
 }
 
 void method_copy(METHOD* SrcMethod, METHOD* DstMethod)
@@ -38,7 +35,7 @@ void method_uninitialize(void* Method)
 {
 	assert(Method != NULL);
 
-	((METHOD*) Method)->uninitialize(Method);	//	<--- FIXME - THIS MAY NOT BE A GOOD IDEA
+	((METHOD*) Method)->uninitialize(Method);
 }
 
 //	End of file

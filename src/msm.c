@@ -125,9 +125,6 @@ void msm_uninitialize(void* Method)
 
 	//	Uninitialize INTERPOLANT
 	(*Msm->itp->uninitialize)(Msm->itp);
-
-	//	Free dynamic memory allocated for MSM object
-	dynfree(Msm);
 }
 
 //	INTERNAL Methods
