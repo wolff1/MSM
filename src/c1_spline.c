@@ -40,7 +40,8 @@ void c1_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS
 	Scale = MsmParams->h/MsmParams->a;
 
 	//	Compute K^l sequence (defined by theta function) for intermediate level grid(s)
-	stencil_initialize(&C1->cmn.g2g, Size, STENCIL_SHAPE_SPHERE);
+	C1->cmn.g2g = (STENCIL*) dynmem(sizeof(STENCIL));
+	stencil_initialize(C1->cmn.g2g, Size, STENCIL_SHAPE_SPHERE);
 	stencil_populate(C1->cmn.g2g, Softener, STENCIL_FUNCTION_TYPE_THETA, Scale);
 //	stencil_display(C1->cmn.g2g, MsmParams->h/MsmParams->a);
 }
@@ -61,7 +62,8 @@ void c1_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETER
 	Scale = MsmParams->h/MsmParams->a;
 
 	//	Compute K^L sequence (defined by gamma function) for top level grid
-	stencil_initialize(&C1->cmn.tg2g, Size, STENCIL_SHAPE_CUBE);
+	C1->cmn.tg2g = (STENCIL*) dynmem(sizeof(STENCIL));
+	stencil_initialize(C1->cmn.tg2g, Size, STENCIL_SHAPE_CUBE);
 	stencil_populate(C1->cmn.tg2g, Softener, STENCIL_FUNCTION_TYPE_GAMMA, Scale);
 //	stencil_display(C1->cmn.tg2g, MsmParams->h/MsmParams->a);
 }
@@ -122,10 +124,11 @@ void c1_spline_uninitialize(void* Interpolant)
 	//	Free the dynamically allocated memory
 	stencil_free(C1->cmn.g2g);
 	stencil_free(C1->cmn.tg2g);
+	dynfree(C1->cmn.g2g);
+	dynfree(C1->cmn.tg2g);
 	dynfree(C1->cmn.g2p[0]);
 	dynfree(C1->cmn.g2p);
 	dynfree(C1->cmn.g2fg);
-	dynfree(C1);
 }
 
 //	INTERNAL Methods

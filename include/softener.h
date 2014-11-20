@@ -22,7 +22,7 @@ typedef struct
 } SOFTENER;
 
 //	EXTERNAL Methods
-void softener_initialize(void** Softener, size_t Size, void* Init(void*), short k);
+void softener_initialize(void* Softener, void* Init(void*), short k);
 
 #endif
 

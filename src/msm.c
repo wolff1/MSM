@@ -50,7 +50,8 @@ void msm_initialize(void* Method)
 		Size = sizeof(C1_SPLINE);
 		Init = &c1_spline_initialize;
 	}
-	interpolant_initialize(&Ptr, Size, Init, &Msm->prm);
+	Ptr = (INTERPOLANT*) dynmem(Size);
+	interpolant_initialize(Ptr, Init, &Msm->prm);
 	Msm->itp = (INTERPOLANT*) Ptr;
 
 	//	Initialize SOFTENER
@@ -61,7 +62,8 @@ void msm_initialize(void* Method)
 		Size = sizeof(EVEN_POWERS);
 		Init = &even_powers_initialize;
 	}
-	softener_initialize(&Ptr, Size, Init, Msm->prm.k);
+	Ptr = (SOFTENER*) dynmem(Size);
+	softener_initialize(Ptr, Init, Msm->prm.k);
 	Msm->sft = (SOFTENER*) Ptr;
 }
 
@@ -122,9 +124,11 @@ void msm_uninitialize(void* Method)
 
 	//	Uninitialize SOFTENER
 	(*Msm->sft->uninitialize)(Msm->sft);
+	dynfree(Msm->sft);
 
 	//	Uninitialize INTERPOLANT
 	(*Msm->itp->uninitialize)(Msm->itp);
+	dynfree(Msm->itp);
 }
 
 //	INTERNAL Methods

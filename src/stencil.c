@@ -5,7 +5,7 @@ stencil.c -
 
 #include "stencil.h"
 
-void stencil_initialize(STENCIL** t, long Size, short Shape)
+void stencil_initialize(STENCIL* s, long Size, short Shape)
 {
 	double			r = 0.0;
 	double			rr = 0.0;
@@ -14,12 +14,10 @@ void stencil_initialize(STENCIL** t, long Size, short Shape)
 	long			zz = 0;
 	long			yyzz = 0;
 	long			zi_2d = 0;
-	STENCIL*		s = NULL;
 
-	assert(t != NULL);
+	assert(s != NULL);
 
 	//	Initialize stencil
-	s = (STENCIL*) dynmem(sizeof(STENCIL));
 	s->Shape = Shape;
 	s->Size = Size;
 	s->Data = (double*) dynvec(STENCIL_STORAGE(s->Size), sizeof(double));
@@ -67,9 +65,6 @@ void stencil_initialize(STENCIL** t, long Size, short Shape)
 			}
 		}
 	}
-
-	//	The value to which the inbound ptr is pointing is the ptr we just set up.
-	*t = s;
 }
 
 void stencil_populate(STENCIL* s, SOFTENER* Softener, short FunctionType, double Scale)
@@ -758,8 +753,6 @@ void stencil_free(STENCIL* s)
 
 	if (s->YMax != NULL)
 		dynfree(s->YMax);
-
-	dynfree(s);
 }
 
 #if 0

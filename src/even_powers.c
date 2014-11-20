@@ -106,9 +106,6 @@ void even_powers_uninitialize(void* Softener)
 
 	//	Free dynamically allocated memory for softening function coefficients
 	dynfree(Ep->cmn.p2p);
-
-	//	Free dynamically allocated memory for EVEN_POWERS object
-	dynfree(Ep);
 }
 
 //	INTERNAL Methods

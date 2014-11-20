@@ -41,7 +41,7 @@ typedef struct
 } INTERPOLANT;
 
 //	EXTERNAL Methods
-void interpolant_initialize(void** Interpolant, size_t Size, void* Init(void*,MSM_PARAMETERS*), MSM_PARAMETERS* MsmParams);
+void interpolant_initialize(void* Interpolant, void* Init(void*,MSM_PARAMETERS*), MSM_PARAMETERS* MsmParams);
 
 #endif
 

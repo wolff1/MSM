@@ -39,7 +39,7 @@ typedef struct
 	double*			Data;
 } STENCIL;
 
-void stencil_initialize(STENCIL** t, long Size, short Shape);
+void stencil_initialize(STENCIL* t, long Size, short Shape);
 void stencil_populate(STENCIL* s, SOFTENER* Softener, short FunctionType, double Scale);
 void stencil_shift(STENCIL* s, short Degree, double* OmegaPrime, STENCIL* K);
 void stencil_shift_infinite(STENCIL* s, short Degree, double* OmegaPrime, STENCIL* K);
