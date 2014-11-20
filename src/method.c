@@ -5,7 +5,7 @@ method.c - Routines for the generic METHOD class
 
 #include "method.h"
 
-void method_initialize(void** Method, size_t Size, void* Init(void*))
+void method_initialize(void** Method, size_t Size, void* Init(void*), short Id)
 {	//	NOTE: Method is ADDRESS of a void*
 	assert(*Method == NULL);
 
@@ -13,6 +13,7 @@ void method_initialize(void** Method, size_t Size, void* Init(void*))
 	*Method = dynmem(Size);
 
 	//	Initialize Members
+	((METHOD*) *Method)->Id = Id;
 	((METHOD*) *Method)->U = 0.0;
 	((METHOD*) *Method)->f = NULL;	//	Allocated in [method]_evaluate()
 

@@ -65,20 +65,18 @@ void simulator_run(SIMULATOR* Simulator)
 
 		//	Which method? (consider combination of parameters to be unique)
 		//		Create and initialize method?
-		if (SelectedMethod == 1)	//	MSM
+		switch (SelectedMethod)
 		{
+		case 1:		//	MSM
 			Init = &msm_initialize;
 			MethodSize = sizeof(MSM);
-		}
-		else						//	NAIVE
-		{
+			break;
+		default:	//	NAIVE
 			Init = &naive_initialize;
 			MethodSize = sizeof(NAIVE);
 		}
-
 		Method = NULL;
-		method_initialize((void*)&Method, MethodSize, Init);
-		Method->Id = i;
+		method_initialize((void*)&Method, MethodSize, Init, i);
 		Method->preprocess(Method);
 		Simulator->Methods[i] = Method;
 	}

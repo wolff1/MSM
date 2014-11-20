@@ -6,6 +6,8 @@ domain.h -
 #ifndef	SIMULATION_DOMAIN_H
 #define	SIMULATION_DOMAIN_H
 
+#include "float.h"
+
 #include "all.h"
 #include "memory.h"
 #include "particle_collection.h"

@@ -15,14 +15,19 @@ void simulation_domain_initialize(SIMULATION_DOMAIN** Domain, short Id, char* Fi
 
 	(*Domain)->Id = Id;
 	strncpy((*Domain)->Name, FileName, MAXLEN_DOMAIN_NAME_STR);
-	(*Domain)->MinimumCoordinates.x = 1000.0;
-	(*Domain)->MinimumCoordinates.y = 1000.0;
-	(*Domain)->MinimumCoordinates.z = 1000.0;
-	(*Domain)->MaximumCoordinates.x = -1000.0;
-	(*Domain)->MaximumCoordinates.y = -1000.0;
-	(*Domain)->MaximumCoordinates.z = -1000.0;
+	(*Domain)->MinimumCoordinates.x = DBL_MAX;
+	(*Domain)->MinimumCoordinates.y = DBL_MAX;
+	(*Domain)->MinimumCoordinates.z = DBL_MAX;
+	(*Domain)->MaximumCoordinates.x = -DBL_MAX;
+	(*Domain)->MaximumCoordinates.y = -DBL_MAX;
+	(*Domain)->MaximumCoordinates.z = -DBL_MAX;
 
 	simulation_domain_input_particles(*Domain);
+
+//	printf("MIN = (%f,%f,%f)\n", (*Domain)->MinimumCoordinates.x,(*Domain)->MinimumCoordinates.y,(*Domain)->MinimumCoordinates.z);
+//	printf("CTR = (%f,%f,%f)\n", (*Domain)->CenterCoordinates.x,(*Domain)->CenterCoordinates.y,(*Domain)->CenterCoordinates.z);
+//	printf("MAX = (%f,%f,%f)\n", (*Domain)->MaximumCoordinates.x,(*Domain)->MaximumCoordinates.y,(*Domain)->MaximumCoordinates.z);
+//	printf("Radius = %f, N=%ld\n", (*Domain)->Radius, (*Domain)->Particles->N);
 }
 
 void simulation_domain_compute_forces(SIMULATION_DOMAIN* Domain)

@@ -23,7 +23,7 @@ typedef struct
 } METHOD;
 
 //	EXTERNAL Methods
-void method_initialize(void** Method, size_t Size, void* Init(void*));
+void method_initialize(void** Method, size_t Size, void* Init(void*), short Id);
 void method_uninitialize(void* Method);
 
 #endif

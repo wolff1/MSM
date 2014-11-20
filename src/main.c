@@ -240,7 +240,7 @@ void test_msm_preprocessing(void)
 	}
 
 	//	Initialize method
-	method_initialize(&Ptr, Size, Init);
+	method_initialize(&Ptr, Size, Init, 0);
 	Method = (METHOD*) Ptr;
 
 	//	Run simulation
