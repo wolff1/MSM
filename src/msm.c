@@ -71,7 +71,7 @@ void msm_preprocess(void* Method, double DomainRadius)
 {
 	MSM*		Msm = (MSM*) Method;
 	assert(Msm != NULL);
-	printf("MSM Preprocessing!\n");
+	printf("MSM Preprocessing for size <%f>!\n", DomainRadius);
 
 	//	Compute Interpolant coefficients
 	Msm->prm.D = DomainRadius;

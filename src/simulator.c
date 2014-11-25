@@ -39,6 +39,13 @@ void simulator_run(SIMULATOR* Simulator)
 	char					DomainFileName[128] = {0};
 	short					SelectedMethod = 0;
 
+	short					NumSims = 0;
+	short					NumMethods = 0;
+	double**				SimulationMatrix = NULL;
+	short					Answer = 0;
+	short					k = 0;
+	short					FoundMatch = 0;
+
 	printf("How many domains? ");
 	scanf("%hd", &Simulator->NumDomains);
 	Simulator->Domains = (SIMULATION_DOMAIN**) dynmem(Simulator->NumDomains*sizeof(SIMULATION_DOMAIN*));
@@ -56,7 +63,9 @@ void simulator_run(SIMULATOR* Simulator)
 
 	printf("How many methods? ");
 	scanf("%hd", &Simulator->NumMethods);
-	Simulator->Methods = (METHOD**) dynmem(Simulator->NumMethods*sizeof(METHOD*));
+	Simulator->Methods = (METHOD**) dynmem(Simulator->NumMethods*Simulator->NumDomains*sizeof(METHOD*));
+	NumMethods = 0;
+/*
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
 		printf("Please enter which method (NAIVE=0,MSM=1) for method #%hd: ", i);
@@ -76,13 +85,20 @@ void simulator_run(SIMULATOR* Simulator)
 		}
 		Method = (METHOD*) dynmem(MethodSize);
 		method_initialize((void*)Method, Init, i);
-		Method->preprocess(Method, 10.0);	//	<--- FIXME - THIS DOESN'T BELONG HERE
 		Simulator->Methods[i] = Method;
+		NumMethods++;
 	}
-
-	//	FIXME - In real life, probably need to "mix and match" instead of just assuming all combinations
+*/
+	//	Assume each method will be used for each domain
+	Simulator->NumSimulations = Simulator->NumDomains * Simulator->NumMethods;
+	Simulator->Simulations = (SIMULATION**) dynmem(Simulator->NumSimulations*sizeof(SIMULATION*));
+	SimulationMatrix = (double**) dynarr_d(Simulator->NumDomains, Simulator->NumMethods);
+	NumSims = 0;
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
+		printf("Please enter which method (NAIVE=0,MSM=1) for method #%hd: ", i);
+		scanf("%hd", &SelectedMethod);
+
 		for (j = 0; j < Simulator->NumDomains; j++)
 		{
 			//	Apply method i to domain j? If yes:
@@ -90,9 +106,64 @@ void simulator_run(SIMULATOR* Simulator)
 			//			method_preprocess
 			//		simulation = method + domain
 			//		initialize simulation
+			printf("Apply method <%hd> to domain <%s>? [0|1]: ", i, Simulator->Domains[j]->Name);
+			scanf("%hd", &Answer);
+			if (Answer)
+			{
+				FoundMatch = 0;
+				for (k = 0; k < j; k++)
+				{
+					if (SimulationMatrix[k][i] == Simulator->Domains[j]->Radius)
+					{
+						//	We found another domain with the same size for the same method!
+						FoundMatch = 1;
+						break;
+					}
+				}
+
+				if (!FoundMatch)
+				{
+					//	Allocate a new Method because the one we need does not exist
+					switch (SelectedMethod)
+					{
+					case 1:		//	MSM
+						Init = &msm_initialize;
+						MethodSize = sizeof(MSM);
+						break;
+					default:	//	NAIVE
+						Init = &naive_initialize;
+						MethodSize = sizeof(NAIVE);
+					}
+					Method = (METHOD*) dynmem(MethodSize);
+					method_initialize((void*)Method, Init, NumMethods);
+					Simulator->Methods[NumMethods] = Method;
+
+					//	None of the previous domains have the same size as the current one
+					Simulator->Methods[NumMethods]->preprocess(Simulator->Methods[NumMethods], Simulator->Domains[j]->Radius);
+					SimulationMatrix[j][i] = Simulator->Domains[j]->Radius;
+
+					NumMethods++;
+				}
+				else
+				{
+					//	Use the pre-existing method for this simulation
+					//		-> Simulator->Methods[i] has already been pre-processed for the correct size
+				}
+
+				//	Create simulation (these could happen in parallel with OpenMP)
+				Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
+				simulation_initialize(Simulation, Simulator->Domains[j], Simulator->Methods[NumMethods-1], NumSims, 1);	//FIXME <-- 1 is TimeSteps
+				Simulator->Simulations[NumSims] = Simulation;
+				NumSims++;
+			}
 		}
 	}
-
+	Simulator->NumSimulations = NumSims;
+	Simulator->NumMethods = NumMethods;
+printf("Simulator->NumSimulations = %ld, Methods = %ld\n", Simulator->NumSimulations, Simulator->NumMethods);
+	dynfree(SimulationMatrix[0]);
+	dynfree(SimulationMatrix);
+/*
 	//	Assume each method will be used for each domain
 	Simulator->NumSimulations = Simulator->NumDomains * Simulator->NumMethods;
 	Simulator->Simulations = (SIMULATION**) dynmem(Simulator->NumSimulations*sizeof(SIMULATION*));
@@ -106,7 +177,7 @@ void simulator_run(SIMULATOR* Simulator)
 		simulation_initialize(Simulation, Simulator->Domains[DomainIdx], Simulator->Methods[MethodIdx], i, 1);	//FIXME <-- 1 is TimeSteps
 		Simulator->Simulations[i] = Simulation;
 	}
-
+*/
 	//	Then, run the simulations
 	simulator_run_simulations(Simulator);
 }
@@ -118,25 +189,31 @@ void simulator_uninitialize(SIMULATOR* Simulator)
 
 	for (i = 0; i < Simulator->NumDomains; i++)
 	{
+printf("Simulator uninitializing Domain <%hd>\n", i);
 		simulation_domain_uninitialize(Simulator->Domains[i]);
 		dynfree(Simulator->Domains[i]);
 	}
+printf("Simulator uninitializing Domains list\n");
 	dynfree(Simulator->Domains);
 	Simulator->NumDomains = 0;
 
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
+printf("Simulator uninitializing Method <%hd>\n", i);
 		method_uninitialize(Simulator->Methods[i]);
 		dynfree(Simulator->Methods[i]);
 	}
+printf("Simulator uninitializing Methods list\n");
 	dynfree(Simulator->Methods);
 	Simulator->NumMethods = 0;
 
 	for (i = 0; i < Simulator->NumSimulations; i++)
 	{
+printf("Simulator uninitializing Simulation <%hd>\n", i);
 		simulation_uninitialize(Simulator->Simulations[i]);
 		dynfree(Simulator->Simulations[i]);
 	}
+printf("Simulator uninitializing Simulations list\n");
 	dynfree(Simulator->Simulations);
 	Simulator->NumSimulations = 0;
 }
@@ -150,6 +227,7 @@ void simulator_run_simulations(SIMULATOR* Simulator)
 
 	for (i = 0; i < Simulator->NumSimulations; i++)
 	{
+printf("Simulator running Simulation <%hd>\n", i);
 		simulator_run_simulation(Simulator, i);
 	}
 }
