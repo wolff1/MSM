@@ -39,6 +39,7 @@ void simulation_run(SIMULATION* Simulation)
 
 	//	Method preprocessing, if necessary
 //	Simulation->Method->preprocess(Simulation->Method, Simulation->Domain->Radius);
+//	FIXME - Need a way to send this back to simulator so that other simulations with this method don't repeat work.
 
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{

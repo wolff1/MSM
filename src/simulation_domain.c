@@ -54,7 +54,7 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 	FILE_FORMAT_PDB				LinePdb;
 	long						N = 0;
 
-	if (1)
+	if (1)	//	FIXME
 	{	//	kcal/mol
 		UnitConverter = sqrt(UNITS_COULOMB);
 	}

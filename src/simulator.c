@@ -28,6 +28,7 @@ void simulator_run(SIMULATOR* Simulator)
 {
 	//	Build list of simulations to run
 	short					i = 0;
+	short					j = 0;
 	size_t					MethodSize = 0;
 	void*					Init = NULL;
 	SIMULATION_DOMAIN*		SimulationDomain = NULL;
@@ -77,6 +78,19 @@ void simulator_run(SIMULATOR* Simulator)
 		method_initialize((void*)Method, Init, i);
 		Method->preprocess(Method, 10.0);	//	<--- FIXME - THIS DOESN'T BELONG HERE
 		Simulator->Methods[i] = Method;
+	}
+
+	//	FIXME - In real life, probably need to "mix and match" instead of just assuming all combinations
+	for (i = 0; i < Simulator->NumMethods; i++)
+	{
+		for (j = 0; j < Simulator->NumDomains; j++)
+		{
+			//	Apply method i to domain j? If yes:
+			//		if method i NOT initialized for domain[j].size
+			//			method_preprocess
+			//		simulation = method + domain
+			//		initialize simulation
+		}
 	}
 
 	//	Assume each method will be used for each domain
