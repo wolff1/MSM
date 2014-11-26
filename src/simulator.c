@@ -63,49 +63,20 @@ void simulator_run(SIMULATOR* Simulator)
 
 	printf("How many methods? ");
 	scanf("%hd", &Simulator->NumMethods);
-	Simulator->Methods = (METHOD**) dynmem(Simulator->NumMethods*Simulator->NumDomains*sizeof(METHOD*));
-	NumMethods = 0;
-/*
-	for (i = 0; i < Simulator->NumMethods; i++)
-	{
-		printf("Please enter which method (NAIVE=0,MSM=1) for method #%hd: ", i);
-		scanf("%hd", &SelectedMethod);
 
-		//	Which method? (consider combination of parameters to be unique)
-		//		Create and initialize method?
-		switch (SelectedMethod)
-		{
-		case 1:		//	MSM
-			Init = &msm_initialize;
-			MethodSize = sizeof(MSM);
-			break;
-		default:	//	NAIVE
-			Init = &naive_initialize;
-			MethodSize = sizeof(NAIVE);
-		}
-		Method = (METHOD*) dynmem(MethodSize);
-		method_initialize((void*)Method, Init, i);
-		Simulator->Methods[i] = Method;
-		NumMethods++;
-	}
-*/
-	//	Assume each method will be used for each domain
 	Simulator->NumSimulations = Simulator->NumDomains * Simulator->NumMethods;
+	Simulator->Methods = (METHOD**) dynmem(Simulator->NumSimulations*sizeof(METHOD*));
 	Simulator->Simulations = (SIMULATION**) dynmem(Simulator->NumSimulations*sizeof(SIMULATION*));
 	SimulationMatrix = (double**) dynarr_d(Simulator->NumDomains, Simulator->NumMethods);
+	NumMethods = 0;
 	NumSims = 0;
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
-		printf("Please enter which method (NAIVE=0,MSM=1) for method #%hd: ", i);
+		printf("Which method type (NAIVE=0,MSM=1) is method #%hd: ", i);
 		scanf("%hd", &SelectedMethod);
 
 		for (j = 0; j < Simulator->NumDomains; j++)
 		{
-			//	Apply method i to domain j? If yes:
-			//		if method i NOT initialized for domain[j].size
-			//			method_preprocess
-			//		simulation = method + domain
-			//		initialize simulation
 			printf("Apply method <%hd> to domain <%s>? [0|1]: ", i, Simulator->Domains[j]->Name);
 			scanf("%hd", &Answer);
 			if (Answer)
@@ -160,24 +131,10 @@ void simulator_run(SIMULATOR* Simulator)
 	}
 	Simulator->NumSimulations = NumSims;
 	Simulator->NumMethods = NumMethods;
-printf("Simulator->NumSimulations = %ld, Methods = %ld\n", Simulator->NumSimulations, Simulator->NumMethods);
+printf("Simulator->NumSimulations = %hd, Methods = %hd\n", Simulator->NumSimulations, Simulator->NumMethods);
 	dynfree(SimulationMatrix[0]);
 	dynfree(SimulationMatrix);
-/*
-	//	Assume each method will be used for each domain
-	Simulator->NumSimulations = Simulator->NumDomains * Simulator->NumMethods;
-	Simulator->Simulations = (SIMULATION**) dynmem(Simulator->NumSimulations*sizeof(SIMULATION*));
-	for (i = 0; i < Simulator->NumSimulations; i++)
-	{
-		DomainIdx = i / Simulator->NumMethods;
-		MethodIdx = i % Simulator->NumMethods;
 
-		//	Create simulation (these could happen in parallel with OpenMP)
-		Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
-		simulation_initialize(Simulation, Simulator->Domains[DomainIdx], Simulator->Methods[MethodIdx], i, 1);	//FIXME <-- 1 is TimeSteps
-		Simulator->Simulations[i] = Simulation;
-	}
-*/
 	//	Then, run the simulations
 	simulator_run_simulations(Simulator);
 }

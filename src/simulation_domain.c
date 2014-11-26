@@ -33,6 +33,23 @@ void simulation_domain_compute_forces(SIMULATION_DOMAIN* Domain)
 	//	Pass domain info to method and let it calculate the forces and electrostatic energy
 }
 
+void simulation_domain_copy(SIMULATION_DOMAIN* SrcDomain, SIMULATION_DOMAIN* DstDomain)
+{
+	//	Initialize destination domain
+	simulation_domain_initialize(DstDomain, SrcDomain->Id, SrcDomain->Name);
+
+	//	Copy non-particle collection items
+	memcpy(&DstDomain->MinimumCoordinates, &SrcDomain->MinimumCoordinates, sizeof(PARTICLE));
+	memcpy(&DstDomain->CenterCoordinates, &SrcDomain->CenterCoordinates, sizeof(PARTICLE));
+	memcpy(&DstDomain->MaximumCoordinates, &SrcDomain->MaximumCoordinates, sizeof(PARTICLE));
+	DstDomain->Radius = SrcDomain->Radius;
+
+	//	Now that we know how many particles, set up particle_collection
+	DstDomain->Particles = (PARTICLE_COLLECTION*) dynmem(sizeof(PARTICLE_COLLECTION));
+	particle_collection_initialize(DstDomain->Particles, SrcDomain->Particles->N, SrcDomain->Particles->UnitConverter);
+	particle_collection_copy(DstDomain->Particles, SrcDomain->Particles);
+}
+
 void simulation_domain_uninitialize(SIMULATION_DOMAIN* Domain)
 {
 	//	Free dynamically allocated memory

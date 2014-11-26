@@ -23,6 +23,15 @@ void particle_collection_move(PARTICLE_COLLECTION* Pc)
 	//	This method will update the particle positions at each time step
 }
 
+void particle_collection_copy(PARTICLE_COLLECTION* SrcParticles, PARTICLE_COLLECTION* DstParticles)
+{
+	DstParticles->N = SrcParticles->N;
+	memcpy(&DstParticles->r, &SrcParticles->r, DstParticles->N*sizeof(PARTICLE));
+	memcpy(&DstParticles->m, &SrcParticles->m, DstParticles->N*sizeof(double));
+	memcpy(&DstParticles->v, &SrcParticles->v, DstParticles->N*3*sizeof(double));
+	DstParticles->UnitConverter = SrcParticles->UnitConverter;
+}
+
 void particle_collection_uninitialize(PARTICLE_COLLECTION* Pc)
 {
 	//	Free dynamically allocated memory

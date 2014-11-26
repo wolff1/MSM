@@ -12,7 +12,6 @@ void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, ME
 	//	A domain is a system of particles, and any other relevant information
 	//	A method computes the forces and electrostatic energy within a domain
 	METHOD*					TmpMethod = NULL;
-	SIMULATION_DOMAIN*		TmpDomain = NULL;
 
 	assert(Simulation != NULL);
 	assert(Domain != NULL);
@@ -20,15 +19,15 @@ void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, ME
 
 	Simulation->Id = Id;
 	Simulation->TimeSteps = TimeSteps;
-/*
+
 	//	Make *separate* copies of Domain and Method
+	//Simulation->Domain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
+	//simulation_domain_copy(Domain, Simulation->Domain);
+
+/*
 	TmpMethod = (METHOD*) dynmem(sizeof(METHOD));
 	method_copy(Method, TmpMethod);
 	(*Simulation)->Method = TmpMethod;
-
-	TmpDomain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
-//	domain_copy(Domain, &Simulation->Domain);
-	(*Simulation)->Domain = TmpDomain;
 */
 }
 
@@ -36,10 +35,6 @@ void simulation_run(SIMULATION* Simulation)
 {
 	//	Compute forces and electrostatic energy of domain using method
 	long		i = 0;
-
-	//	Method preprocessing, if necessary
-//	Simulation->Method->preprocess(Simulation->Method, Simulation->Domain->Radius);
-//	FIXME - Need a way to send this back to simulator so that other simulations with this method don't repeat work.
 
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{
@@ -57,7 +52,7 @@ void simulation_run(SIMULATION* Simulation)
 void simulation_uninitialize(SIMULATION* Simulation)
 {
 	//	Free dynamically allocated memory
-//	simulation_domain_uninitialize(Simulation->Domain);
+	//simulation_domain_uninitialize(Simulation->Domain);
 //	method_uninitialize(Simulation->Method);
 }
 

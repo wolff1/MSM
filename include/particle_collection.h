@@ -22,6 +22,7 @@ typedef struct
 //	EXTERNAL Methods
 void particle_collection_initialize(PARTICLE_COLLECTION* Pc, long N, double UnitConverter);
 void particle_collection_move(PARTICLE_COLLECTION* Pc);
+void particle_collection_copy(PARTICLE_COLLECTION* SrcParticles, PARTICLE_COLLECTION* DstParticles);
 void particle_collection_uninitialize(PARTICLE_COLLECTION* Pc);
 
 #endif

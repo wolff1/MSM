@@ -29,6 +29,7 @@ void method_copy(METHOD* SrcMethod, METHOD* DstMethod)
 	DstMethod->preprocess = SrcMethod->preprocess;
 	DstMethod->evaluate = SrcMethod->evaluate;
 	DstMethod->uninitialize = SrcMethod->uninitialize;
+	//	Call sub-class copy method
 }
 
 void method_uninitialize(void* Method)
