@@ -1,6 +1,6 @@
 //-------|---------|---------|---------|---------|---------|---------|---------|
 /*
-domain.h - 
+simulation_domain.h - 
 */
 
 #ifndef	SIMULATION_DOMAIN_H

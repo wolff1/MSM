@@ -21,8 +21,8 @@ void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, ME
 	Simulation->TimeSteps = TimeSteps;
 
 	//	Make *separate* copies of Domain and Method
-	//Simulation->Domain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
-	//simulation_domain_copy(Domain, Simulation->Domain);
+	Simulation->Domain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
+	simulation_domain_copy(Domain, Simulation->Domain);
 
 /*
 	TmpMethod = (METHOD*) dynmem(sizeof(METHOD));
@@ -52,7 +52,11 @@ void simulation_run(SIMULATION* Simulation)
 void simulation_uninitialize(SIMULATION* Simulation)
 {
 	//	Free dynamically allocated memory
-	//simulation_domain_uninitialize(Simulation->Domain);
+printf("before simulation_domain_uninit\n");
+  	simulation_domain_uninitialize(Simulation->Domain);
+printf("before dynfree(Simulation->Domain)\n");
+	dynfree(Simulation->Domain);
+
 //	method_uninitialize(Simulation->Method);
 }
 
