@@ -35,25 +35,26 @@ void simulation_domain_compute_forces(SIMULATION_DOMAIN* Domain)
 
 void simulation_domain_copy(SIMULATION_DOMAIN* SrcDomain, SIMULATION_DOMAIN* DstDomain)
 {
-  assert(SrcDomain != NULL);
-  assert(DstDomain != NULL);
+	assert(SrcDomain != NULL);
+	assert(DstDomain != NULL);
 
-	//	Copy non-particle collection items
-  DstDomain->Id = SrcDomain->Id;
-  strncpy(DstDomain->Name, SrcDomain->Name, MAXLEN_DOMAIN_NAME_STR);
+	//	Copy non-particle_collection items
+	DstDomain->Id = SrcDomain->Id;
+	strncpy(DstDomain->Name, SrcDomain->Name, MAXLEN_DOMAIN_NAME_STR);
 	memcpy(&DstDomain->MinimumCoordinates, &SrcDomain->MinimumCoordinates, sizeof(PARTICLE));
 	memcpy(&DstDomain->CenterCoordinates, &SrcDomain->CenterCoordinates, sizeof(PARTICLE));
-       	memcpy(&DstDomain->MaximumCoordinates, &SrcDomain->MaximumCoordinates, sizeof(PARTICLE));
+	memcpy(&DstDomain->MaximumCoordinates, &SrcDomain->MaximumCoordinates, sizeof(PARTICLE));
 	DstDomain->Radius = SrcDomain->Radius;
 
-	// Now that we know how many particles, set up particle_collection
+	// Set up new particle_collection and copy source particle_collection
 	DstDomain->Particles = (PARTICLE_COLLECTION*) dynmem(sizeof(PARTICLE_COLLECTION));
 	particle_collection_copy(SrcDomain->Particles, DstDomain->Particles);
 }
 
 void simulation_domain_uninitialize(SIMULATION_DOMAIN* Domain)
 {
-  assert(Domain != NULL);
+	assert(Domain != NULL);
+
 	//	Free dynamically allocated memory
 printf("before particle_collection_uninit\n");
   	particle_collection_uninitialize(Domain->Particles);
