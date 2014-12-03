@@ -11,8 +11,6 @@ void method_initialize(void* Method, void* Init(void*), short Id)
 
 	//	Initialize Members
 	((METHOD*) Method)->Id = Id;
-	((METHOD*) Method)->U = 0.0;
-	((METHOD*) Method)->f = NULL;	//	Allocated in [method]_evaluate()
 
 	//	Initialize Method by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!
@@ -23,12 +21,12 @@ void method_copy(METHOD* SrcMethod, METHOD* DstMethod)
 {
 	//	Members
 	DstMethod->Id = SrcMethod->Id;
-	DstMethod->U = SrcMethod->U;
-	DstMethod->f = SrcMethod->f;
+
 	//	Methods
 	DstMethod->preprocess = SrcMethod->preprocess;
 	DstMethod->evaluate = SrcMethod->evaluate;
 	DstMethod->uninitialize = SrcMethod->uninitialize;
+
 	//	Call sub-class copy method
 }
 

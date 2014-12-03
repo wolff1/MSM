@@ -12,7 +12,9 @@ void particle_collection_initialize(PARTICLE_COLLECTION* Pc, long N, double Unit
 	assert(Pc != NULL);
 
 	Pc->N = N;
+	Pc->U = 0.0;
 	Pc->r = (PARTICLE*) dynmem(Pc->N*sizeof(PARTICLE));
+	Pc->f = (double**) dynarr_d(Pc->N, 3);
 	Pc->m = (double*) dynvec(Pc->N, sizeof(double));
 	Pc->v = (double**) dynarr_d(Pc->N, 3);
 	Pc->UnitConverter = UnitConverter;
@@ -30,19 +32,23 @@ void particle_collection_copy(PARTICLE_COLLECTION* SrcParticles, PARTICLE_COLLEC
 	assert(SrcParticles != NULL);
 	assert(DstParticles != NULL);
 
+	//	Create template for particle_collection
 	particle_collection_initialize(DstParticles, SrcParticles->N, SrcParticles->UnitConverter);
 
-	//DstParticles->N = SrcParticles->N;
-	//DstParticles->UnitConverter = SrcParticles->UnitConverter;
-	//memcpy(&DstParticles->r, &SrcParticles->r, DstParticles->N*sizeof(PARTICLE));
-	//memcpy(&DstParticles->m, &SrcParticles->m, DstParticles->N*sizeof(double));
-	//memcpy(&DstParticles->v, &SrcParticles->v, DstParticles->N*3*sizeof(double)); // does this make sense?
+	//	Energy, U, is initialized to 0.0. Copy over the correct value from SrcParticles
+	DstParticles->U = SrcParticles->U;
+
+	//	Fill in all of the particle info from source to destination
 	for (i = 0; i < DstParticles->N; i++)
 	{
 		DstParticles->r[i].x = SrcParticles->r[i].x;
 		DstParticles->r[i].y = SrcParticles->r[i].y;
 		DstParticles->r[i].z = SrcParticles->r[i].z;
 		DstParticles->r[i].q = SrcParticles->r[i].q;
+
+		DstParticles->f[i][0] = SrcParticles->f[i][0];
+		DstParticles->f[i][1] = SrcParticles->f[i][1];
+		DstParticles->f[i][2] = SrcParticles->f[i][2];
 
 		DstParticles->m[i] = SrcParticles->m[i];
 
@@ -67,6 +73,10 @@ printf("before dynfree(Pc->v)\n");
 	dynfree(Pc->v);
 printf("before dynfree(Pc->m)\n");
 	dynfree(Pc->m);
+printf("before dynfree(Pc->f[0])\n");
+	dynfree(Pc->f[0]);
+printf("before dynfree(Pc->f)\n");
+	dynfree(Pc->f);
 printf("before dynfree(Pc->r)\n");
 	dynfree(Pc->r);
 }

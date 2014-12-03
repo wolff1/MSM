@@ -13,8 +13,6 @@ typedef struct
 {
 	//	Members
 	short		Id;
-	double		U;
-	double**	f;
 
 	//	Methods
 	void		(*preprocess)(void*,double);

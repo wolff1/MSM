@@ -12,11 +12,13 @@ particle_collection.h -
 
 typedef struct
 {
-	long			N;
-	PARTICLE*		r;
-	double*			m;
-	double**		v;
-	double			UnitConverter;
+	long			N;				//	Number of particles
+	double			U;				//	Energy induced by particles
+	PARTICLE*		r;				//	Positions and charges of particles
+	double**		f;				//	Per particle induced force
+	double*			m;				//	Masses of particles
+	double**		v;				//	Per particle velocity
+	double			UnitConverter;	//	Charge scalar for unit conversion
 } PARTICLE_COLLECTION;
 
 //	EXTERNAL Methods
