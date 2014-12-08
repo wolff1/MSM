@@ -32,8 +32,10 @@ typedef struct
 	double*		g2fg;
 	STENCIL*	g2g;
 	STENCIL*	tg2g;
+	size_t		Size;
 
 	//	Methods
+	void		(*copy)(void*,void*);
 	void		(*compute_g2g)(void*, SOFTENER*, MSM_PARAMETERS*);
 	void		(*compute_tg2g)(void*, SOFTENER*, MSM_PARAMETERS*);
 	void		(*evaluate)(void*, long, double*, double*, double*);
@@ -42,6 +44,7 @@ typedef struct
 
 //	EXTERNAL Methods
 void interpolant_initialize(void* Interpolant, void* Init(void*,MSM_PARAMETERS*), MSM_PARAMETERS* MsmParams);
+void interpolant_copy(INTERPOLANT* Dst, INTERPOLANT* Src);
 
 #endif
 

@@ -13,7 +13,11 @@ void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	assert(MsmParams != NULL);
 	printf("\tC1_SPLINE initialization!\n");
 
+	//	Set up COMMON members
+	C1->cmn.Size = sizeof(C1_SPLINE);
+
 	//	Set up COMMON function pointers
+	C1->cmn.copy = &c1_spline_copy;
 	C1->cmn.compute_g2g = &c1_spline_compute_g2g;
 	C1->cmn.compute_tg2g = &c1_spline_compute_tg2g;
 	C1->cmn.evaluate = &c1_spline_evaluate;
@@ -22,6 +26,14 @@ void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	//	Set up the C1_SPLINE interpolant
 	c1_spline_compute_g2p(C1);
 	c1_spline_compute_g2fg(C1);
+}
+
+void c1_spline_copy(void* Dst, void* Src)
+{
+	assert(Dst != NULL);
+	assert(Src != NULL);
+
+	//	--> INTERPOLANT is copied in interpolant_copy()
 }
 
 void c1_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams)

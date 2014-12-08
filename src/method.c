@@ -11,23 +11,30 @@ void method_initialize(void* Method, void* Init(void*), short Id)
 
 	//	Initialize Members
 	((METHOD*) Method)->Id = Id;
+	((METHOD*) Method)->Size = sizeof(METHOD);
 
 	//	Initialize Method by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!
 	(*Init)(Method);
 }
 
-void method_copy(METHOD* SrcMethod, METHOD* DstMethod)
+void method_copy(METHOD* Dst, METHOD* Src)
 {
-	//	Members
-	DstMethod->Id = SrcMethod->Id;
+	assert(Dst != NULL);
+	assert(Src != NULL);
 
-	//	Methods
-	DstMethod->preprocess = SrcMethod->preprocess;
-	DstMethod->evaluate = SrcMethod->evaluate;
-	DstMethod->uninitialize = SrcMethod->uninitialize;
+	//	Copy Members
+	Dst->Id = Src->Id;
+	Dst->Size = Src->Size;
+
+	//	Copy Methods
+	Dst->copy = Src->copy;
+	Dst->preprocess = Src->preprocess;
+	Dst->evaluate = Src->evaluate;
+	Dst->uninitialize = Src->uninitialize;
 
 	//	Call sub-class copy method
+	(*Src->copy)((void*)Dst, (void*)Src);
 }
 
 void method_uninitialize(void* Method)

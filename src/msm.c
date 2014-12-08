@@ -16,7 +16,11 @@ void msm_initialize(void* Method)
 	assert(Msm != NULL);
 	printf("Initializing MSM!\n");
 
+	//	Initialize COMMON members
+	Msm->cmn.Size = sizeof(MSM);
+
 	//	Initialize COMMON function pointers
+	Msm->cmn.copy = &msm_copy;
 	Msm->cmn.preprocess = &msm_preprocess;
 	Msm->cmn.evaluate = &msm_evaluate;
 	Msm->cmn.uninitialize = &msm_uninitialize;
@@ -65,6 +69,29 @@ void msm_initialize(void* Method)
 	Ptr = (SOFTENER*) dynmem(Size);
 	softener_initialize(Ptr, Init, Msm->prm.k);
 	Msm->sft = (SOFTENER*) Ptr;
+}
+
+void msm_copy(void* Dst, void* Src)
+{
+	assert(Dst != NULL);
+	assert(Src != NULL);
+
+	//	--> METHOD is copied in method_copy()
+
+	//	Copy MSM_PARAMETERS
+	memcpy(&((MSM*)Dst)->prm, &((MSM*)Src)->prm, sizeof(MSM_PARAMETERS));
+
+	//	Copy MSM_OPTIONS
+	memcpy(&((MSM*)Dst)->opt, &((MSM*)Src)->opt, sizeof(MSM_OPTIONS));
+
+	//	Copy INTERPOLANT
+	((MSM*)Dst)->itp = (INTERPOLANT*) dynmem(((MSM*)Src)->itp->Size);
+
+	interpolant_copy(((MSM*)Dst)->itp, ((MSM*)Src)->itp);
+
+	//	Copy SOFTENER
+	((MSM*)Dst)->sft = (SOFTENER*) dynmem(((MSM*)Src)->sft->Size);
+	softener_copy(((MSM*)Dst)->sft, ((MSM*)Src)->sft);
 }
 
 void msm_preprocess(void* Method, double DomainRadius)

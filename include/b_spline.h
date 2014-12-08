@@ -24,6 +24,7 @@ typedef struct
 
 //	EXTERNAL Methods
 void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams);
+void b_spline_copy(void* Dst, void* Src);
 void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams);
 void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams);
 void b_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double* DF);

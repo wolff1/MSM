@@ -67,6 +67,22 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 	}
 }
 
+void stencil_copy(STENCIL* Dst, STENCIL* Src)
+{
+	//	Initialize stencil
+	Dst->Shape = Src->Shape;
+	Dst->Size = Src->Size;
+
+	Dst->Data = (double*) dynvec(STENCIL_STORAGE(Dst->Size), sizeof(double));
+	memcpy(Dst->Data, Src->Data, STENCIL_STORAGE(Dst->Size)*sizeof(double));
+
+	Dst->YMax = (long*) dynvec(Dst->Size+1, sizeof(long));						//	One max per z
+	memcpy(Dst->YMax, Src->YMax, (Dst->Size+1)*sizeof(long));
+
+	Dst->XMax = (long*) dynvec(STENCIL_STORAGE_2D(Dst->Size), sizeof(long));	//	One max per (y,z)
+	memcpy(Dst->XMax, Src->XMax, STENCIL_STORAGE_2D(Dst->Size)*sizeof(long));
+}
+
 void stencil_populate(STENCIL* s, SOFTENER* Softener, short FunctionType, double Scale)
 {
 	void			(*f)(void*,long,double*,double*,double*);

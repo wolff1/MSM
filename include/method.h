@@ -13,8 +13,10 @@ typedef struct
 {
 	//	Members
 	short		Id;
+	size_t		Size;
 
 	//	Methods
+	void		(*copy)(void*,void*);
 	void		(*preprocess)(void*,double);
 	void		(*evaluate)(void*);
 	void		(*uninitialize)(void*);
@@ -22,7 +24,7 @@ typedef struct
 
 //	EXTERNAL Methods
 void method_initialize(void* Method, void* Init(void*), short Id);
-void method_copy(METHOD* SrcMethod, METHOD* DstMethod);
+void method_copy(METHOD* Dst, METHOD* Src);
 void method_uninitialize(void* Method);
 
 #endif

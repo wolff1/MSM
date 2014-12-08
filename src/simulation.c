@@ -11,7 +11,6 @@ void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, ME
 	//	A simulation is the repeated application of a specific method to a certain domain
 	//	A domain is a system of particles, and any other relevant information
 	//	A method computes the forces and electrostatic energy within a domain
-	METHOD*					TmpMethod = NULL;
 
 	assert(Simulation != NULL);
 	assert(Domain != NULL);
@@ -20,15 +19,13 @@ void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, ME
 	Simulation->Id = Id;
 	Simulation->TimeSteps = TimeSteps;
 
-	//	Make *separate* copies of Domain and Method
+	//	Make *separate* copy of Domain
 	Simulation->Domain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
 	simulation_domain_copy(Domain, Simulation->Domain);
 
-/*
-	TmpMethod = (METHOD*) dynmem(sizeof(METHOD));
-	method_copy(Method, TmpMethod);
-	(*Simulation)->Method = TmpMethod;
-*/
+	//	Make *separate* copy of Method
+	Simulation->Method = (METHOD*) dynmem(Method->Size);
+	method_copy(Simulation->Method, Method);
 }
 
 void simulation_run(SIMULATION* Simulation)
@@ -57,7 +54,10 @@ printf("before simulation_domain_uninit\n");
 printf("before dynfree(Simulation->Domain)\n");
 	dynfree(Simulation->Domain);
 
-//	method_uninitialize(Simulation->Method);
+printf("before method_uninit\n");
+	method_uninitialize(Simulation->Method);
+printf("before dynfree(Simulation->Method)\n");
+	dynfree(Simulation->Method);
 }
 
 //	INTERNAL Methods

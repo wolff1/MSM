@@ -13,7 +13,11 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	assert(MsmParams != NULL);
 	printf("\tB_SPLINE initialization!\n");
 
+	//	Set up COMMON members
+	Bs->cmn.Size = sizeof(B_SPLINE);
+
 	//	Set up COMMON function pointers
+	Bs->cmn.copy = &b_spline_copy;
 	Bs->cmn.compute_g2g = &b_spline_compute_g2g;
 	Bs->cmn.compute_tg2g = &b_spline_compute_tg2g;
 	Bs->cmn.evaluate = &b_spline_evaluate;
@@ -33,6 +37,30 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	b_spline_compute_omega_prime(Bs);
 //	b_spline_compute_g2g(Bs);		//	Happens in preprocess
 //	b_spline_compute_tg2g(Bs);		//	Happens in preprocess
+}
+
+void b_spline_copy(void* Dst, void* Src)
+{
+	assert(Dst != NULL);
+	assert(Src != NULL);
+
+	//	--> INTERPOLANT is copied in interpolant_copy()
+
+	//	Copy Members
+	((B_SPLINE*)Dst)->mu = ((B_SPLINE*)Src)->mu;
+
+	((B_SPLINE*)Dst)->omega = (double*) dynvec(((B_SPLINE*)Dst)->cmn.p/2+((B_SPLINE*)Dst)->mu+1, sizeof(double));
+	memcpy(((B_SPLINE*)Dst)->omega, ((B_SPLINE*)Src)->omega, (((B_SPLINE*)Dst)->cmn.p/2+((B_SPLINE*)Dst)->mu+1)*sizeof(double));
+
+	((B_SPLINE*)Dst)->omegap = (double*) dynvec(((B_SPLINE*)Dst)->cmn.p/2+((B_SPLINE*)Dst)->mu+1, sizeof(double));
+	memcpy(((B_SPLINE*)Dst)->omegap, ((B_SPLINE*)Src)->omegap, (((B_SPLINE*)Dst)->cmn.p/2+((B_SPLINE*)Dst)->mu+1)*sizeof(double));
+
+	//	The following two stencils do not survive the preprocessing step and don't need to be copied
+//	((B_SPLINE*)Dst)->GammaIntermediate = (STENCIL*) dynmem(sizeof(STENCIL));
+//	stencil_copy(((B_SPLINE*)Dst)->GammaIntermediate, ((B_SPLINE*)Src)->GammaIntermediate);
+
+//	((B_SPLINE*)Dst)->GammaTop = (STENCIL*) dynmem(sizeof(STENCIL));
+//	stencil_copy(((B_SPLINE*)Dst)->GammaTop, ((B_SPLINE*)Src)->GammaTop);
 }
 
 void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS* MsmParams)
@@ -159,11 +187,11 @@ void b_spline_uninitialize(void* Interpolant)
 	stencil_free(Bs->cmn.tg2g);
 	dynfree(Bs->cmn.g2g);
 	dynfree(Bs->cmn.tg2g);
-	dynfree(Bs->omega);
-	dynfree(Bs->omegap);
 	dynfree(Bs->cmn.g2p[0]);
 	dynfree(Bs->cmn.g2p);
 	dynfree(Bs->cmn.g2fg);
+	dynfree(Bs->omega);
+	dynfree(Bs->omegap);
 }
 
 //	INTERNAL Methods
@@ -356,6 +384,7 @@ void b_spline_compute_omega(B_SPLINE* Bs)
 
 	p = Bs->cmn.p;
 	p_2 = p/2;
+	n = p_2 + Bs->mu + 1;
 
 	// Dynamically allocate memory
 	X = (double*) dynvec(p_2, sizeof(double));

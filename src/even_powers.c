@@ -12,13 +12,27 @@ void even_powers_initialize(void* Softener)
 	assert(Ep != NULL);
 	printf("\tEVEN_POWERS initialization!\n");
 
+	//	Initialize COMMON members
+	Ep->cmn.Size = sizeof(EVEN_POWERS);
+
 	//	Initialize COMMON function pointers
+	Ep->cmn.copy = &even_powers_copy;
 	Ep->cmn.soften = &even_powers_soften;
 	Ep->cmn.split = &even_powers_split;
 	Ep->cmn.uninitialize = &even_powers_uninitialize;
 
 	// Initialize the EVEN_POWERS softener
 	even_powers_compute_p2p(Ep);
+}
+
+void even_powers_copy(void* Dst, void* Src)
+{
+	assert(Dst != NULL);
+	assert(Src != NULL);
+
+	//	Copy softening function coefficients
+	((EVEN_POWERS*)Dst)->cmn.p2p = (double*) dynvec(((EVEN_POWERS*)Dst)->cmn.k+1, sizeof(double));
+	memcpy(((EVEN_POWERS*)Dst)->cmn.p2p, ((EVEN_POWERS*)Src)->cmn.p2p, (((EVEN_POWERS*)Dst)->cmn.k+1)*sizeof(double));
 }
 
 void even_powers_soften(void* Softener, long Len, double* X, double* F, double* DF)

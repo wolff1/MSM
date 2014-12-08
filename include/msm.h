@@ -26,22 +26,17 @@ typedef struct
 
 typedef struct
 {
-	double**	Data;
-} MSM_GRIDS;
-
-typedef struct
-{
 	//	Members
 	METHOD				cmn;
 	MSM_PARAMETERS		prm;
 	MSM_OPTIONS			opt;
-	MSM_GRIDS			grd;
 	INTERPOLANT*		itp;
 	SOFTENER*			sft;
 } MSM;
 
 //	EXTERNAL Methods
 void msm_initialize(void* Msm);
+void msm_copy(void* Dst, void* Src);
 void msm_preprocess(void* Msm, double DomainRadius);
 void msm_evaluate(void* Msm);
 void msm_uninitialize(void* Msm);
