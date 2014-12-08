@@ -21,7 +21,7 @@ void simulation_initialize(SIMULATION* Simulation, SIMULATION_DOMAIN* Domain, ME
 
 	//	Make *separate* copy of Domain
 	Simulation->Domain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
-	simulation_domain_copy(Domain, Simulation->Domain);
+	simulation_domain_copy(Simulation->Domain, Domain);
 
 	//	Make *separate* copy of Method
 	Simulation->Method = (METHOD*) dynmem(Method->Size);

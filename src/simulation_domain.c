@@ -33,7 +33,7 @@ void simulation_domain_compute_forces(SIMULATION_DOMAIN* Domain)
 	//	Pass domain info to method and let it calculate the forces and electrostatic energy
 }
 
-void simulation_domain_copy(SIMULATION_DOMAIN* SrcDomain, SIMULATION_DOMAIN* DstDomain)
+void simulation_domain_copy(SIMULATION_DOMAIN* DstDomain, SIMULATION_DOMAIN* SrcDomain)
 {
 	assert(SrcDomain != NULL);
 	assert(DstDomain != NULL);
@@ -48,7 +48,7 @@ void simulation_domain_copy(SIMULATION_DOMAIN* SrcDomain, SIMULATION_DOMAIN* Dst
 
 	// Set up new particle_collection and copy source particle_collection
 	DstDomain->Particles = (PARTICLE_COLLECTION*) dynmem(sizeof(PARTICLE_COLLECTION));
-	particle_collection_copy(SrcDomain->Particles, DstDomain->Particles);
+	particle_collection_copy(DstDomain->Particles, SrcDomain->Particles);
 }
 
 void simulation_domain_uninitialize(SIMULATION_DOMAIN* Domain)

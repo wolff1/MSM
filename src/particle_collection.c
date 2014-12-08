@@ -25,7 +25,7 @@ void particle_collection_move(PARTICLE_COLLECTION* Pc)
 	//	This method will update the particle positions at each time step
 }
 
-void particle_collection_copy(PARTICLE_COLLECTION* SrcParticles, PARTICLE_COLLECTION* DstParticles)
+void particle_collection_copy(PARTICLE_COLLECTION* DstParticles, PARTICLE_COLLECTION* SrcParticles)
 {
 	long i = 0;
 
