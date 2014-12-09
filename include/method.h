@@ -19,7 +19,7 @@ typedef struct
 	//	Methods
 	void		(*copy)(void*,void*);
 	void		(*preprocess)(void*,double);
-	void		(*evaluate)(void*, long, PARTICLE*);
+	void		(*evaluate)(void*, long, PARTICLE*, double*, double**);
 	void		(*uninitialize)(void*);
 } METHOD;
 

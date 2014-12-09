@@ -22,7 +22,7 @@ typedef struct
 void naive_initialize(void* Naive);
 void naive_copy(void* Dst, void* Src);
 void naive_preprocess(void* Naive, double DomainRadius);
-void naive_evaluate(void* Naive, long N, PARTICLE* r);
+void naive_evaluate(void* Naive, long N, PARTICLE* r, double* U, double** f);
 void naive_uninitialize(void* Naive);
 
 //	INTERNAL Methods

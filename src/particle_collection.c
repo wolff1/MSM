@@ -20,9 +20,35 @@ void particle_collection_initialize(PARTICLE_COLLECTION* Pc, long N, double Unit
 	Pc->UnitConverter = UnitConverter;
 }
 
-void particle_collection_update(PARTICLE_COLLECTION* Pc)
+void particle_collection_update(PARTICLE_COLLECTION* Pc, PARTICLE* MinimumCoordinate, PARTICLE* MaximumCoordinate)
 {
+	long		i = 0;
+
 	//	This method will update the particle positions at each time step
+	//		->	Leap-frog integration
+
+	MinimumCoordinate->x = DBL_MAX;
+	MinimumCoordinate->y = DBL_MAX;
+	MinimumCoordinate->z = DBL_MAX;
+	MaximumCoordinate->x = -DBL_MAX;
+	MaximumCoordinate->y = -DBL_MAX;
+	MaximumCoordinate->z = -DBL_MAX;
+
+	//	Loop through all of the particles and update their positions
+	for (i = 0; i < Pc->N; i++)
+	{
+		//	New position = old position + momemtum + forces + ...
+		//		... FIXME
+
+		//	Check particle i to see if it has a minimum coordinate
+		MinimumCoordinate->x = MIN(MinimumCoordinate->x, Pc->r[i].x);
+		MinimumCoordinate->y = MIN(MinimumCoordinate->y, Pc->r[i].y);
+		MinimumCoordinate->z = MIN(MinimumCoordinate->z, Pc->r[i].z);
+		//	Check particle i to see if it has a maximum coordinate
+		MaximumCoordinate->x = MAX(MaximumCoordinate->x, Pc->r[i].x);
+		MaximumCoordinate->y = MAX(MaximumCoordinate->y, Pc->r[i].y);
+		MaximumCoordinate->z = MAX(MaximumCoordinate->z, Pc->r[i].z);
+	}
 }
 
 void particle_collection_copy(PARTICLE_COLLECTION* DstParticles, PARTICLE_COLLECTION* SrcParticles)

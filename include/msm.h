@@ -39,7 +39,7 @@ typedef struct
 void msm_initialize(void* Msm);
 void msm_copy(void* Dst, void* Src);
 void msm_preprocess(void* Msm, double DomainRadius);
-void msm_evaluate(void* Msm, long N, PARTICLE* r);
+void msm_evaluate(void* Msm, long N, PARTICLE* r, double* U, double** f);
 void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods

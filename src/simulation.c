@@ -36,17 +36,28 @@ void simulation_run(SIMULATION* Simulation)
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{
 		//	Have <METHOD> evaluate the energy and forces for the <DOMAIN>
-		(*Simulation->Method->evaluate)(Simulation->Method, Simulation->Domain->Particles->N, Simulation->Domain->Particles->r);
+		(*Simulation->Method->evaluate)(Simulation->Method,
+										Simulation->Domain->Particles->N,
+										Simulation->Domain->Particles->r,
+										&Simulation->Domain->Particles->U,
+										Simulation->Domain->Particles->f);
 
 		//	Handle time integration
 		simulation_step(Simulation);
 
-		if (0/*Domain enlarged*/)
+		if (0/*Domain size changed*/)
 		{
 			//	FIXME - Probably should have SIMULATION_DOMAIN do the resizing
 			//	Resize K
 			(*Simulation->Method->preprocess)(Simulation->Method, Simulation->Domain->Radius);
 		}
+	}
+
+	printf("Energy: %+f\n", Simulation->Domain->Particles->U);
+	printf("Forces:\n");
+	for (i = 0; i < Simulation->Domain->Particles->N; i++)
+	{
+		printf("%+f\t%+f\t%+f\n", Simulation->Domain->Particles->f[i][0], Simulation->Domain->Particles->f[i][1], Simulation->Domain->Particles->f[i][2]);
 	}
 }
 

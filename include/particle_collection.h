@@ -6,6 +6,8 @@ particle_collection.h -
 #ifndef PARTICLE_COLLECTION_H
 #define PARTICLE_COLLECTION_H
 
+#include "float.h"
+
 #include "all.h"
 #include "memory.h"
 #include "particle.h"
@@ -23,7 +25,7 @@ typedef struct
 
 //	EXTERNAL Methods
 void particle_collection_initialize(PARTICLE_COLLECTION* Pc, long N, double UnitConverter);
-void particle_collection_update(PARTICLE_COLLECTION* Pc);
+void particle_collection_update(PARTICLE_COLLECTION* Pc, PARTICLE* MinimumCoordinate, PARTICLE* MaximumCoordinate);
 void particle_collection_copy(PARTICLE_COLLECTION* DstParticles, PARTICLE_COLLECTION* SrcParticles);
 void particle_collection_uninitialize(PARTICLE_COLLECTION* Pc);
 

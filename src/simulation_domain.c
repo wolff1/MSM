@@ -31,24 +31,14 @@ void simulation_domain_initialize(SIMULATION_DOMAIN* Domain, short Id, char* Fil
 void simulation_domain_update(SIMULATION_DOMAIN* Domain)
 {
 	//	Given force field induced by current configuration, update the simulation domain
-
 	//		-> update particle_collection
-	particle_collection_update(Domain->Particles);
-
 	//		-> update simulation_domain based on new min/max positions, domain radius, etc
-	Domain->MinimumCoordinates.x = 0.0;
-	Domain->MinimumCoordinates.y = 0.0;
-	Domain->MinimumCoordinates.z = 0.0;
-	Domain->MinimumCoordinates.q = 0.0;
+	particle_collection_update(Domain->Particles, &Domain->MinimumCoordinates, &Domain->MaximumCoordinates);
 
-	Domain->MaximumCoordinates.x = 0.0;
-	Domain->MaximumCoordinates.y = 0.0;
-	Domain->MaximumCoordinates.z = 0.0;
-	Domain->MaximumCoordinates.q = 0.0;
-
+	//	Set up CenterCoordinates and Radius based on new particle positions
 	simulation_domain_set_center_and_radius(Domain);
 
-	//		-> If domain size changes -> ...
+	//	FIXME: resize domain here by calling preprocessing or in simulation?
 }
 
 void simulation_domain_copy(SIMULATION_DOMAIN* DstDomain, SIMULATION_DOMAIN* SrcDomain)
@@ -204,22 +194,7 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 		//	Generate data, set up Particles
 	}
 
-	////	Find lengths of sides of simulation domain
-	//Domain->CenterCoordinates.x = Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x;
-	//Domain->CenterCoordinates.y = Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y;
-	//Domain->CenterCoordinates.z = Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z;
-
-	////	Define Radius to be 2-norm of vector between the min and max corners
-	//Domain->Radius =  Domain->CenterCoordinates.x * Domain->CenterCoordinates.x;
-	//Domain->Radius += Domain->CenterCoordinates.y * Domain->CenterCoordinates.y;
-	//Domain->Radius += Domain->CenterCoordinates.z * Domain->CenterCoordinates.z;
-	//Domain->Radius = 0.5 * sqrt(Domain->Radius);
-
-	////	Lastly, set the center to be the minimum coordinate plus half of the side length
-	//Domain->CenterCoordinates.x = Domain->MinimumCoordinates.x + (0.5 * Domain->CenterCoordinates.x);
-	//Domain->CenterCoordinates.y = Domain->MinimumCoordinates.y + (0.5 * Domain->CenterCoordinates.y);
-	//Domain->CenterCoordinates.z = Domain->MinimumCoordinates.z + (0.5 * Domain->CenterCoordinates.z);
-
+	//	Set up CenterCoordinates and Radius based on particle positions
 	simulation_domain_set_center_and_radius(Domain);
 
 	Domain->Particles = Pc;

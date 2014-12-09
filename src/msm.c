@@ -106,7 +106,7 @@ void msm_preprocess(void* Method, double DomainRadius)
 	(*Msm->itp->compute_tg2g)(Msm->itp, Msm->sft, &Msm->prm);
 }
 
-void msm_evaluate(void* Method, long N, PARTICLE* r)
+void msm_evaluate(void* Method, long N, PARTICLE* r, double* U, double** f)
 {
 	MSM*		Msm = (MSM*) Method;
 	assert(Msm != NULL);
