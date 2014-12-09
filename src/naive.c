@@ -38,11 +38,11 @@ void naive_preprocess(void* Method, double DomainRadius)
 	printf("NAIVE Preprocessing!\n");
 }
 
-void naive_evaluate(void* Method)
+void naive_evaluate(void* Method, long N, PARTICLE* r)
 {
 	NAIVE*		Naive = (NAIVE*) Method;
 	assert(Naive != NULL);
-	printf("NAIVE Evaluation!\n");
+	printf("NAIVE Evaluation! %lu particles\n", N);
 }
 
 void naive_uninitialize(void* Method)

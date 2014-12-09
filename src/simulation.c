@@ -35,13 +35,17 @@ void simulation_run(SIMULATION* Simulation)
 
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{
-//		Simulation->Method->evaluate(Simulation->Method);
+		//	Have <METHOD> evaluate the energy and forces for the <DOMAIN>
+		(*Simulation->Method->evaluate)(Simulation->Method, Simulation->Domain->Particles->N, Simulation->Domain->Particles->r);
+
+		//	Handle time integration
 		simulation_step(Simulation);
 
 		if (0/*Domain enlarged*/)
 		{
+			//	FIXME - Probably should have SIMULATION_DOMAIN do the resizing
 			//	Resize K
-			Simulation->Method->preprocess(Simulation->Method, Simulation->Domain->Radius);
+			(*Simulation->Method->preprocess)(Simulation->Method, Simulation->Domain->Radius);
 		}
 	}
 }
@@ -63,7 +67,7 @@ printf("before dynfree(Simulation->Method)\n");
 //	INTERNAL Methods
 void simulation_step(SIMULATION* Simulation)
 {
-	//	Use the calculated forces / momentum information to move the particles
+	//	Have SIMULATION_DOMAIN Use the calculated forces / momentum information to move the particles
 }
 
 //	End of file

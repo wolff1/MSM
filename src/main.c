@@ -246,7 +246,7 @@ void test_msm_preprocessing(void)
 
 	//	Run simulation
 	(*Method->preprocess)(Method, 10.0);
-	(*Method->evaluate)(Method);
+	(*Method->evaluate)(Method, 0, NULL);
 	(*Method->uninitialize)(Method);
 	dynfree(Method);
 }
