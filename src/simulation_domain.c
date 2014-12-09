@@ -16,9 +16,11 @@ void simulation_domain_initialize(SIMULATION_DOMAIN* Domain, short Id, char* Fil
 	Domain->MinimumCoordinates.x = DBL_MAX;
 	Domain->MinimumCoordinates.y = DBL_MAX;
 	Domain->MinimumCoordinates.z = DBL_MAX;
+	Domain->MinimumCoordinates.q = DBL_MAX;
 	Domain->MaximumCoordinates.x = -DBL_MAX;
 	Domain->MaximumCoordinates.y = -DBL_MAX;
 	Domain->MaximumCoordinates.z = -DBL_MAX;
+	Domain->MaximumCoordinates.q = -DBL_MAX;
 
 	simulation_domain_input_particles(Domain);
 
@@ -134,7 +136,7 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 			if (Idx < Pc->N)
 			{
 				strncpy(TempBuffer, LinePsf.Atom.Charge, 16);
-				Pc->r[Idx].q = strtod(TempBuffer, NULL);
+				Pc->r[Idx].q = strtod(TempBuffer, NULL) * UnitConverter;	//	FIXME - Do I really want to do this here?
 
 				strncpy(TempBuffer, LinePsf.Atom.Mass, 7);
 				Pc->m[Idx] = strtod(TempBuffer, NULL);
@@ -180,10 +182,12 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 				Domain->MinimumCoordinates.x = MIN(Domain->MinimumCoordinates.x, Pc->r[Idx].x);
 				Domain->MinimumCoordinates.y = MIN(Domain->MinimumCoordinates.y, Pc->r[Idx].y);
 				Domain->MinimumCoordinates.z = MIN(Domain->MinimumCoordinates.z, Pc->r[Idx].z);
+				Domain->MinimumCoordinates.q = MIN(Domain->MinimumCoordinates.q, Pc->r[Idx].q);
 
 				Domain->MaximumCoordinates.x = MAX(Domain->MaximumCoordinates.x, Pc->r[Idx].x);
 				Domain->MaximumCoordinates.y = MAX(Domain->MaximumCoordinates.y, Pc->r[Idx].y);
 				Domain->MaximumCoordinates.z = MAX(Domain->MaximumCoordinates.z, Pc->r[Idx].z);
+				Domain->MaximumCoordinates.q = MAX(Domain->MaximumCoordinates.q, Pc->r[Idx].q);
 			}
 		}
 
@@ -206,6 +210,7 @@ void simulation_domain_set_center_and_radius(SIMULATION_DOMAIN* Domain)
 	Domain->CenterCoordinates.x = Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x;
 	Domain->CenterCoordinates.y = Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y;
 	Domain->CenterCoordinates.z = Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z;
+	Domain->CenterCoordinates.q = Domain->MaximumCoordinates.q - Domain->MinimumCoordinates.q;
 
 	//	Define Radius to be 2-norm of vector between the min and max corners
 	Domain->Radius =  Domain->CenterCoordinates.x * Domain->CenterCoordinates.x;
@@ -217,6 +222,7 @@ void simulation_domain_set_center_and_radius(SIMULATION_DOMAIN* Domain)
 	Domain->CenterCoordinates.x = Domain->MinimumCoordinates.x + (0.5 * Domain->CenterCoordinates.x);
 	Domain->CenterCoordinates.y = Domain->MinimumCoordinates.y + (0.5 * Domain->CenterCoordinates.y);
 	Domain->CenterCoordinates.z = Domain->MinimumCoordinates.z + (0.5 * Domain->CenterCoordinates.z);
+	Domain->CenterCoordinates.q = Domain->MinimumCoordinates.q + (0.5 * Domain->CenterCoordinates.q);
 }
 
 //	End of file
