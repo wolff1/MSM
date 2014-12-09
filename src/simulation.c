@@ -36,11 +36,7 @@ void simulation_run(SIMULATION* Simulation)
 	for (i = 0; i < Simulation->TimeSteps; i++)
 	{
 		//	Have <METHOD> evaluate the energy and forces for the <DOMAIN>
-		(*Simulation->Method->evaluate)(Simulation->Method,
-										Simulation->Domain->Particles->N,
-										Simulation->Domain->Particles->r,
-										&Simulation->Domain->Particles->U,
-										Simulation->Domain->Particles->f);
+		(*Simulation->Method->evaluate)(Simulation->Method, Simulation->Domain);
 
 		//	Handle time integration
 		simulation_step(Simulation);

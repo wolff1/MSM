@@ -38,15 +38,19 @@ void naive_preprocess(void* Method, double DomainRadius)
 	printf("NAIVE Preprocessing!\n");
 }
 
-void naive_evaluate(void* Method, long N, PARTICLE* r, double* U, double** f)
+void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 {
 	NAIVE*		Naive = (NAIVE*) Method;
 	long		i = 0;
 	long		j = 0;
+	long		N = Domain->Particles->N;
 	double		d = 0.0;
 	double		dx = 0.0;
 	double		dy = 0.0;
 	double		dz = 0.0;
+	PARTICLE*	r = Domain->Particles->r;
+	double		U = 0.0;
+	double**	f = Domain->Particles->f;
 	double		dfx = 0.0;
 	double		dfy = 0.0;
 	double		dfz = 0.0;
@@ -66,7 +70,7 @@ void naive_evaluate(void* Method, long N, PARTICLE* r, double* U, double** f)
 			d = sqrt(dx*dx + dy*dy + dz*dz);
 
 			//	Compute contribution to the energy
-			*U += (r[i].q*r[j].q/d);
+			U += (r[i].q*r[j].q/d);
 
 			//	Compute contribution to the forces
 			dfx = (-dx/d)*r[i].q*r[j].q/(d*d);
@@ -84,6 +88,7 @@ void naive_evaluate(void* Method, long N, PARTICLE* r, double* U, double** f)
 			f[j][2] += dfz;
 		}
 	}
+	Domain->Particles->U = U;
 }
 
 void naive_uninitialize(void* Method)

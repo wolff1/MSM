@@ -10,6 +10,7 @@ msm.h -
 #include "interpolant.h"
 #include "softener.h"
 #include "method.h"
+//#include "simulation_domain.h"
 #include "particle.h"
 
 #include "even_powers.h"
@@ -39,11 +40,11 @@ typedef struct
 void msm_initialize(void* Msm);
 void msm_copy(void* Dst, void* Src);
 void msm_preprocess(void* Msm, double DomainRadius);
-void msm_evaluate(void* Msm, long N, PARTICLE* r, double* U, double** f);
+void msm_evaluate(void* Msm, SIMULATION_DOMAIN* Domain);
 void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods
-void msm_short_range(MSM* Msm);
+void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain);
 void msm_anterpolate(MSM* Msm);
 void msm_restrict(MSM* Msm);
 void msm_direct(MSM* Msm);

@@ -8,6 +8,7 @@ method.h - Definition for the generic METHOD class
 
 #include "all.h"
 #include "memory.h"
+#include "simulation_domain.h"
 #include "particle.h"
 
 typedef struct
@@ -19,7 +20,7 @@ typedef struct
 	//	Methods
 	void		(*copy)(void*,void*);
 	void		(*preprocess)(void*,double);
-	void		(*evaluate)(void*, long, PARTICLE*, double*, double**);
+	void		(*evaluate)(void*, SIMULATION_DOMAIN*);
 	void		(*uninitialize)(void*);
 } METHOD;
 

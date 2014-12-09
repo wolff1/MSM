@@ -106,15 +106,24 @@ void msm_preprocess(void* Method, double DomainRadius)
 	(*Msm->itp->compute_tg2g)(Msm->itp, Msm->sft, &Msm->prm);
 }
 
-void msm_evaluate(void* Method, long N, PARTICLE* r, double* U, double** f)
+void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 {
+	long		N = 0;
 	MSM*		Msm = (MSM*) Method;
+
 	assert(Msm != NULL);
+	assert(Domain != NULL);
+
+	N = Domain->Particles->N;
 	printf("MSM Evaluation! %lu particles\n", N);
+
+	//	Initialize output variables U and f
+	Domain->Particles->U = 0.0;
+	memset(Domain->Particles->f[0], 0, sizeof(double)*N*3);	//	FIXME <-- double check this
 
 	if (Msm->opt.ComputeShortRange)
 	{
-		msm_short_range(Msm);
+		msm_short_range(Msm, Domain);
 	}
 
 	if (Msm->opt.ComputeLongRange)
@@ -159,8 +168,12 @@ void msm_uninitialize(void* Method)
 }
 
 //	INTERNAL Methods
-void msm_short_range(MSM* Msm)
+void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 {
+	printf("\tMSM short range computation!\n");
+
+	//	Set up bins
+	//	Loop over bins
 }
 
 void msm_anterpolate(MSM* Msm)

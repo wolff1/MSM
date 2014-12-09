@@ -10,6 +10,7 @@ naive.h -
 #include "interpolant.h"
 #include "softener.h"
 #include "method.h"
+//#include "simulation_domain.h"
 #include "particle.h"
 
 typedef struct
@@ -22,7 +23,7 @@ typedef struct
 void naive_initialize(void* Naive);
 void naive_copy(void* Dst, void* Src);
 void naive_preprocess(void* Naive, double DomainRadius);
-void naive_evaluate(void* Naive, long N, PARTICLE* r, double* U, double** f);
+void naive_evaluate(void* Naive, SIMULATION_DOMAIN* Domain);
 void naive_uninitialize(void* Naive);
 
 //	INTERNAL Methods
