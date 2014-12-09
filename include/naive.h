@@ -10,7 +10,6 @@ naive.h -
 #include "interpolant.h"
 #include "softener.h"
 #include "method.h"
-//#include "simulation_domain.h"
 #include "particle.h"
 
 typedef struct

@@ -49,7 +49,7 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	double		dy = 0.0;
 	double		dz = 0.0;
 	PARTICLE*	r = Domain->Particles->r;
-	double		U = 0.0;
+	double*		U = &Domain->Particles->U;
 	double**	f = Domain->Particles->f;
 	double		dfx = 0.0;
 	double		dfy = 0.0;
@@ -70,7 +70,7 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			d = sqrt(dx*dx + dy*dy + dz*dz);
 
 			//	Compute contribution to the energy
-			U += (r[i].q*r[j].q/d);
+			*U += (r[i].q*r[j].q/d);
 
 			//	Compute contribution to the forces
 			dfx = (-dx/d)*r[i].q*r[j].q/(d*d);
@@ -88,7 +88,7 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			f[j][2] += dfz;
 		}
 	}
-	Domain->Particles->U = U;
+//	Domain->Particles->U = U;
 }
 
 void naive_uninitialize(void* Method)
