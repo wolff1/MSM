@@ -68,6 +68,7 @@ printf("before dynfree(Simulation->Method)\n");
 void simulation_step(SIMULATION* Simulation)
 {
 	//	Have SIMULATION_DOMAIN Use the calculated forces / momentum information to move the particles
+	simulation_domain_update(Simulation->Domain);
 }
 
 //	End of file

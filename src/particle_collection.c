@@ -20,7 +20,7 @@ void particle_collection_initialize(PARTICLE_COLLECTION* Pc, long N, double Unit
 	Pc->UnitConverter = UnitConverter;
 }
 
-void particle_collection_move(PARTICLE_COLLECTION* Pc)
+void particle_collection_update(PARTICLE_COLLECTION* Pc)
 {
 	//	This method will update the particle positions at each time step
 }

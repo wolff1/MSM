@@ -28,9 +28,27 @@ void simulation_domain_initialize(SIMULATION_DOMAIN* Domain, short Id, char* Fil
 //	printf("Radius = %f, N=%ld\n", (*Domain)->Radius, (*Domain)->Particles->N);
 }
 
-void simulation_domain_compute_forces(SIMULATION_DOMAIN* Domain)
+void simulation_domain_update(SIMULATION_DOMAIN* Domain)
 {
-	//	Pass domain info to method and let it calculate the forces and electrostatic energy
+	//	Given force field induced by current configuration, update the simulation domain
+
+	//		-> update particle_collection
+	particle_collection_update(Domain->Particles);
+
+	//		-> update simulation_domain based on new min/max positions, domain radius, etc
+	Domain->MinimumCoordinates.x = 0.0;
+	Domain->MinimumCoordinates.y = 0.0;
+	Domain->MinimumCoordinates.z = 0.0;
+	Domain->MinimumCoordinates.q = 0.0;
+
+	Domain->MaximumCoordinates.x = 0.0;
+	Domain->MaximumCoordinates.y = 0.0;
+	Domain->MaximumCoordinates.z = 0.0;
+	Domain->MaximumCoordinates.q = 0.0;
+
+	simulation_domain_set_center_and_radius(Domain);
+
+	//		-> If domain size changes -> ...
 }
 
 void simulation_domain_copy(SIMULATION_DOMAIN* DstDomain, SIMULATION_DOMAIN* SrcDomain)
@@ -186,6 +204,29 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 		//	Generate data, set up Particles
 	}
 
+	////	Find lengths of sides of simulation domain
+	//Domain->CenterCoordinates.x = Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x;
+	//Domain->CenterCoordinates.y = Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y;
+	//Domain->CenterCoordinates.z = Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z;
+
+	////	Define Radius to be 2-norm of vector between the min and max corners
+	//Domain->Radius =  Domain->CenterCoordinates.x * Domain->CenterCoordinates.x;
+	//Domain->Radius += Domain->CenterCoordinates.y * Domain->CenterCoordinates.y;
+	//Domain->Radius += Domain->CenterCoordinates.z * Domain->CenterCoordinates.z;
+	//Domain->Radius = 0.5 * sqrt(Domain->Radius);
+
+	////	Lastly, set the center to be the minimum coordinate plus half of the side length
+	//Domain->CenterCoordinates.x = Domain->MinimumCoordinates.x + (0.5 * Domain->CenterCoordinates.x);
+	//Domain->CenterCoordinates.y = Domain->MinimumCoordinates.y + (0.5 * Domain->CenterCoordinates.y);
+	//Domain->CenterCoordinates.z = Domain->MinimumCoordinates.z + (0.5 * Domain->CenterCoordinates.z);
+
+	simulation_domain_set_center_and_radius(Domain);
+
+	Domain->Particles = Pc;
+}
+
+void simulation_domain_set_center_and_radius(SIMULATION_DOMAIN* Domain)
+{
 	//	Find lengths of sides of simulation domain
 	Domain->CenterCoordinates.x = Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x;
 	Domain->CenterCoordinates.y = Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y;
@@ -201,8 +242,6 @@ void simulation_domain_input_particles(SIMULATION_DOMAIN* Domain)
 	Domain->CenterCoordinates.x = Domain->MinimumCoordinates.x + (0.5 * Domain->CenterCoordinates.x);
 	Domain->CenterCoordinates.y = Domain->MinimumCoordinates.y + (0.5 * Domain->CenterCoordinates.y);
 	Domain->CenterCoordinates.z = Domain->MinimumCoordinates.z + (0.5 * Domain->CenterCoordinates.z);
-
-	Domain->Particles = Pc;
 }
 
 //	End of file
