@@ -211,7 +211,7 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 		Next[n] = First[IDX(i,j,k,YBinCount,ZBinCount)];
 		First[IDX(i,j,k,YBinCount,ZBinCount)] = n;
 	}
-
+/*
 	//	Loop over bins
 	for (i = 0; i < XBinCount; i++)
 	{
@@ -220,7 +220,6 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 			for (k = 0; k < ZBinCount; k++)
 			{
 //				printf("%03ld <-- (%02ld,%02ld,%02ld)\n", IDX(i,j,k,YBinCount,ZBinCount), i,j,k);
-
 				if (First[IDX(i,j,k,YBinCount,ZBinCount)] != -1)
 				{
 					printf("Bin: (%02ld,%02ld,%02ld):\t", i,j,k);
@@ -232,6 +231,279 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 					} while (n != -1);
 					printf("\n");
 				}
+			}
+		}
+	}
+
+	//	Loop over bins
+	for (i = 0; i < XBinCount; i++)
+	{
+		for (j = 0; j < YBinCount; j++)
+		{
+			for (k = 0; k < ZBinCount; k++)
+			{
+				//	"current" cell is (i, j, k)
+//FIXME: how to restructure loops so that 1) output is correct and 2) no/few conditionals
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i+1, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i-1, j+1, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i+1, j+1, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+	}
+*/
+	//	i = 0 (no i-1)
+	i = 0;
+	{
+		//	j = 0 (no j-1)
+		j = 0;
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i+1, j+1, k-1)
+				//	"next" cell is (i, j, k)
+			}
+		}
+
+		for (j = 1; j < YBinCount-1; j++)
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i+1, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i-1, j+1, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i+1, j+1, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+
+		//	j = YBinCount (no j+1)
+		j = YBinCount-1;
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i+1, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+	}
+
+	for (i = 1; i < XBinCount-1; i++)
+	{
+		//	j = 0 (no j-1)
+		j = 0;
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i-1, j+1, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i+1, j+1, k-1)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+
+		for (j = 1; j < YBinCount-1; j++)
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	ALL
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i+1, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i-1, j+1, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i+1, j+1, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+
+		//	j = YBinCount (no j+1)
+		j = YBinCount-1;
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i+1, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i+1, j, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i+1, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+	}
+
+	//	i = XBinCount (no i+1)
+	i = XBinCount-1;
+	{
+		//	j = 0 (no j-1)
+		j = 0;
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i-1, j+1, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+
+		for (j = 1; j < YBinCount-1; j++)
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i-1, j+1, k-1)
+				//	"next" cell is (i, j+1, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+		}
+
+		//	j = YBinCount (no j+1)
+		j = YBinCount-1;
+		{
+			//	k = 0 (no k-1)
+			k = 0;
+			{
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
+			}
+
+			for (k = 1; k < ZBinCount; k++)
+			{
+				//	"next" cell is (i-1, j-1, k-1)
+				//	"next" cell is (i, j-1, k-1)
+				//	"next" cell is (i-1, j, k-1)
+				//	"next" cell is (i, j, k-1)
+				//	"next" cell is (i-1, j-1, k)
+				//	"next" cell is (i, j-1, k)
+				//	"next" cell is (i-1, j, k)
+				//	"next" cell is (i, j, k)
 			}
 		}
 	}
