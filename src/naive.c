@@ -43,11 +43,11 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	NAIVE*		Naive = (NAIVE*) Method;
 	long		i = 0;
 	long		j = 0;
-	long		N = Domain->Particles->N;
 	double		d = 0.0;
 	double		dx = 0.0;
 	double		dy = 0.0;
 	double		dz = 0.0;
+	long		N = Domain->Particles->N;
 	PARTICLE*	r = Domain->Particles->r;
 	double*		U = &Domain->Particles->U;
 	double**	f = Domain->Particles->f;
@@ -88,7 +88,6 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			f[j][2] += dfz;
 		}
 	}
-//	Domain->Particles->U = U;
 }
 
 void naive_uninitialize(void* Method)
