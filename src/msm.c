@@ -168,12 +168,81 @@ void msm_uninitialize(void* Method)
 }
 
 //	INTERNAL Methods
+long IDX(long x, long y, long z, long YLength, long ZLength)
+{
+	return x*YLength*ZLength + y*ZLength + z;
+}
+
 void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 {
+	long		i = 0;
+	long		j = 0;
+	long		k = 0;
+	long		n = 0;
+	long		N = Domain->Particles->N;
+	PARTICLE*	r = Domain->Particles->r;
+	double*		U = &Domain->Particles->U;
+	double**	f = Domain->Particles->f;
+	double		a = Msm->prm.a;
+	long		XBinCount = 0;
+	long		YBinCount = 0;
+	long		ZBinCount = 0;
+	long*		First = NULL;
+	long*		Next = NULL;
+
 	printf("\tMSM short range computation!\n");
 
-	//	Set up bins
+	//	Set up number of bins in each dimension (NOTE: MATLAB code has floor() + 1)
+	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a);
+	YBinCount = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / a);
+	ZBinCount = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / a);
+
+	//	Dynamically allocate memory for lists of bins
+	First = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
+	Next = (long*) dynvec(N, sizeof(long));
+
+	//	Set-up lists of bins
+	for (n = 0; n < XBinCount*YBinCount*ZBinCount; n++)
+	{
+		First[n] = -1;
+	}
+
+	//	Assign particles to bins
+	for (n = 0; n < N; n++)
+	{
+		i = (long) floor((r[n].x-Domain->MinimumCoordinates.x) / a);
+		j = (long) floor((r[n].y-Domain->MinimumCoordinates.y) / a);
+		k = (long) floor((r[n].z-Domain->MinimumCoordinates.z) / a);
+		Next[n] = First[IDX(i,j,k,YBinCount,ZBinCount)];
+		First[IDX(i,j,k,YBinCount,ZBinCount)] = n;
+	}
+
 	//	Loop over bins
+	for (i = 0; i < XBinCount; i++)
+	{
+		for (j = 0; j < YBinCount; j++)
+		{
+			for (k = 0; k < ZBinCount; k++)
+			{
+//				printf("%03ld <-- (%02ld,%02ld,%02ld)\n", IDX(i,j,k,YBinCount,ZBinCount), i,j,k);
+				if (First[IDX(i,j,k,YBinCount,ZBinCount)] != -1)
+				{
+					printf("Bin: (%02ld,%02ld,%02ld):\t", i,j,k);
+					n = First[IDX(i,j,k,YBinCount,ZBinCount)];
+					do
+					{
+						printf("%02ld, ", n);
+						n = Next[n];
+					} while (n != -1);
+					printf("\n");
+				}
+			}
+		}
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(First);
+	dynfree(Next);
 }
 
 void msm_anterpolate(MSM* Msm)
