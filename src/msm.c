@@ -168,11 +168,6 @@ void msm_uninitialize(void* Method)
 }
 
 //	INTERNAL Methods
-long IDX(long x, long y, long z, long YLength, long ZLength)
-{
-	return x*YLength*ZLength + y*ZLength + z;
-}
-
 void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 {
 	long		i = 0;
@@ -225,6 +220,7 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 			for (k = 0; k < ZBinCount; k++)
 			{
 //				printf("%03ld <-- (%02ld,%02ld,%02ld)\n", IDX(i,j,k,YBinCount,ZBinCount), i,j,k);
+
 				if (First[IDX(i,j,k,YBinCount,ZBinCount)] != -1)
 				{
 					printf("Bin: (%02ld,%02ld,%02ld):\t", i,j,k);
