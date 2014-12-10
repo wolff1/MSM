@@ -289,28 +289,21 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 			//	k = 0 (no k-1)
 			k = 0;
 			{
-				//	"next" cell is (i-1, j-1, k)
 				//	"next" cell is (i, j-1, k)
 				//	"next" cell is (i+1, j-1, k)
-				//	"next" cell is (i-1, j, k)
 				//	"next" cell is (i, j, k)
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
-				//	"next" cell is (i-1, j-1, k-1)
 				//	"next" cell is (i, j-1, k-1)
 				//	"next" cell is (i+1, j-1, k-1)
-				//	"next" cell is (i-1, j, k-1)
 				//	"next" cell is (i, j, k-1)
 				//	"next" cell is (i+1, j, k-1)
-				//	"next" cell is (i-1, j+1, k-1)
 				//	"next" cell is (i, j+1, k-1)
 				//	"next" cell is (i+1, j+1, k-1)
-				//	"next" cell is (i-1, j-1, k)
 				//	"next" cell is (i, j-1, k)
 				//	"next" cell is (i+1, j-1, k)
-				//	"next" cell is (i-1, j, k)
 				//	"next" cell is (i, j, k)
 			}
 		}
@@ -321,25 +314,19 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 			//	k = 0 (no k-1)
 			k = 0;
 			{
-				//	"next" cell is (i-1, j-1, k)
 				//	"next" cell is (i, j-1, k)
 				//	"next" cell is (i+1, j-1, k)
-				//	"next" cell is (i-1, j, k)
 				//	"next" cell is (i, j, k)
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
-				//	"next" cell is (i-1, j-1, k-1)
 				//	"next" cell is (i, j-1, k-1)
 				//	"next" cell is (i+1, j-1, k-1)
-				//	"next" cell is (i-1, j, k-1)
 				//	"next" cell is (i, j, k-1)
 				//	"next" cell is (i+1, j, k-1)
-				//	"next" cell is (i-1, j-1, k)
 				//	"next" cell is (i, j-1, k)
 				//	"next" cell is (i+1, j-1, k)
-				//	"next" cell is (i-1, j, k)
 				//	"next" cell is (i, j, k)
 			}
 		}
