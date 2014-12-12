@@ -184,6 +184,7 @@ void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Partic
 	double		d = 0.0;
 	long		Idx = 0;
 	double*		D = NULL;
+	double*		D_A = NULL;
 	double*		F = NULL;
 	double*		DF = NULL;
 	PARTICLE*	R = NULL;
@@ -194,6 +195,7 @@ void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Partic
 
 	//	Dynamically allocate memory
 	D = (double*) dynvec(MaxIterationCount, sizeof(double));
+	D_A = (double*) dynvec(MaxIterationCount, sizeof(double));
 	F = (double*) dynvec(MaxIterationCount, sizeof(double));
 	DF = (double*) dynvec(MaxIterationCount, sizeof(double));
 	R = (PARTICLE*) dynvec(MaxIterationCount, sizeof(PARTICLE));
@@ -215,31 +217,29 @@ void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Partic
 		//	Particle j in bin 2
 		while (j != -1)
 		{
-			if (i == j) printf("\t\ti == j, OMG\n");
-			dx = r[i].x - r[j].x;
-			dy = r[i].y - r[j].y;
-			dz = r[i].z - r[j].z;
+			dx = r[j].x - r[i].x;
+			dy = r[j].y - r[i].y;
+			dz = r[j].z - r[i].z;
 			d = sqrt(dx*dx + dy*dy + dz*dz);
 
-//			if (d < a && d > 0.0)
-			if (d < a)// && d > 0.0)
+			if (d < a)
 			{
-printf("\t\t(i,j) = (%ld,%ld)\n", i, j);
-//FIXME: how am i getting i==j? (once found, remove d > 0.0 from if clause above)
 				//	Add d to vector D
 				D[Idx] = d;
+				D_A[Idx] = d/a;
 
 				//	Add q[i]*q[j] to vector Q	-> Save in PARTICLE array?
 				//	Add r[j]-r[i] to array R	-> Save in PARTICLE array?
-				R[Idx].x = r[j].x - r[i].x;
-				R[Idx].y = r[j].x - r[i].y;
-				R[Idx].z = r[j].x - r[i].z;
-				R[Idx].q = r[j].q * r[i].q;
+				R[Idx].x = dx;
+				R[Idx].y = dy;
+				R[Idx].z = dz;
+				R[Idx].q = 1.0;//r[j].q * r[i].q;
 
 				//	Add i to vector I
 				//	add j to vector J
 				I[Idx] = i;
 				J[Idx] = j;
+if (i == j) printf("\t\ti == j, OMG\n"); else printf("(i,j) = (%ld,%ld), d=%f, Idx=%ld\n", i,j,D[Idx], Idx);
 
 				Idx++;
 			}
@@ -252,7 +252,7 @@ printf("\t\t(i,j) = (%ld,%ld)\n", i, j);
 printf("Interactions=%ld, Max=%ld\n", Idx, MaxIterationCount);
 
 	//	Compute gamma(D) and gamma'(D) in bulk
-	(*Msm->sft->soften)(Msm->sft, Idx, D, F, DF);
+	(*Msm->sft->soften)(Msm->sft, Idx, D_A, F, DF);
 
 	//	Compute energy and forces
 	for (k = 0; k < Idx; k++)
@@ -280,6 +280,7 @@ printf("Interactions=%ld, Max=%ld\n", Idx, MaxIterationCount);
 
 	//	Free dynamically allocated memory
 	dynfree(D);
+	dynfree(D_A);
 	dynfree(F);
 	dynfree(DF);
 	dynfree(R);
