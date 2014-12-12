@@ -184,7 +184,6 @@ void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Partic
 	double		d = 0.0;
 	long		Idx = 0;
 	double*		D = NULL;
-	double*		D_A = NULL;
 	double*		F = NULL;
 	double*		DF = NULL;
 	PARTICLE*	R = NULL;
@@ -195,7 +194,6 @@ void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Partic
 
 	//	Dynamically allocate memory
 	D = (double*) dynvec(MaxIterationCount, sizeof(double));
-	D_A = (double*) dynvec(MaxIterationCount, sizeof(double));
 	F = (double*) dynvec(MaxIterationCount, sizeof(double));
 	DF = (double*) dynvec(MaxIterationCount, sizeof(double));
 	R = (PARTICLE*) dynvec(MaxIterationCount, sizeof(PARTICLE));
@@ -224,22 +222,18 @@ void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Partic
 
 			if (d < a)
 			{
-				//	Add d to vector D
-				D[Idx] = d;
-				D_A[Idx] = d/a;
+				//	Add d/a to vector D, NOTE: need a*D[x] to get d below
+				D[Idx] = d/a;
 
-				//	Add q[i]*q[j] to vector Q	-> Save in PARTICLE array?
-				//	Add r[j]-r[i] to array R	-> Save in PARTICLE array?
+				//	Add r[j]-r[i] direction vector and q[j]*q[i] to array R
 				R[Idx].x = dx;
 				R[Idx].y = dy;
 				R[Idx].z = dz;
-				R[Idx].q = 1.0;//r[j].q * r[i].q;
+				R[Idx].q = r[j].q * r[i].q;
 
-				//	Add i to vector I
-				//	add j to vector J
+				//	Add i to vector I and add j to vector J
 				I[Idx] = i;
 				J[Idx] = j;
-if (i == j) printf("\t\ti == j, OMG\n"); else printf("(i,j) = (%ld,%ld), d=%f, Idx=%ld\n", i,j,D[Idx], Idx);
 
 				Idx++;
 			}
@@ -248,25 +242,22 @@ if (i == j) printf("\t\ti == j, OMG\n"); else printf("(i,j) = (%ld,%ld), d=%f, I
 		i = Next[i];
 	}
 
-//	if (Idx > MaxIterationCount) printf("Interactions=%ld, Max=%ld\n", Idx, MaxIterationCount);
-printf("Interactions=%ld, Max=%ld\n", Idx, MaxIterationCount);
+printf("Interactions=%ld, Max=%ld, P1=%ld, P2=%ld\n", Idx, MaxIterationCount, Particle1, Particle2);
 
 	//	Compute gamma(D) and gamma'(D) in bulk
-	(*Msm->sft->soften)(Msm->sft, Idx, D_A, F, DF);
+	(*Msm->sft->soften)(Msm->sft, Idx, D, F, DF);
 
 	//	Compute energy and forces
 	for (k = 0; k < Idx; k++)
 	{
-//		printf("Idx=%ld\t%f\t%f\t%f\n", k, D[k], F[k], DF[k]);
-
 		//	U += q(i)*q(j)*(1/d - gamma(d)/a);
-		(*U) += R[k].q*(1.0/D[k] - F[k]/a);
+		(*U) += R[k].q*(1.0/(a*D[k]) - F[k]/a);
 
 		//	f += q(i)*q(j)*(1/d^2 + gamma'(d)/a^2) * (r[j]-r[i])/d;
-		Magnitude = R[k].q*(1.0/(D[k]*D[k]) + DF[k]/a2);
-		Direction[0] = R[k].x / D[k];
-		Direction[1] = R[k].y / D[k];
-		Direction[2] = R[k].z / D[k];
+		Magnitude = R[k].q*(1.0/(a2*D[k]*D[k]) + DF[k]/a2);
+		Direction[0] = R[k].x / (a*D[k]);
+		Direction[1] = R[k].y / (a*D[k]);
+		Direction[2] = R[k].z / (a*D[k]);
 
 		f[I[k]][0] -= Magnitude*Direction[0];
 		f[I[k]][1] -= Magnitude*Direction[1];
@@ -280,7 +271,6 @@ printf("Interactions=%ld, Max=%ld\n", Idx, MaxIterationCount);
 
 	//	Free dynamically allocated memory
 	dynfree(D);
-	dynfree(D_A);
 	dynfree(F);
 	dynfree(DF);
 	dynfree(R);
@@ -288,37 +278,38 @@ printf("Interactions=%ld, Max=%ld\n", Idx, MaxIterationCount);
 	dynfree(J);
 }
 
-void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long YBinCount, long ZBinCount, long i, long j, long k)
+void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long i, long j, long k)
 {
 	long		ParticlesInBin = 0;
 	long		MaxInteractionCount = 0;
 	long		Particle1 = -1;
 	long		Particle2 = -1;
 
-	ParticlesInBin = ParticlesPerBin[IDX(i,j,k,YBinCount,ZBinCount)];
-	MaxInteractionCount = ParticlesInBin*ParticlesInBin;
-	if (MaxInteractionCount > 0)
+	ParticlesInBin = ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)];
+	MaxInteractionCount = (ParticlesInBin*(ParticlesInBin+1))/2;
+	//	NOTE: (MaxInteractionCount == 1) => 1 particle in bin and it will not interact with itself so don't bother calculating it.
+	if (MaxInteractionCount > 1)
 	{
-		Particle1 = First[IDX(i,j,k,YBinCount,ZBinCount)];
-		//Particle2 = Next[Particle1];
+		Particle1 = First[IDX(i,j,k,XBinCount,YBinCount)];
 		Particle2 = Particle1;
 		msm_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
 	}
 }
 
-void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long YBinCount, long ZBinCount, long i, long j, long k, long l, long m, long n)
+void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long i, long j, long k, long l, long m, long n)
 {
 	long		ParticlesInBin = 0;
 	long		MaxInteractionCount = 0;
 	long		Particle1 = -1;
 	long		Particle2 = -1;
 
-	ParticlesInBin = ParticlesPerBin[IDX(i,j,k,YBinCount,ZBinCount)];
-	MaxInteractionCount = ParticlesInBin*ParticlesPerBin[IDX(l,m,n,YBinCount,ZBinCount)];
+	ParticlesInBin = ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)];
+	MaxInteractionCount = ParticlesInBin*ParticlesPerBin[IDX(l,m,n,XBinCount,YBinCount)];
+	//	NOTE: (MaxInteractionCount == 0) => one of the bins has no particles and so there will be no interactions.
 	if (MaxInteractionCount > 0)
 	{
-		Particle1 = First[IDX(i,j,k,YBinCount,ZBinCount)];
-		Particle2 = First[IDX(l,m,n,YBinCount,ZBinCount)];
+		Particle1 = First[IDX(i,j,k,XBinCount,YBinCount)];
+		Particle2 = First[IDX(l,m,n,XBinCount,YBinCount)];
 		msm_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
 	}
 }
@@ -369,24 +360,23 @@ printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
 		i = (long) floor((r[n].x-Domain->MinimumCoordinates.x) / a);
 		j = (long) floor((r[n].y-Domain->MinimumCoordinates.y) / a);
 		k = (long) floor((r[n].z-Domain->MinimumCoordinates.z) / a);
-		Next[n] = First[IDX(i,j,k,YBinCount,ZBinCount)];
-		First[IDX(i,j,k,YBinCount,ZBinCount)] = n;
-		ParticlesPerBin[IDX(i,j,k,YBinCount,ZBinCount)]++;
+		Next[n] = First[IDX(i,j,k,XBinCount,YBinCount)];
+		First[IDX(i,j,k,XBinCount,YBinCount)] = n;
+		ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]++;
 	}
-printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 /*
 	//	Loop over bins
-	for (i = 0; i < XBinCount; i++)
+	for (k = 0; k < ZBinCount; k++)
 	{
 		for (j = 0; j < YBinCount; j++)
 		{
-			for (k = 0; k < ZBinCount; k++)
+			for (i = 0; i < XBinCount; i++)
 			{
-				printf("%03ld <-- (%02ld,%02ld,%02ld), Cnt=%ld: ", IDX(i,j,k,YBinCount,ZBinCount), i,j,k, ParticlesPerBin[IDX(i,j,k,YBinCount,ZBinCount)]);
-				if (First[IDX(i,j,k,YBinCount,ZBinCount)] != -1)
+				printf("\t\t%03ld <-- (%02ld,%02ld,%02ld), Cnt=%ld\n", IDX(i,j,k,XBinCount,YBinCount), i,j,k, ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]);
+				if (First[IDX(i,j,k,XBinCount,YBinCount)] != -1)
 				{
 //					printf("Bin: (%02ld,%02ld,%02ld):\t", i,j,k);
-					n = First[IDX(i,j,k,YBinCount,ZBinCount)];
+					n = First[IDX(i,j,k,XBinCount,YBinCount)];
 					do
 					{
 						printf("%02ld, ", n);
@@ -399,7 +389,6 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 		}
 	}
 */
-
 	//	i = 0 (no i-1)
 	i = 0;
 	{
@@ -410,21 +399,21 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i+1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
 				//	"next" bin is (i, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
 				//	"next" bin is (i+1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j+1,k-1);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 
@@ -434,33 +423,33 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);
 				//	"next" bin is (i+1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k-1);
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i+1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
 				//	"next" bin is (i, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
 				//	"next" bin is (i+1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j+1,k-1);
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 
@@ -471,29 +460,29 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);//
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);//
 				//	"next" bin is (i+1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k-1);//
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i+1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);//
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 	}
@@ -507,29 +496,29 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i-1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i+1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
 				//	"next" bin is (i-1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j+1,k-1);
 				//	"next" bin is (i, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
 				//	"next" bin is (i+1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j+1,k-1);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 
@@ -539,48 +528,48 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	ALL
 				//	"next" bin is (i-1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k-1);
 				//	"next" bin is (i, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);
 				//	"next" bin is (i+1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k-1);
 				//	"next" bin is (i-1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i+1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
 				//	"next" bin is (i-1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j+1,k-1);
 				//	"next" bin is (i, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
 				//	"next" bin is (i+1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j+1,k-1);
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 
@@ -591,41 +580,41 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);//
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);//
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);//
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i-1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k-1);//
 				//	"next" bin is (i, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);//
 				//	"next" bin is (i+1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k-1);//
 				//	"next" bin is (i-1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i+1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);//
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);//
 				//	"next" bin is (i+1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i+1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);//
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 	}
@@ -640,25 +629,25 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i-1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);//
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i-1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j+1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j+1,k-1);//
 				//	"next" bin is (i, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 
@@ -668,37 +657,37 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);//
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i-1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k-1);//
 				//	"next" bin is (i, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);
 				//	"next" bin is (i-1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);//
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i-1, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j+1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j+1,k-1);//
 				//	"next" bin is (i, j+1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j+1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);//
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 
@@ -709,33 +698,33 @@ printf("\t\tbin 0 has %ld particles in it\n", ParticlesPerBin[0]);
 			k = 0;
 			{
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);//
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 
 			for (k = 1; k < ZBinCount; k++)
 			{
 				//	"next" bin is (i-1, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k-1);//
 				//	"next" bin is (i, j-1, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);
 				//	"next" bin is (i-1, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k-1);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);//
 				//	"next" bin is (i, j, k-1)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j,k-1);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
 				//	"next" bin is (i-1, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j-1,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);//
 				//	"next" bin is (i, j-1, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i,j-1,k);
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
 				//	"next" bin is (i-1, j, k)
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i,j,k, i-1,j,k);//
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);//
 				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, YBinCount, ZBinCount, i, j, k);
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
 			}
 		}
 	}

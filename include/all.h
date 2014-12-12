@@ -22,7 +22,7 @@
 #define	MAX(x,y)						((x > y) ? (x) : (y))
 #define	MIN(x,y)						((x < y) ? (x) : (y))
 #define	PI								3.14159265358979323846
-#define	IDX(x,y,z,YLength,ZLength)		(x)*(YLength)*(ZLength) + (y)*(ZLength) + (z)	//	3D to 1D
+#define	IDX(x,y,z,XLength,YLength)		(z)*(XLength)*(YLength) + (y)*(XLength) + (x)	//	3D to 1D
 
 #endif
 
