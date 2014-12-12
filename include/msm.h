@@ -44,7 +44,9 @@ void msm_evaluate(void* Msm, SIMULATION_DOMAIN* Domain);
 void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods
-void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount);
+void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount);
+void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long i, long j, long k);
+void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long i, long j, long k, long l, long m, long n);
 void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain);
 void msm_anterpolate(MSM* Msm);
 void msm_restrict(MSM* Msm);

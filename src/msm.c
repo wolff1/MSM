@@ -168,7 +168,7 @@ void msm_uninitialize(void* Method)
 }
 
 //	INTERNAL Methods
-void msm_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount)
+void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount)
 {
 	long		i = Particle1;
 	long		j = Particle2;
@@ -292,7 +292,7 @@ void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Fir
 	{
 		Particle1 = First[IDX(i,j,k,XBinCount,YBinCount)];
 		Particle2 = Particle1;
-		msm_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
+		msm_short_range_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
 	}
 }
 
@@ -310,7 +310,7 @@ void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long*
 	{
 		Particle1 = First[IDX(i,j,k,XBinCount,YBinCount)];
 		Particle2 = First[IDX(l,m,n,XBinCount,YBinCount)];
-		msm_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
+		msm_short_range_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
 	}
 }
 
@@ -389,6 +389,7 @@ printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
 		}
 	}
 */
+	//	FIXME: Re-order all of the following so that k is the outside of the loop and i is the inside of the loop
 	//	i = 0 (no i-1)
 	i = 0;
 	{
