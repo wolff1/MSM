@@ -64,18 +64,18 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		for (j = i + 1; j < N; j++)
 		{
 			//	Compute Euclidean distance between two particles
-			dx = r[i].x-r[j].x;
-			dy = r[i].y-r[j].y;
-			dz = r[i].z-r[j].z;
+			dx = r[j].x-r[i].x;
+			dy = r[j].y-r[i].y;
+			dz = r[j].z-r[i].z;
 			d = sqrt(dx*dx + dy*dy + dz*dz);
 
 			//	Compute contribution to the energy
 			*U += (r[i].q*r[j].q/d);
 
 			//	Compute contribution to the forces
-			dfx = (-dx/d)*r[i].q*r[j].q/(d*d);
-			dfy = (-dy/d)*r[i].q*r[j].q/(d*d);
-			dfz = (-dz/d)*r[i].q*r[j].q/(d*d);
+			dfx = (dx/d)*r[i].q*r[j].q/(d*d);
+			dfy = (dy/d)*r[i].q*r[j].q/(d*d);
+			dfz = (dz/d)*r[i].q*r[j].q/(d*d);
 
 			//	Apply force to particle i
 			f[i][0] -= dfx;

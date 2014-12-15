@@ -86,7 +86,6 @@ void msm_copy(void* Dst, void* Src)
 
 	//	Copy INTERPOLANT
 	((MSM*)Dst)->itp = (INTERPOLANT*) dynmem(((MSM*)Src)->itp->Size);
-
 	interpolant_copy(((MSM*)Dst)->itp, ((MSM*)Src)->itp);
 
 	//	Copy SOFTENER
@@ -250,10 +249,10 @@ printf("Interactions=%ld, Max=%ld, P1=%ld, P2=%ld\n", Idx, MaxIterationCount, Pa
 	//	Compute energy and forces
 	for (k = 0; k < Idx; k++)
 	{
-		//	U += q(i)*q(j)*(1/d - gamma(d)/a);
+		//	U += q(i)*q(j)*(1/d - gamma(d/a)/a);
 		(*U) += R[k].q*(1.0/(a*D[k]) - F[k]/a);
 
-		//	f += q(i)*q(j)*(1/d^2 + gamma'(d)/a^2) * (r[j]-r[i])/d;
+		//	f += q(i)*q(j)*(1/d^2 + gamma'(d/a)/a^2) * (r[j]-r[i])/d;
 		Magnitude = R[k].q*(1.0/(a2*D[k]*D[k]) + DF[k]/a2);
 		Direction[0] = R[k].x / (a*D[k]);
 		Direction[1] = R[k].y / (a*D[k]);
@@ -266,7 +265,6 @@ printf("Interactions=%ld, Max=%ld, P1=%ld, P2=%ld\n", Idx, MaxIterationCount, Pa
 		f[J[k]][0] += Magnitude*Direction[0];
 		f[J[k]][1] += Magnitude*Direction[1];
 		f[J[k]][2] += Magnitude*Direction[2];
-
 	}
 
 	//	Free dynamically allocated memory
@@ -762,6 +760,99 @@ void msm_interpolate(MSM* Msm)
 
 void msm_exclude(MSM* Msm)
 {
+}
+
+//	INTERNAL TEST Methods
+void msm_short_range_naive(MSM* Msm, SIMULATION_DOMAIN* Domain)
+{
+/*		-- In evaluate()
+	double		U2 = 0.0;
+	double**	f = Domain->Particles->f;
+	double**	f2 = NULL;
+	long		i = 0;
+	double		maxferr = 0.0;
+
+		--	In short_range if-clause
+		//	Save off energy/forces for comparison
+		U2 = Domain->Particles->U;
+		f2 = (double**) dynarr_d(N,3);
+		memcpy(f2[0], f[0], N*3*sizeof(double));
+
+		//	Re-initialize output variables U and f
+		Domain->Particles->U = 0.0;
+		memset(f[0], 0, sizeof(double)*N*3);	//	FIXME <-- double check this
+
+		msm_short_range_naive(Msm, Domain);
+
+		//	Compare Energy and forces
+		printf("\t\tDiff in Energy: %e\n", fabs(U2-Domain->Particles->U));
+
+		for (i = 0; i < N; i++)
+		{
+			f2[i][0] = (f2[i][0]-f[i][0])*(f2[i][0]-f[i][0]);
+			f2[i][1] = (f2[i][1]-f[i][1])*(f2[i][1]-f[i][1]);
+			f2[i][2] = (f2[i][2]-f[i][2])*(f2[i][2]-f[i][2]);
+			maxferr = MAX(maxferr, sqrt(f2[i][0] + f2[i][1] + f2[i][2]));
+		}
+		printf("\t\tDiff in force (max of N 2-norms): %e\n", maxferr);
+
+		dynfree(f2[0]);
+		dynfree(f2);
+*/
+	long		i = 0;
+	long		j = 0;
+	double		d = 0.0;
+	double		dx = 0.0;
+	double		dy = 0.0;
+	double		dz = 0.0;
+	double		a = Msm->prm.a;
+	long		N = Domain->Particles->N;
+	PARTICLE*	r = Domain->Particles->r;
+	double*		U = &Domain->Particles->U;
+	double**	f = Domain->Particles->f;
+	double		dfx = 0.0;
+	double		dfy = 0.0;
+	double		dfz = 0.0;
+
+	double		gamma = 0.0;
+	double		dgamma = 0.0;
+	double		d_a = 0.0;
+
+	//	Perform the naive O(N^2) calculation
+	for (i = 0; i < N; i++)
+	{
+		for (j = i + 1; j < N; j++)
+		{
+			//	Compute Euclidean distance between two particles
+			dx = r[j].x-r[i].x;
+			dy = r[j].y-r[i].y;
+			dz = r[j].z-r[i].z;
+			d = sqrt(dx*dx + dy*dy + dz*dz);
+
+			if (d < a)
+			{
+				d_a = d/a;
+				//	Compute contribution to the energy
+				(*Msm->sft->soften)(Msm->sft, 1, &d_a, &gamma, &dgamma);
+				*U += (r[i].q*r[j].q*(1.0/d - gamma/a));
+
+				//	Compute contribution to the forces
+				dfx = (dx/d)*r[i].q*r[j].q*(1.0/(d*d) + dgamma/(a*a));
+				dfy = (dy/d)*r[i].q*r[j].q*(1.0/(d*d) + dgamma/(a*a));
+				dfz = (dz/d)*r[i].q*r[j].q*(1.0/(d*d) + dgamma/(a*a));
+
+				//	Apply force to particle i
+				f[i][0] -= dfx;
+				f[i][1] -= dfy;
+				f[i][2] -= dfz;
+
+				//	Apply force to particle j
+				f[j][0] += dfx;
+				f[j][1] += dfy;
+				f[j][2] += dfz;
+			}
+		}
+	}
 }
 
 //	End of file
