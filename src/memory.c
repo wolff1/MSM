@@ -19,7 +19,10 @@ void* dynmem(size_t size)
 {
 	//void*	ptr = calloc(size, sizeof(...));
 	void*	ptr = mkl_malloc(size, MEM_ALIGN);
-	assert(ptr != NULL);
+	if (size > 0)
+	{	//	FIXME: Should assert get removed for performance once code is stable?
+		assert(ptr != NULL);
+	}
 	memset(ptr, 0, size);
 	return ptr;
 }

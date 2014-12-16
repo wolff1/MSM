@@ -244,7 +244,112 @@ void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next,
 		i = Next[i];
 	}
 
-//printf("Interactions=%ld, Max=%ld, P1=%ld, P2=%ld\n", Idx, MaxIterationCount, Particle1, Particle2);
+	//	Compute gamma(D) and gamma'(D) in bulk
+	(*Msm->sft->soften)(Msm->sft, Idx, D, F, DF);
+
+	//	Compute energy and forces
+	for (k = 0; k < Idx; k++)
+	{
+		//	U += q(i)*q(j)*(1/d - gamma(d/a)/a);
+		(*U) += R[k].q*(1.0/(a*D[k]) - F[k]/a);
+
+		//	f += q(i)*q(j)*(1/d^2 + gamma'(d/a)/a^2) * (r[j]-r[i])/d;
+		Magnitude = R[k].q*(1.0/(a2*D[k]*D[k]) + DF[k]/a2);
+		Direction[0] = R[k].x / (a*D[k]);
+		Direction[1] = R[k].y / (a*D[k]);
+		Direction[2] = R[k].z / (a*D[k]);
+
+		f[I[k]][0] -= Magnitude*Direction[0];
+		f[I[k]][1] -= Magnitude*Direction[1];
+		f[I[k]][2] -= Magnitude*Direction[2];
+
+		f[J[k]][0] += Magnitude*Direction[0];
+		f[J[k]][1] += Magnitude*Direction[1];
+		f[J[k]][2] += Magnitude*Direction[2];
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(D);
+	dynfree(F);
+	dynfree(DF);
+	dynfree(R);
+	dynfree(I);
+	dynfree(J);
+}
+
+void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long x, long y, long z)
+{
+	long		i = -1;
+	long		j = -1;
+	long		k = 0;
+	double		a = Msm->prm.a;
+	double		a2 = a*a;
+	PARTICLE*	r = Domain->Particles->r;
+	double*		U = &Domain->Particles->U;
+	double**	f = Domain->Particles->f;
+	double		dx = 0.0;
+	double		dy = 0.0;
+	double		dz = 0.0;
+	double		d = 0.0;
+	long		Idx = 0;
+	double*		D = NULL;
+	double*		F = NULL;
+	double*		DF = NULL;
+	PARTICLE*	R = NULL;
+	long*		I = NULL;
+	long*		J = NULL;
+	double		Magnitude = 0.0;
+	double		Direction[3];
+	long		ParticlesInBin = 0;
+	long		MaxInteractionCount = 0;
+
+	//	What is the maximum number of interactions which we could compute?
+	ParticlesInBin = ParticlesPerBin[IDX(x,y,z,XBinCount,YBinCount)];
+	MaxInteractionCount = (ParticlesInBin*(ParticlesInBin+1))/2;
+
+	//	Dynamically allocate memory
+	D = (double*) dynvec(MaxInteractionCount, sizeof(double));
+	F = (double*) dynvec(MaxInteractionCount, sizeof(double));
+	DF = (double*) dynvec(MaxInteractionCount, sizeof(double));
+	R = (PARTICLE*) dynvec(MaxInteractionCount, sizeof(PARTICLE));
+	I = (long*) dynvec(MaxInteractionCount, sizeof(long));
+	J = (long*) dynvec(MaxInteractionCount, sizeof(long));
+
+	//	Particle i in bin 1
+	i = First[IDX(x,y,z,XBinCount,YBinCount)];
+	while (i != -1)
+	{
+		j = Next[i];	//	Resets particle j to first in the list for new particle i
+
+		//	Particle j in bin 2
+		while (j != -1)
+		{
+			dx = r[j].x - r[i].x;
+			dy = r[j].y - r[i].y;
+			dz = r[j].z - r[i].z;
+			d = sqrt(dx*dx + dy*dy + dz*dz);
+
+			if (d < a)
+			{
+				//	Add d/a to vector D, NOTE: need a*D[x] to get d below
+				D[Idx] = d/a;
+
+				//	Add r[j]-r[i] direction vector and q[j]*q[i] to array R
+				R[Idx].x = dx;
+				R[Idx].y = dy;
+				R[Idx].z = dz;
+				R[Idx].q = r[j].q * r[i].q;
+
+				//	Add i to vector I and add j to vector J
+				I[Idx] = i;
+				J[Idx] = j;
+
+				Idx++;
+			}
+			j = Next[j];
+		}
+		i = Next[i];
+	}
 
 	//	Compute gamma(D) and gamma'(D) in bulk
 	(*Msm->sft->soften)(Msm->sft, Idx, D, F, DF);
@@ -279,27 +384,9 @@ void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next,
 	dynfree(J);
 }
 
-void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long i, long j, long k)
+void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long x, long y, long z, long l, long m, long n)
 {
-	long		ParticlesInBin = 0;
-	long		MaxInteractionCount = 0;
-	long		Particle1 = -1;
-	long		Particle2 = -1;
-
-	ParticlesInBin = ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)];
-	MaxInteractionCount = (ParticlesInBin*(ParticlesInBin+1))/2;
-	//	NOTE: (MaxInteractionCount == 1) => 1 particle in bin and it will not interact with itself so don't bother calculating it.
-	if (MaxInteractionCount > 1)
-	{
-		Particle1 = First[IDX(i,j,k,XBinCount,YBinCount)];
-		Particle2 = Particle1;
-//FIXME: Could split into its own "self" version and remove the "if" statement in outer while loop
-		msm_short_range_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
-	}
-}
-
-void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long i, long j, long k, long l, long m, long n)
-{
+/*
 	long		ParticlesInBin = 0;
 	long		MaxInteractionCount = 0;
 	long		Particle1 = -1;
@@ -315,6 +402,113 @@ void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long*
 //FIXME: Could split into its own "neighbor" version and remove the "if" statement in outer while loop
 		msm_short_range_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
 	}
+*/
+	long		i = -1;
+	long		j = -1;
+	long		k = 0;
+	double		a = Msm->prm.a;
+	double		a2 = a*a;
+	PARTICLE*	r = Domain->Particles->r;
+	double*		U = &Domain->Particles->U;
+	double**	f = Domain->Particles->f;
+	double		dx = 0.0;
+	double		dy = 0.0;
+	double		dz = 0.0;
+	double		d = 0.0;
+	long		Idx = 0;
+	double*		D = NULL;
+	double*		F = NULL;
+	double*		DF = NULL;
+	PARTICLE*	R = NULL;
+	long*		I = NULL;
+	long*		J = NULL;
+	double		Magnitude = 0.0;
+	double		Direction[3];
+	long		ParticlesInBin = 0;
+	long		MaxInteractionCount = 0;
+
+	//	What is the maximum number of interactions which we could compute?
+	ParticlesInBin = ParticlesPerBin[IDX(x,y,z,XBinCount,YBinCount)];
+	MaxInteractionCount = ParticlesInBin*ParticlesPerBin[IDX(l,m,n,XBinCount,YBinCount)];
+
+	//	Dynamically allocate memory
+	D = (double*) dynvec(MaxInteractionCount, sizeof(double));
+	F = (double*) dynvec(MaxInteractionCount, sizeof(double));
+	DF = (double*) dynvec(MaxInteractionCount, sizeof(double));
+	R = (PARTICLE*) dynvec(MaxInteractionCount, sizeof(PARTICLE));
+	I = (long*) dynvec(MaxInteractionCount, sizeof(long));
+	J = (long*) dynvec(MaxInteractionCount, sizeof(long));
+
+	//	Particle i in bin 1
+	i = First[IDX(x,y,z,XBinCount,YBinCount)];
+	while (i != -1)
+	{
+		j = First[IDX(l,m,n,XBinCount,YBinCount)];	//	Resets particle j to first in the list for new particle i
+
+		//	Particle j in bin 2
+		while (j != -1)
+		{
+printf("(i,j) = (%ld,%ld), (x,y,z)=(%ld,%ld,%ld), (l,m,n)=(%ld,%ld,%ld)\n", i,j, x,y,z, l,m,n);
+			dx = r[j].x - r[i].x;
+			dy = r[j].y - r[i].y;
+			dz = r[j].z - r[i].z;
+			d = sqrt(dx*dx + dy*dy + dz*dz);
+			assert(d > 0.0);
+
+			if (d < a)
+			{
+				//	Add d/a to vector D, NOTE: need a*D[x] to get d below
+				D[Idx] = d/a;
+
+				//	Add r[j]-r[i] direction vector and q[j]*q[i] to array R
+				R[Idx].x = dx;
+				R[Idx].y = dy;
+				R[Idx].z = dz;
+				R[Idx].q = r[j].q * r[i].q;
+
+				//	Add i to vector I and add j to vector J
+				I[Idx] = i;
+				J[Idx] = j;
+
+				Idx++;
+			}
+			j = Next[j];
+		}
+		i = Next[i];
+	}
+
+	//	Compute gamma(D) and gamma'(D) in bulk
+	(*Msm->sft->soften)(Msm->sft, Idx, D, F, DF);
+
+	//	Compute energy and forces
+	for (k = 0; k < Idx; k++)
+	{
+		//	U += q(i)*q(j)*(1/d - gamma(d/a)/a);
+		(*U) += R[k].q*(1.0/(a*D[k]) - F[k]/a);
+
+		//	f += q(i)*q(j)*(1/d^2 + gamma'(d/a)/a^2) * (r[j]-r[i])/d;
+		Magnitude = R[k].q*(1.0/(a2*D[k]*D[k]) + DF[k]/a2);
+		Direction[0] = R[k].x / (a*D[k]);
+		Direction[1] = R[k].y / (a*D[k]);
+		Direction[2] = R[k].z / (a*D[k]);
+
+		f[I[k]][0] -= Magnitude*Direction[0];
+		f[I[k]][1] -= Magnitude*Direction[1];
+		f[I[k]][2] -= Magnitude*Direction[2];
+
+		f[J[k]][0] += Magnitude*Direction[0];
+		f[J[k]][1] += Magnitude*Direction[1];
+		f[J[k]][2] += Magnitude*Direction[2];
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(D);
+	dynfree(F);
+	dynfree(DF);
+	dynfree(R);
+	dynfree(I);
+	dynfree(J);
+	printf("\n");
 }
 
 void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
