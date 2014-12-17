@@ -113,12 +113,6 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	long		N = 0;
 	MSM*		Msm = (MSM*) Method;
 
-	double		U2 = 0.0;
-	double**	f = Domain->Particles->f;
-	double**	f2 = NULL;
-	long		i = 0;
-	double		maxferr = 0.0;
-
 	assert(Msm != NULL);
 	assert(Domain != NULL);
 
@@ -132,32 +126,6 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	if (Msm->opt.ComputeShortRange)
 	{
 		msm_short_range(Msm, Domain);
-
-		//	Save off energy/forces for comparison
-		U2 = Domain->Particles->U;
-		f2 = (double**) dynarr_d(N,3);
-		memcpy(f2[0], f[0], N*3*sizeof(double));
-
-		//	Re-initialize output variables U and f
-		Domain->Particles->U = 0.0;
-		memset(f[0], 0, sizeof(double)*N*3);	//	FIXME <-- double check this
-
-		msm_short_range_naive(Msm, Domain);
-
-		//	Compare Energy and forces
-		printf("\t\tDiff in Energy: %e\n", fabs(U2-Domain->Particles->U));
-
-		for (i = 0; i < N; i++)
-		{
-			f2[i][0] = (f2[i][0]-f[i][0])*(f2[i][0]-f[i][0]);
-			f2[i][1] = (f2[i][1]-f[i][1])*(f2[i][1]-f[i][1]);
-			f2[i][2] = (f2[i][2]-f[i][2])*(f2[i][2]-f[i][2]);
-			maxferr = MAX(maxferr, sqrt(f2[i][0] + f2[i][1] + f2[i][2]));
-		}
-		printf("\t\tDiff in force (max of N 2-norms): %e\n", maxferr);
-
-		dynfree(f2[0]);
-		dynfree(f2);
 	}
 
 	if (Msm->opt.ComputeLongRange)
