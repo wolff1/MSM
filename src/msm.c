@@ -5,9 +5,6 @@ msm.c -
 
 #include "msm.h"
 
-//	INTERNAL TESTING Method Prototypes
-void msm_short_range_naive(MSM* Msm, SIMULATION_DOMAIN* Domain);
-
 //	EXTERNAL Methods
 void msm_initialize(void* Method)
 {
@@ -41,7 +38,7 @@ void msm_initialize(void* Method)
 	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
-	Msm->opt.IsN = 1;
+	Msm->opt.IsN = 0;
 	Msm->opt.IsNLogN = 1;
 
 	//	Initialize INTERPOLANT
@@ -132,7 +129,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	{
 		if (Msm->opt.IsN)
 		{
-			msm_anterpolate(Msm);
+			msm_anterpolate(Msm, Domain, 0);
 			msm_restrict(Msm);
 			msm_direct(Msm);
 			msm_direct_top(Msm);
@@ -142,9 +139,12 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 
 		if (Msm->opt.IsNLogN)
 		{
-			msm_anterpolate(Msm);
-			msm_direct_top(Msm);
-			msm_interpolate(Msm);
+			for (N = 0; N < 3; N++)
+			{	//	FIXME
+				msm_anterpolate(Msm, Domain, (short)N);
+				msm_direct_top(Msm);
+				msm_interpolate(Msm);
+			}
 		}
 
 		if (Msm->opt.ComputeExclusions)
@@ -170,6 +170,252 @@ void msm_uninitialize(void* Method)
 }
 
 //	INTERNAL Methods
+void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
+{
+	long		i = 0;
+	long		j = 0;
+	long		k = 0;
+	long		n = 0;
+	long		N = Domain->Particles->N;
+	PARTICLE*	r = Domain->Particles->r;
+	double*		U = &Domain->Particles->U;
+	double**	f = Domain->Particles->f;
+	double		a = Msm->prm.a;
+	long		XBinCount = 0;
+	long		YBinCount = 0;
+	long		ZBinCount = 0;
+	long		Particle1 = 0;
+	long		Particle2 = 0;
+	long		MaxInteractionCount = 0;
+	long*		First = NULL;
+	long*		Next = NULL;
+	long*		ParticlesPerBin = NULL;
+	long		ParticlesInBin = 0;
+	short		EdgeCaseCount = 0;
+
+	printf("\tMSM short range computation!\n");
+
+	//	Set up number of bins in each dimension (NOTE: MATLAB code has floor() + 1)
+	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a);
+	YBinCount = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / a);
+	ZBinCount = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / a);
+printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
+	//	Dynamically allocate memory for lists of bins
+	First = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
+	Next = (long*) dynvec(N, sizeof(long));
+	ParticlesPerBin = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
+
+	//	Set-up lists of bins
+	for (n = 0; n < XBinCount*YBinCount*ZBinCount; n++)
+	{
+		First[n] = -1;
+	}
+
+	//	Assign particles to bins
+	for (n = 0; n < N; n++)
+	{
+		i = (long) floor((r[n].x-Domain->MinimumCoordinates.x) / a);
+		j = (long) floor((r[n].y-Domain->MinimumCoordinates.y) / a);
+		k = (long) floor((r[n].z-Domain->MinimumCoordinates.z) / a);
+		Next[n] = First[IDX(i,j,k,XBinCount,YBinCount)];
+		First[IDX(i,j,k,XBinCount,YBinCount)] = n;
+		ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]++;
+	}
+/*
+	//	Loop over bins
+	for (k = 0; k < ZBinCount; k++)
+	{
+		for (j = 0; j < YBinCount; j++)
+		{
+			for (i = 0; i < XBinCount; i++)
+			{
+				printf("\t\t%03ld <-- (%02ld,%02ld,%02ld), Cnt=%ld\n", IDX(i,j,k,XBinCount,YBinCount), i,j,k, ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]);
+				if (First[IDX(i,j,k,XBinCount,YBinCount)] != -1)
+				{
+//					printf("Bin: (%02ld,%02ld,%02ld):\t", i,j,k);
+					n = First[IDX(i,j,k,XBinCount,YBinCount)];
+					do
+					{
+						printf("%02ld, ", n);
+						n = Next[n];
+					} while (n != -1);
+					printf("\n");
+				}
+				printf("\n");
+			}
+		}
+	}
+*/
+
+	for (k = 1; k < ZBinCount; k++)
+	{
+		for (j = 1; j < YBinCount; j++)
+		{
+			for (i = 1; i < XBinCount; i++)
+			{
+				//	"next" bin is (i-1, j-1, k-1) -> i > 0, j > 0, k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k-1);
+			}
+
+			for (i = 0; i < XBinCount; i++)
+			{
+				//	"next" bin is (i, j-1, k-1) ->        j > 0, k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);
+			}
+
+			for (i = 0; i < XBinCount-1; i++)
+			{
+				//	"next" bin is (i+1, j-1, k-1) ->	i+1<X, j > 0, k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k-1);
+			}
+		}
+
+		for (j = 0; j < YBinCount; j++)
+		{
+			for (i = 1; i < XBinCount; i++)
+			{
+				//	"next" bin is (i-1, j, k-1) ->	i > 0,        k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);
+			}
+
+			for (i = 0; i < XBinCount; i++)
+			{
+				//	"next" bin is (i, j, k-1) ->	              k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
+			}
+
+			for (i = 0; i < XBinCount-1; i++)
+			{
+				//	"next" bin is (i+1, j, k-1) ->	i+1<X,        k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
+			}
+		}
+
+		for (j = 0; j < YBinCount-1; j++)
+		{
+			for (i = 1; i < XBinCount; i++)
+			{
+				//	"next" bin is (i-1, j+1, k-1) ->	i > 0, j+1<Y, k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j+1,k-1);
+			}
+
+			for (i = 0; i < XBinCount; i++)
+			{
+				//	"next" bin is (i, j+1, k-1) ->	       j+1<Y, k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
+			}
+
+			for (i = 0; i < XBinCount-1; i++)
+			{
+				//	"next" bin is (i+1, j+1, k-1) ->	i+1<X, j+1<Y, k > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j+1,k-1);
+			}
+		}
+	}
+
+	for (k = 0; k < ZBinCount; k++)
+	{
+		for (j = 1; j < YBinCount; j++)
+		{
+			for (i = 1; i < XBinCount; i++)
+			{
+				//	"next" bin is (i-1, j-1, k) ->	i > 0, j > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);
+			}
+
+			for (i = 0; i < XBinCount; i++)
+			{
+				//	"next" bin is (i, j-1, k) ->	       j > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
+			}
+
+			for (i = 0; i < XBinCount-1; i++)
+			{
+				//	"next" bin is (i+1, j-1, k) ->	i+1<X, j > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);
+			}
+		}
+
+		for (j = 0; j < YBinCount; j++)
+		{
+			for (i = 1; i < XBinCount; i++)
+			{
+				//	"next" bin is (i-1, j, k) ->	i > 0
+				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
+			}
+
+			for (i = 0; i < XBinCount; i++)
+			{
+				//	"next" bin is (i, j, k)
+				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
+			}
+		}
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(First);
+	dynfree(Next);
+	dynfree(ParticlesPerBin);
+}
+
+void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
+{
+	long		n = 0;
+	long		Nx = 0;
+	long		Ny = 0;
+	long		Nz = 0;
+	double		h = Msm->prm.h;
+	short		p = Msm->prm.p;
+
+	//	Create grid corresponding to Level (0 is finest grid)
+	Nx = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / (h*pow(2.0, Level))) + p + 1;
+	Ny = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / (h*pow(2.0, Level))) + p + 1;
+	Nz = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / (h*pow(2.0, Level))) + p + 1;
+
+	printf("Min(%f,%f,%f) Max(%f,%f,%f) -> %ldx%ldx%ld (Level=%hd, h=%2.2f)\n",
+		Domain->MinimumCoordinates.x,Domain->MinimumCoordinates.y,Domain->MinimumCoordinates.z,
+		Domain->MaximumCoordinates.x,Domain->MaximumCoordinates.y,Domain->MaximumCoordinates.z,
+		Nx,Ny,Nz,Level,h*pow(2.0, Level));
+
+	//	FIXME
+	//	Think about local vs global indexing of grid
+	//	Think about how consecutive grids will be aligned
+	//	Think about how p/2 extra points on ends affect indexing
+	//	Where to store grid(s)?
+	//	What type of meta-data to store with grid(s)?
+
+	//	Loop through all particles
+	//		-> Spread particle charge onto grid in each dimension
+	for (n = 0; n < Domain->Particles->N; n++)
+	{
+	}
+}
+
+void msm_restrict(MSM* Msm)
+{
+}
+
+void msm_direct(MSM* Msm)
+{
+}
+
+void msm_direct_top(MSM* Msm)
+{
+}
+
+void msm_prolongate(MSM* Msm)
+{
+}
+
+void msm_interpolate(MSM* Msm)
+{
+}
+
+void msm_exclude(MSM* Msm)
+{
+}
+
+//	INTERNAL HELPER Methods
 void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount)
 {
 	long		i = Particle1;
@@ -386,23 +632,6 @@ void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Fir
 
 void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long x, long y, long z, long l, long m, long n)
 {
-/*
-	long		ParticlesInBin = 0;
-	long		MaxInteractionCount = 0;
-	long		Particle1 = -1;
-	long		Particle2 = -1;
-
-	ParticlesInBin = ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)];
-	MaxInteractionCount = ParticlesInBin*ParticlesPerBin[IDX(l,m,n,XBinCount,YBinCount)];
-	//	NOTE: (MaxInteractionCount == 0) => one of the bins has no particles and so there will be no interactions.
-	if (MaxInteractionCount > 0)
-	{
-		Particle1 = First[IDX(i,j,k,XBinCount,YBinCount)];
-		Particle2 = First[IDX(l,m,n,XBinCount,YBinCount)];
-//FIXME: Could split into its own "neighbor" version and remove the "if" statement in outer while loop
-		msm_short_range_bin_to_bin(Msm, Domain, Next, Particle1, Particle2, MaxInteractionCount);
-	}
-*/
 	long		i = -1;
 	long		j = -1;
 	long		k = 0;
@@ -448,7 +677,6 @@ void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long*
 		//	Particle j in bin 2
 		while (j != -1)
 		{
-//printf("(i,j) = (%ld,%ld), (x,y,z)=(%ld,%ld,%ld):%ld, (l,m,n)=(%ld,%ld,%ld):%ld\n", i,j, x,y,z,IDX(x,y,z,XBinCount,YBinCount), l,m,n,IDX(l,m,n,XBinCount,YBinCount));
 			dx = r[j].x - r[i].x;
 			dy = r[j].y - r[i].y;
 			dz = r[j].z - r[i].z;
@@ -508,223 +736,6 @@ void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long*
 	dynfree(R);
 	dynfree(I);
 	dynfree(J);
-//	printf("\n");
-}
-
-void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
-{
-	long		i = 0;
-	long		j = 0;
-	long		k = 0;
-	long		n = 0;
-	long		N = Domain->Particles->N;
-	PARTICLE*	r = Domain->Particles->r;
-	double*		U = &Domain->Particles->U;
-	double**	f = Domain->Particles->f;
-	double		a = Msm->prm.a;
-	long		XBinCount = 0;
-	long		YBinCount = 0;
-	long		ZBinCount = 0;
-	long		Particle1 = 0;
-	long		Particle2 = 0;
-	long		MaxInteractionCount = 0;
-	long*		First = NULL;
-	long*		Next = NULL;
-	long*		ParticlesPerBin = NULL;
-	long		ParticlesInBin = 0;
-	short		EdgeCaseCount = 0;
-
-	printf("\tMSM short range computation!\n");
-
-	//	Set up number of bins in each dimension (NOTE: MATLAB code has floor() + 1)
-	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a);
-	YBinCount = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / a);
-	ZBinCount = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / a);
-printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
-	//	Dynamically allocate memory for lists of bins
-	First = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
-	Next = (long*) dynvec(N, sizeof(long));
-	ParticlesPerBin = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
-
-	//	Set-up lists of bins
-	for (n = 0; n < XBinCount*YBinCount*ZBinCount; n++)
-	{
-		First[n] = -1;
-	}
-
-	//	Assign particles to bins
-	for (n = 0; n < N; n++)
-	{
-		i = (long) floor((r[n].x-Domain->MinimumCoordinates.x) / a);
-		j = (long) floor((r[n].y-Domain->MinimumCoordinates.y) / a);
-		k = (long) floor((r[n].z-Domain->MinimumCoordinates.z) / a);
-		Next[n] = First[IDX(i,j,k,XBinCount,YBinCount)];
-		First[IDX(i,j,k,XBinCount,YBinCount)] = n;
-		ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]++;
-	}
-/*
-	//	Loop over bins
-	for (k = 0; k < ZBinCount; k++)
-	{
-		for (j = 0; j < YBinCount; j++)
-		{
-			for (i = 0; i < XBinCount; i++)
-			{
-				printf("\t\t%03ld <-- (%02ld,%02ld,%02ld), Cnt=%ld\n", IDX(i,j,k,XBinCount,YBinCount), i,j,k, ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]);
-				if (First[IDX(i,j,k,XBinCount,YBinCount)] != -1)
-				{
-//					printf("Bin: (%02ld,%02ld,%02ld):\t", i,j,k);
-					n = First[IDX(i,j,k,XBinCount,YBinCount)];
-					do
-					{
-						printf("%02ld, ", n);
-						n = Next[n];
-					} while (n != -1);
-					printf("\n");
-				}
-				printf("\n");
-			}
-		}
-	}
-*/
-
-	for (k = 1; k < ZBinCount; k++)
-	{
-		for (j = 1; j < YBinCount; j++)
-		{
-			for (i = 1; i < XBinCount; i++)
-			{
-				//	"next" bin is (i-1, j-1, k-1) -> i > 0, j > 0, k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k-1);
-			}
-
-			for (i = 0; i < XBinCount; i++)
-			{
-				//	"next" bin is (i, j-1, k-1) ->        j > 0, k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k-1);
-			}
-
-			for (i = 0; i < XBinCount-1; i++)
-			{
-				//	"next" bin is (i+1, j-1, k-1) ->	i+1<X, j > 0, k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k-1);
-			}
-		}
-
-		for (j = 0; j < YBinCount; j++)
-		{
-			for (i = 1; i < XBinCount; i++)
-			{
-				//	"next" bin is (i-1, j, k-1) ->	i > 0,        k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k-1);
-			}
-
-			for (i = 0; i < XBinCount; i++)
-			{
-				//	"next" bin is (i, j, k-1) ->	              k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j,k-1);
-			}
-
-			for (i = 0; i < XBinCount-1; i++)
-			{
-				//	"next" bin is (i+1, j, k-1) ->	i+1<X,        k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j,k-1);
-			}
-		}
-
-		for (j = 0; j < YBinCount-1; j++)
-		{
-			for (i = 1; i < XBinCount; i++)
-			{
-				//	"next" bin is (i-1, j+1, k-1) ->	i > 0, j+1<Y, k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j+1,k-1);
-			}
-
-			for (i = 0; i < XBinCount; i++)
-			{
-				//	"next" bin is (i, j+1, k-1) ->	       j+1<Y, k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j+1,k-1);
-			}
-
-			for (i = 0; i < XBinCount-1; i++)
-			{
-				//	"next" bin is (i+1, j+1, k-1) ->	i+1<X, j+1<Y, k > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j+1,k-1);
-			}
-		}
-	}
-
-	for (k = 0; k < ZBinCount; k++)
-	{
-		for (j = 1; j < YBinCount; j++)
-		{
-			for (i = 1; i < XBinCount; i++)
-			{
-				//	"next" bin is (i-1, j-1, k) ->	i > 0, j > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j-1,k);
-			}
-
-			for (i = 0; i < XBinCount; i++)
-			{
-				//	"next" bin is (i, j-1, k) ->	       j > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i,j-1,k);
-			}
-
-			for (i = 0; i < XBinCount-1; i++)
-			{
-				//	"next" bin is (i+1, j-1, k) ->	i+1<X, j > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i+1,j-1,k);
-			}
-		}
-
-		for (j = 0; j < YBinCount; j++)
-		{
-			for (i = 1; i < XBinCount; i++)
-			{
-				//	"next" bin is (i-1, j, k) ->	i > 0
-				msm_short_range_compute_neighbor(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i,j,k, i-1,j,k);
-			}
-
-			for (i = 0; i < XBinCount; i++)
-			{
-				//	"next" bin is (i, j, k)
-				msm_short_range_compute_self(Msm, Domain, First, Next, ParticlesPerBin, XBinCount, YBinCount, i, j, k);
-			}
-		}
-	}
-
-	//	Free dynamically allocated memory
-	dynfree(First);
-	dynfree(Next);
-	dynfree(ParticlesPerBin);
-}
-
-void msm_anterpolate(MSM* Msm)
-{
-}
-
-void msm_restrict(MSM* Msm)
-{
-}
-
-void msm_direct(MSM* Msm)
-{
-}
-
-void msm_direct_top(MSM* Msm)
-{
-}
-
-void msm_prolongate(MSM* Msm)
-{
-}
-
-void msm_interpolate(MSM* Msm)
-{
-}
-
-void msm_exclude(MSM* Msm)
-{
 }
 
 //	INTERNAL TEST Methods
@@ -821,4 +832,3 @@ void msm_short_range_naive(MSM* Msm, SIMULATION_DOMAIN* Domain)
 }
 
 //	End of file
-
