@@ -11,7 +11,7 @@ void c1_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
 	assert(C1 != NULL);
 	assert(MsmParams != NULL);
-	printf("\tC1_SPLINE initialization!\n");
+//	printf("\tC1_SPLINE initialization!\n");
 
 	//	Set up COMMON members
 	C1->cmn.Size = sizeof(C1_SPLINE);
@@ -45,7 +45,7 @@ void c1_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS
 	assert(C1 != NULL);
 	assert(Softener != NULL);
 	assert(MsmParams != NULL);
-	printf("\tC1_SPLINE compute_g2g\n");
+//	printf("\tC1_SPLINE compute_g2g\n");
 
 	//	Pre-processing (Intermediate levels)
 	Size = (long) ceil(2.0*MsmParams->alpha);
@@ -67,7 +67,7 @@ void c1_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETER
 	assert(C1 != NULL);
 	assert(Softener != NULL);
 	assert(MsmParams != NULL);
-	printf("\tC1_SPLINE compute_tg2g\n");
+//	printf("\tC1_SPLINE compute_tg2g\n");
 
 	//	Pre-processing (Top level)
 	Size = (long) ceil(MsmParams->D);
@@ -96,7 +96,7 @@ void c1_spline_evaluate(void* Interpolant, long Len, double* X, double* F, doubl
     assert(X != NULL);
     assert(F != NULL);
     assert(DF != NULL);
-	printf("\tC1_SPLINE evaluate\n");
+//	printf("\tC1_SPLINE evaluate\n");
 
 	g2p = C1->cmn.g2p;
 	p = C1->cmn.p;
@@ -131,7 +131,7 @@ void c1_spline_uninitialize(void* Interpolant)
 {
 	C1_SPLINE*		C1 = (C1_SPLINE*) Interpolant;
 	assert(C1 != NULL);
-	printf("\tUn-initializing C1_SPLINE!\n");
+//	printf("\tUn-initializing C1_SPLINE!\n");
 
 	//	Free the dynamically allocated memory
 	stencil_free(C1->cmn.g2g);
@@ -151,7 +151,7 @@ void c1_spline_compute_g2p(C1_SPLINE* C1)
     short			p_2 = 0;
 
 	assert(C1 != NULL);
-	printf("\tC1_SPLINE compute_g2p\n");
+//	printf("\tC1_SPLINE compute_g2p\n");
 
 	p = C1->cmn.p;
 	p_2 = p/2;
@@ -303,7 +303,7 @@ void c1_spline_compute_g2fg(C1_SPLINE* C1)
 	short		i = 0;
 
 	assert(C1 != NULL);
-	printf("\tC1_SPLINE compute_g2fg\n");
+//	printf("\tC1_SPLINE compute_g2fg\n");
 
 	X = (double*) dynvec(C1->cmn.p+1, sizeof(double));
 	F = (double*) dynvec(C1->cmn.p+1, sizeof(double));

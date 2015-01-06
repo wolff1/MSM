@@ -129,11 +129,12 @@ void simulator_run(SIMULATOR* Simulator)
 			}
 		}
 	}
-	Simulator->NumSimulations = NumSims;
-	Simulator->NumMethods = NumMethods;
-printf("Simulator->NumSimulations = %hd, Methods = %hd\n", Simulator->NumSimulations, Simulator->NumMethods);
 	dynfree(SimulationMatrix[0]);
 	dynfree(SimulationMatrix);
+
+	Simulator->NumSimulations = NumSims;
+	Simulator->NumMethods = NumMethods;
+	printf("Simulator->NumSimulations = %hd, Methods = %hd\n", Simulator->NumSimulations, Simulator->NumMethods);
 
 	//	Then, run the simulations
 	simulator_run_simulations(Simulator);
@@ -146,31 +147,31 @@ void simulator_uninitialize(SIMULATOR* Simulator)
 
 	for (i = 0; i < Simulator->NumDomains; i++)
 	{
-printf("Simulator uninitializing Domain <%hd>\n", i);
+//printf("Simulator uninitializing Domain <%hd>\n", i);
 		simulation_domain_uninitialize(Simulator->Domains[i]);
 		dynfree(Simulator->Domains[i]);
 	}
-printf("Simulator uninitializing Domains list\n");
+//printf("Simulator uninitializing Domains list\n");
 	dynfree(Simulator->Domains);
 	Simulator->NumDomains = 0;
 
 	for (i = 0; i < Simulator->NumMethods; i++)
 	{
-printf("Simulator uninitializing Method <%hd>\n", i);
+//printf("Simulator uninitializing Method <%hd>\n", i);
 		method_uninitialize(Simulator->Methods[i]);
 		dynfree(Simulator->Methods[i]);
 	}
-printf("Simulator uninitializing Methods list\n");
+//printf("Simulator uninitializing Methods list\n");
 	dynfree(Simulator->Methods);
 	Simulator->NumMethods = 0;
 
 	for (i = 0; i < Simulator->NumSimulations; i++)
 	{
-printf("Simulator uninitializing Simulation <%hd>\n", i);
+//printf("Simulator uninitializing Simulation <%hd>\n", i);
 		simulation_uninitialize(Simulator->Simulations[i]);
 		dynfree(Simulator->Simulations[i]);
 	}
-printf("Simulator uninitializing Simulations list\n");
+//printf("Simulator uninitializing Simulations list\n");
 	dynfree(Simulator->Simulations);
 	Simulator->NumSimulations = 0;
 }
@@ -184,7 +185,7 @@ void simulator_run_simulations(SIMULATOR* Simulator)
 
 	for (i = 0; i < Simulator->NumSimulations; i++)
 	{
-printf("Simulator running Simulation <%hd>\n", i);
+		printf("Simulator running Simulation <%hd>\n", i);
 		simulator_run_simulation(Simulator, i);
 	}
 }

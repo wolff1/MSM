@@ -10,7 +10,7 @@ void even_powers_initialize(void* Softener)
 {
 	EVEN_POWERS*		Ep = (EVEN_POWERS*) Softener;
 	assert(Ep != NULL);
-	printf("\tEVEN_POWERS initialization!\n");
+//	printf("\tEVEN_POWERS initialization!\n");
 
 	//	Initialize COMMON members
 	Ep->cmn.Size = sizeof(EVEN_POWERS);
@@ -119,7 +119,7 @@ void even_powers_uninitialize(void* Softener)
 {
 	EVEN_POWERS*		Ep = (EVEN_POWERS*) Softener;
 	assert(Ep != NULL);
-	printf("\tUn-initializing EVEN_POWERS!\n");
+//	printf("\tUn-initializing EVEN_POWERS!\n");
 
 	//	Free dynamically allocated memory for softening function coefficients
 	dynfree(Ep->cmn.p2p);

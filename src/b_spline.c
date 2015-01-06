@@ -11,7 +11,7 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
 	assert(MsmParams != NULL);
-	printf("\tB_SPLINE initialization!\n");
+//	printf("\tB_SPLINE initialization!\n");
 
 	//	Set up COMMON members
 	Bs->cmn.Size = sizeof(B_SPLINE);
@@ -72,7 +72,7 @@ void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS*
 	assert(Bs != NULL);
 	assert(Softener != NULL);
 	assert(MsmParams != NULL);
-	printf("\tB_SPLINE compute_g2g\n");
+//	printf("\tB_SPLINE compute_g2g\n");
 
 	//	Pre-processing (Intermediate levels)
 	Size = (long) ceil(2.0*MsmParams->alpha);
@@ -105,7 +105,7 @@ void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS
 	assert(Bs != NULL);
 	assert(Softener != NULL);
 	assert(MsmParams != NULL);
-	printf("\tB_SPLINE compute_tg2g\n");
+//	printf("\tB_SPLINE compute_tg2g\n");
 
 	//	Pre-processing (Top level)
 	Size = (long) ceil(MsmParams->D);
@@ -145,7 +145,7 @@ void b_spline_evaluate(void* Interpolant, long Len, double* X, double* F, double
     assert(X != NULL);
     assert(F != NULL);
     assert(DF != NULL);
-	printf("\tB_SPLINE evaluate\n");
+//	printf("\tB_SPLINE evaluate\n");
 
 	g2p = Bs->cmn.g2p;
 	p = Bs->cmn.p;
@@ -180,7 +180,7 @@ void b_spline_uninitialize(void* Interpolant)
 {
 	B_SPLINE*		Bs = (B_SPLINE*) Interpolant;
 	assert(Bs != NULL);
-	printf("\tUn-initializing B_SPLINE!\n");
+//	printf("\tUn-initializing B_SPLINE!\n");
 
 	//	Free the dynamically allocated memory
 	stencil_free(Bs->cmn.g2g);
@@ -264,7 +264,7 @@ void b_spline_compute_g2p(B_SPLINE* Bs)
 	lapack_int* piv = NULL;
 
 	assert(Bs != NULL);
-	printf("\tB_SPLINE compute_g2p\n");
+//	printf("\tB_SPLINE compute_g2p\n");
 
 	p = Bs->cmn.p;
 	p_2 = p/2;
@@ -334,7 +334,7 @@ void b_spline_compute_g2fg(B_SPLINE* Bs)
 	long		den = 0;			// denominator
 
 	assert(Bs != NULL);
-	printf("\tB_SPLINE compute_g2fg\n");
+//	printf("\tB_SPLINE compute_g2fg\n");
 
 	p = Bs->cmn.p;
 	p_2 = (short)p/2;
@@ -380,7 +380,7 @@ void b_spline_compute_omega(B_SPLINE* Bs)
 	double*		Psi = NULL;
 
 	assert(Bs != NULL);
-	printf("\tB_SPLINE compute_omega\n");
+//	printf("\tB_SPLINE compute_omega\n");
 
 	p = Bs->cmn.p;
 	p_2 = p/2;
@@ -437,7 +437,7 @@ void b_spline_compute_omega_prime(B_SPLINE* Bs)
 	double*		omegap = NULL;
 
 	assert(Bs != NULL);
-	printf("\tB_SPLINE compute_omega_prime\n");
+//	printf("\tB_SPLINE compute_omega_prime\n");
 
 	p = Bs->cmn.p;
 	p_2 = p/2;

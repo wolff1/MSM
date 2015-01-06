@@ -97,17 +97,17 @@ void particle_collection_copy(PARTICLE_COLLECTION* DstParticles, PARTICLE_COLLEC
 void particle_collection_uninitialize(PARTICLE_COLLECTION* Pc)
 {
 	//	Free dynamically allocated memory
-printf("before dynfree(Pc->v[0])\n");
+//printf("before dynfree(Pc->v[0])\n");
 	dynfree(Pc->v[0]);
-printf("before dynfree(Pc->v)\n");
+//printf("before dynfree(Pc->v)\n");
 	dynfree(Pc->v);
-printf("before dynfree(Pc->m)\n");
+//printf("before dynfree(Pc->m)\n");
 	dynfree(Pc->m);
-printf("before dynfree(Pc->f[0])\n");
+//printf("before dynfree(Pc->f[0])\n");
 	dynfree(Pc->f[0]);
-printf("before dynfree(Pc->f)\n");
+//printf("before dynfree(Pc->f)\n");
 	dynfree(Pc->f);
-printf("before dynfree(Pc->r)\n");
+//printf("before dynfree(Pc->r)\n");
 	dynfree(Pc->r);
 }
 

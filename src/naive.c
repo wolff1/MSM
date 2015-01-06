@@ -11,7 +11,7 @@ void naive_initialize(void* Method)
 	NAIVE*		Naive = (NAIVE*) Method;
 
 	assert(Naive != NULL);
-	printf("Initializing NAIVE!\n");
+//	printf("Initializing NAIVE!\n");
 
 	//	Initialize COMMON members
 	Naive->cmn.Size = sizeof(NAIVE);
@@ -35,7 +35,7 @@ void naive_preprocess(void* Method, double DomainRadius)
 {
 	NAIVE*		Naive = (NAIVE*) Method;
 	assert(Naive != NULL);
-	printf("NAIVE Preprocessing!\n");
+//	printf("NAIVE Preprocessing!\n");
 }
 
 void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
@@ -56,7 +56,7 @@ void naive_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	double		dfz = 0.0;
 
 	assert(Naive != NULL);
-	printf("NAIVE Evaluation! %lu particles\n", N);
+//	printf("NAIVE Evaluation! %lu particles\n", N);
 
 	//	Perform the naive O(N^2) calculation
 	for (i = 0; i < N; i++)
@@ -94,7 +94,7 @@ void naive_uninitialize(void* Method)
 {
 	NAIVE*		Naive = (NAIVE*) Method;
 	assert(Naive != NULL);
-	printf("Un-initializing NAIVE!\n");
+//	printf("Un-initializing NAIVE!\n");
 }
 
 //	INTERNAL Methods

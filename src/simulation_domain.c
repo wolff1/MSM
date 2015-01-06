@@ -66,9 +66,9 @@ void simulation_domain_uninitialize(SIMULATION_DOMAIN* Domain)
 	assert(Domain != NULL);
 
 	//	Free dynamically allocated memory
-printf("before particle_collection_uninit\n");
+//printf("before particle_collection_uninit\n");
   	particle_collection_uninitialize(Domain->Particles);
-printf("before dynfree(Domain->Particles)\n");
+//printf("before dynfree(Domain->Particles)\n");
   	dynfree(Domain->Particles);
 }
 

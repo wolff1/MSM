@@ -14,7 +14,7 @@ void msm_initialize(void* Method)
 	MSM*		Msm = (MSM*) Method;
 
 	assert(Msm != NULL);
-	printf("Initializing MSM!\n");
+//	printf("Initializing MSM!\n");
 
 	//	Initialize COMMON members
 	Msm->cmn.Size = sizeof(MSM);
@@ -26,7 +26,7 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 1.5;
+	Msm->prm.a = 12.5;
 	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
@@ -35,9 +35,9 @@ void msm_initialize(void* Method)
 	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
 
 	//	Initialize MSM options
-	Msm->opt.ComputeExclusions = 1;
+	Msm->opt.ComputeExclusions = 0;
 	Msm->opt.ComputeLongRange = 1;
-	Msm->opt.ComputeShortRange = 1;
+	Msm->opt.ComputeShortRange = 0;
 	Msm->opt.IsN = 0;
 	Msm->opt.IsNLogN = 1;
 
@@ -97,7 +97,7 @@ void msm_preprocess(void* Method, double DomainRadius)
 {
 	MSM*		Msm = (MSM*) Method;
 	assert(Msm != NULL);
-	printf("MSM Preprocessing for size <%f>!\n", DomainRadius);
+//	printf("MSM Preprocessing for size <%f>!\n", DomainRadius);
 
 	//	Compute Interpolant coefficients
 	Msm->prm.D = DomainRadius;
@@ -114,7 +114,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	assert(Domain != NULL);
 
 	N = Domain->Particles->N;
-	printf("MSM Evaluation! %lu particles\n", N);
+//	printf("MSM Evaluation! %lu particles\n", N);
 
 	//	Initialize output variables U and f
 	Domain->Particles->U = 0.0;
@@ -158,7 +158,7 @@ void msm_uninitialize(void* Method)
 {
 	MSM*		Msm = (MSM*) Method;
 	assert(Msm != NULL);
-	printf("Un-initializing MSM!\n");
+//	printf("Un-initializing MSM!\n");
 
 	//	Uninitialize SOFTENER
 	(*Msm->sft->uninitialize)(Msm->sft);
@@ -199,7 +199,7 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a);
 	YBinCount = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / a);
 	ZBinCount = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / a);
-printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
+//printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
 	//	Dynamically allocate memory for lists of bins
 	First = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
 	Next = (long*) dynvec(N, sizeof(long));
@@ -364,21 +364,23 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
 	long		Nx = 0;
 	long		Ny = 0;
 	long		Nz = 0;
-	double		h = Msm->prm.h;
+	double		h = Msm->prm.h * pow(2.0, Level);
 	short		p = Msm->prm.p;
 
-	//	Create grid corresponding to Level (0 is finest grid)
-	Nx = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / (h*pow(2.0, Level))) + p + 1;
-	Ny = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / (h*pow(2.0, Level))) + p + 1;
-	Nz = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / (h*pow(2.0, Level))) + p + 1;
+	printf("\tMSM anterpolation!\n");
 
-	printf("Min(%f,%f,%f) Max(%f,%f,%f) -> %ldx%ldx%ld (Level=%hd, h=%2.2f)\n",
+	//	Create grid corresponding to Level (0 is finest grid)
+	Nx = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / h) + p + 1;
+	Ny = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / h) + p + 1;
+	Nz = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / h) + p + 1;
+
+	printf("Min(%4.2f,%4.2f,%4.2f) Max(%4.2f,%4.2f,%4.2f) -> %ldx%ldx%ld (Level=%hd, h=%4.2f)\n",
 		Domain->MinimumCoordinates.x,Domain->MinimumCoordinates.y,Domain->MinimumCoordinates.z,
 		Domain->MaximumCoordinates.x,Domain->MaximumCoordinates.y,Domain->MaximumCoordinates.z,
-		Nx,Ny,Nz,Level,h*pow(2.0, Level));
+		Nx,Ny,Nz,Level,h);
 
 	//	FIXME
-	//	Think about local vs global indexing of grid
+	//	Think about local vs global indexing of grid (parallel implementation only)
 	//	Think about how consecutive grids will be aligned
 	//	Think about how p/2 extra points on ends affect indexing
 	//	Where to store grid(s)?
@@ -393,26 +395,32 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
 
 void msm_restrict(MSM* Msm)
 {
+//	printf("\tMSM restriction!\n");
 }
 
 void msm_direct(MSM* Msm)
 {
+//	printf("\tMSM direct computation!\n");
 }
 
 void msm_direct_top(MSM* Msm)
 {
+//	printf("\tMSM direct computation (top-level)!\n");
 }
 
 void msm_prolongate(MSM* Msm)
 {
+//	printf("\tMSM prolongation!\n");
 }
 
 void msm_interpolate(MSM* Msm)
 {
+//	printf("\tMSM interpolation!\n");
 }
 
 void msm_exclude(MSM* Msm)
 {
+//	printf("\tMSM exclusions!\n");
 }
 
 //	INTERNAL HELPER Methods
