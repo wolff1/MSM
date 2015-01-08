@@ -401,14 +401,18 @@ void msm_restrict(MSM* Msm)
 {
 //	printf("\tMSM restriction!\n");
 /*
-	for (i = *all fine grid points*)
+	all_ranges = *all fine grid points*
+	for (m = 0; m < all_ranges.num; m++)
 	{
-		phi_ranges = *corresponding coarse grid points* for fine grid point, i
-		for (k = 0; k < phi_ranges.num; k++)
+		for (i = all_ranges[m].min; i <= all_ranges[m].max; i++)
 		{
-			for (j = phi_ranges[k].min; j <= phi_ranges[k].max; j++)
+			phi_ranges = *corresponding coarse grid points* for fine grid point, i
+			for (n = 0; n < phi_ranges.num; n++)
 			{
-				coarse_grid[j] += Phi(g(i,j))*fine_grid[i];
+				for (j = phi_ranges[n].min; j <= phi_ranges[n].max; j++)
+				{
+					coarse_grid[j] += Phi(g(i,j))*fine_grid[i];
+				}
 			}
 		}
 	}
@@ -419,14 +423,18 @@ void msm_direct(MSM* Msm)
 {
 //	printf("\tMSM direct computation!\n");
 /*
-	for (i = *all potential grid points*)
+	all_ranges = *all potential grid points*
+	for (m = 0; m < all_ranges.num; m++)
 	{
-		stencil_ranges = *corresponding charge grid points* for grid point, i
-		for (k = 0; k < stencil_ranges.num; k++)
+		for (i = all_ranges[m].min; i <= all_ranges[m].max; i++)
 		{
-			for (j = stencil_ranges[k].min; j <= stencil_ranges[k].max; j++)
+			stencil_ranges = *corresponding charge grid points* for grid point, i
+			for (n = 0; n < stencil_ranges.num; n++)
 			{
-				potential_grid[i] += K(h(i,j))*charge_grid[j];
+				for (j = stencil_ranges[n].min; j <= stencil_ranges[n].max; j++)
+				{
+					potential_grid[i] += K(h(i,j))*charge_grid[j];
+				}
 			}
 		}
 	}
@@ -437,14 +445,18 @@ void msm_direct_top(MSM* Msm)
 {
 //	printf("\tMSM direct computation (top-level)!\n");
 /*
-	for (i = *all potential grid points*)
+	all_ranges = *all potential grid points*
+	for (m = 0; m < all_ranges.num; m++)
 	{
-		top_stencil_ranges = *corresponding charge grid points* for grid point, i (probably all charge grid points)
-		for (k = 0; k < top_stencil_ranges.num; k++)
+		for (i = all_ranges[m].min; i <= all_ranges[m].max; i++)
 		{
-			for (j = top_stencil_ranges[k].min; j <= top_stencil_ranges[k].max; j++)
+			top_stencil_ranges = *corresponding charge grid points* for grid point, i (probably all charge grid points)
+			for (n = 0; n < top_stencil_ranges.num; n++)
 			{
-				potential_grid[i] += K_L(h(i,j))*charge_grid[j];
+				for (j = top_stencil_ranges[n].min; j <= top_stencil_ranges[n].max; j++)
+				{
+					potential_grid[i] += K_L(h(i,j))*charge_grid[j];
+				}
 			}
 		}
 	}
@@ -455,14 +467,18 @@ void msm_prolongate(MSM* Msm)
 {
 //	printf("\tMSM prolongation!\n");
 /*
-	for (i = *all fine grid points*)
+	all_ranges = *all fine grid points*
+	for (m = 0; m < all_ranges.num; m++)
 	{
-		phi_ranges = *corresponding coarse grid points* for fine grid point, i
-		for (k = 0; k < phi_ranges.num; k++)
+		for (i = all_ranges[m].min; i <= all_ranges[m].max; i++)
 		{
-			for (j = phi_ranges[k].min; j <= phi_ranges[k].max; j++)
+			phi_ranges = *corresponding coarse grid points* for fine grid point, i
+			for (n = 0; n < phi_ranges.num; n++)
 			{
-				fine_grid[i] += Phi(g(i,j))*coarse_grid[j];
+				for (j = phi_ranges[n].min; j <= phi_ranges[n].max; j++)
+				{
+					fine_grid[i] += Phi(g(i,j))*coarse_grid[j];
+				}
 			}
 		}
 	}
