@@ -390,32 +390,97 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
 	//		-> Spread particle charge onto grid in each dimension
 	for (n = 0; n < Domain->Particles->N; n++)
 	{
+/*
+		i = f(r[n],h);
+		grid[i] += Phi(g(r[n],h,i))*q[n];
+*/
 	}
 }
 
 void msm_restrict(MSM* Msm)
 {
 //	printf("\tMSM restriction!\n");
+/*
+	for (i = *all fine grid points*)
+	{
+		phi_ranges = *corresponding coarse grid points* for fine grid point, i
+		for (k = 0; k < phi_ranges.num; k++)
+		{
+			for (j = phi_ranges[k].min; j <= phi_ranges[k].max; j++)
+			{
+				coarse_grid[j] += Phi(g(i,j))*fine_grid[i];
+			}
+		}
+	}
+*/
 }
 
 void msm_direct(MSM* Msm)
 {
 //	printf("\tMSM direct computation!\n");
+/*
+	for (i = *all potential grid points*)
+	{
+		stencil_ranges = *corresponding charge grid points* for grid point, i
+		for (k = 0; k < stencil_ranges.num; k++)
+		{
+			for (j = stencil_ranges[k].min; j <= stencil_ranges[k].max; j++)
+			{
+				potential_grid[i] += K(h(i,j))*charge_grid[j];
+			}
+		}
+	}
+*/
 }
 
 void msm_direct_top(MSM* Msm)
 {
 //	printf("\tMSM direct computation (top-level)!\n");
+/*
+	for (i = *all potential grid points*)
+	{
+		top_stencil_ranges = *corresponding charge grid points* for grid point, i (probably all charge grid points)
+		for (k = 0; k < top_stencil_ranges.num; k++)
+		{
+			for (j = top_stencil_ranges[k].min; j <= top_stencil_ranges[k].max; j++)
+			{
+				potential_grid[i] += K_L(h(i,j))*charge_grid[j];
+			}
+		}
+	}
+*/
 }
 
 void msm_prolongate(MSM* Msm)
 {
 //	printf("\tMSM prolongation!\n");
+/*
+	for (i = *all fine grid points*)
+	{
+		phi_ranges = *corresponding coarse grid points* for fine grid point, i
+		for (k = 0; k < phi_ranges.num; k++)
+		{
+			for (j = phi_ranges[k].min; j <= phi_ranges[k].max; j++)
+			{
+				fine_grid[i] += Phi(g(i,j))*coarse_grid[j];
+			}
+		}
+	}
+*/
 }
 
 void msm_interpolate(MSM* Msm)
 {
 //	printf("\tMSM interpolation!\n");
+/*
+	E = 0.5*q_0'*e_0;
+
+	for (n = 0; n < N; n++)
+	{
+		i = f(r[n],h);
+		f[n] += Phi(g(r[n],h,i)*potential_grid[i]
+	}
+*/
 }
 
 void msm_exclude(MSM* Msm)
