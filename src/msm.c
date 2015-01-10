@@ -360,6 +360,8 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 
 void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
 {
+	//	INPUT:	particles
+	//	OUTPUT:	finest grid
 	long		n = 0;
 	long		Nx = 0;
 	long		Ny = 0;
@@ -399,6 +401,8 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
 
 void msm_restrict(MSM* Msm)
 {
+	//	INPUT:	fine grid
+	//	OUTPUT:	coarse grid
 //	printf("\tMSM restriction!\n");
 /*
 	all_ranges = *all fine grid points*
@@ -421,6 +425,8 @@ void msm_restrict(MSM* Msm)
 
 void msm_direct(MSM* Msm)
 {
+	//	INTPUT:	charge grid
+	//	OUTPUT:	potential grid
 //	printf("\tMSM direct computation!\n");
 /*
 	all_ranges = *all potential grid points*
@@ -443,6 +449,8 @@ void msm_direct(MSM* Msm)
 
 void msm_direct_top(MSM* Msm)
 {
+	//	INTPUT:	charge grid
+	//	OUTPUT:	potential grid
 //	printf("\tMSM direct computation (top-level)!\n");
 /*
 	all_ranges = *all potential grid points*
@@ -465,6 +473,8 @@ void msm_direct_top(MSM* Msm)
 
 void msm_prolongate(MSM* Msm)
 {
+	//	INPUT:	coarse grid
+	//	OUTPUT:	fine grid
 //	printf("\tMSM prolongation!\n");
 /*
 	all_ranges = *all fine grid points*
@@ -487,6 +497,8 @@ void msm_prolongate(MSM* Msm)
 
 void msm_interpolate(MSM* Msm)
 {
+	//	INPUT:	finest potential gird, finest charge grid
+	//	OUTPUT:	energy, forces
 //	printf("\tMSM interpolation!\n");
 /*
 	E = 0.5*q_0'*e_0;
