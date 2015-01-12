@@ -108,6 +108,7 @@ void msm_preprocess(void* Method, double DomainRadius)
 void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 {
 	long		N = 0;
+	GRID*		ChargeGrid = NULL;
 	MSM*		Msm = (MSM*) Method;
 
 	assert(Msm != NULL);
@@ -129,21 +130,21 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	{
 		if (Msm->opt.IsN)
 		{
-			msm_anterpolate(Msm, Domain, 0);
+			msm_anterpolate(Msm, Domain, 0, &ChargeGrid);
 			msm_restrict(Msm);
 			msm_direct(Msm);
 			msm_direct_top(Msm);
 			msm_prolongate(Msm);
-			msm_interpolate(Msm);
+			msm_interpolate(Msm, ChargeGrid);
 		}
 
 		if (Msm->opt.IsNLogN)
 		{
 			for (N = 0; N < 3; N++)
 			{	//	FIXME
-				msm_anterpolate(Msm, Domain, (short)N);
+				msm_anterpolate(Msm, Domain, (short)N, &ChargeGrid);
 				msm_direct_top(Msm);
-				msm_interpolate(Msm);
+				msm_interpolate(Msm, ChargeGrid);
 			}
 		}
 
@@ -358,35 +359,34 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 	dynfree(ParticlesPerBin);
 }
 
-void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level)
+void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID** Grid)
 {
 	//	INPUT:	particles
 	//	OUTPUT:	finest grid
 	long		n = 0;
-	long		Nx = 0;
-	long		Ny = 0;
-	long		Nz = 0;
-	double		h = Msm->prm.h * pow(2.0, Level);
-	short		p = Msm->prm.p;
+//	double		h = Msm->prm.h * pow(2.0, Level);
+//	short		p = Msm->prm.p;
+	size_t		Size = 0;
+	void*		Init = NULL;
+	void*		Ptr = NULL;
 
 	printf("\tMSM anterpolation!\n");
 
-	//	Create grid corresponding to Level (0 is finest grid)
-	Nx = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / h) + p + 1;
-	Ny = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / h) + p + 1;
-	Nz = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / h) + p + 1;
-
-	printf("Min(%4.2f,%4.2f,%4.2f) Max(%4.2f,%4.2f,%4.2f) -> %ldx%ldx%ld (Level=%hd, h=%4.2f)\n",
+	printf("Min(%4.2f,%4.2f,%4.2f) Max(%4.2f,%4.2f,%4.2f)\n",
 		Domain->MinimumCoordinates.x,Domain->MinimumCoordinates.y,Domain->MinimumCoordinates.z,
-		Domain->MaximumCoordinates.x,Domain->MaximumCoordinates.y,Domain->MaximumCoordinates.z,
-		Nx,Ny,Nz,Level,h);
+		Domain->MaximumCoordinates.x,Domain->MaximumCoordinates.y,Domain->MaximumCoordinates.z);
 
-	//	FIXME
-	//	Think about local vs global indexing of grid (parallel implementation only)
-	//	Think about how consecutive grids will be aligned
-	//	Think about how p/2 extra points on ends affect indexing
-	//	Where to store grid(s)?
-	//	What type of meta-data to store with grid(s)?
+	//	Create Grid <Level>
+	Ptr = NULL;
+	(*Grid) = NULL;
+	if (1)
+	{	//	RECTANGULAR_ROW_MAJOR_B_SPLINE Grid
+		Size = sizeof(RECTANGULAR_ROW_MAJOR_B_SPLINE);
+		Init = &rectangular_row_major_b_spline_initialize;
+	}
+	Ptr = dynmem(Size);
+	grid_initialize(Ptr, Init, Domain, Level, Msm->prm.h);
+	(*Grid) = (GRID*) Ptr;
 
 	//	Loop through all particles
 	//		-> Spread particle charge onto grid in each dimension
@@ -495,11 +495,11 @@ void msm_prolongate(MSM* Msm)
 */
 }
 
-void msm_interpolate(MSM* Msm)
+void msm_interpolate(MSM* Msm, GRID* ChargeGrid)
 {
 	//	INPUT:	finest potential gird, finest charge grid
 	//	OUTPUT:	energy, forces
-//	printf("\tMSM interpolation!\n");
+	printf("\tMSM interpolation!\n");
 /*
 	E = 0.5*q_0'*e_0;
 
@@ -509,6 +509,8 @@ void msm_interpolate(MSM* Msm)
 		f[n] += Phi(g(r[n],h,i)*potential_grid[i]
 	}
 */
+	grid_uninitialize(ChargeGrid);
+	dynfree(ChargeGrid);
 }
 
 void msm_exclude(MSM* Msm)

@@ -7,6 +7,8 @@ grid.h -
 #define	GRID_H
 
 #include "all.h"
+#include "memory.h"
+#include "simulation_domain.h"
 
 typedef struct
 {
@@ -23,28 +25,28 @@ typedef struct
 typedef struct
 {
 	//	Members
-	double*		data;
-	double		h;
-	short		level;
-	long		Nx;
-	long		Ny;
-	long		Nz;
-	short		NumIntergridCoefficients;
+	short		Level;
+	double		h;		//	Actually h_l
 
 	//	Methods
-	long	(*xyz2idx)(void*, double, double, double);
-	long	(*ijk2idx)(void*, long, long, long);
-	void	(*get_grid_points_all)(void*, GRID_RANGE*);
-	void	(*get_grid_points_coarse)(void*, long, GRID_RANGE*);
-	void	(*get_grid_points_stencil)(void*, long, GRID_RANGE*);
-	void	(*get_grid_points_stencil_top)(void*, long, GRID_RANGE*);
-	double	(*get_grid_point_value)(void*, long);
-	void	(*increment_grid_point_value)(void*, long, double value);
+	void		(*copy)(void*, void*);
+	long		(*xyz2idx)(void*, double, double, double);
+	long		(*ijk2idx)(void*, long, long, long);
+	void		(*get_grid_points_all)(void*, GRID_RANGE*);
+	void		(*get_grid_points_coarse)(void*, long, GRID_RANGE*);
+	void		(*get_grid_points_stencil)(void*, long, GRID_RANGE*);
+	void		(*get_grid_points_stencil_top)(void*, long, GRID_RANGE*);
+	double		(*get_grid_point_value)(void*, long);
+	void		(*increment_grid_point_value)(void*, long, double);
+	void		(*create_finer_grid)(void*, void*);
+	void		(*create_coarser_grid)(void*, void*);
+	void		(*uninitialize)(void*);
 } GRID;
 
 //	EXTERNAL Methods
-void grid_initialize(void* Grid, void* Init(void));
-void grid_copy(GRID* Dst, GRID* Src);
+void grid_initialize(void* Grid, void* Init(void*, SIMULATION_DOMAIN*), SIMULATION_DOMAIN* Domain, short Level, double h);
+void grid_copy(void* Dst, void* Src);
+void grid_uninitialize(void* Grid);
 
 //	INTERNAL Methods
 

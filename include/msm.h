@@ -11,11 +11,13 @@ msm.h -
 #include "softener.h"
 #include "method.h"
 //#include "simulation_domain.h"
-#include "particle.h"
+//#include "particle.h"
 
 #include "even_powers.h"
 #include "b_spline.h"
 #include "c1_spline.h"
+
+#include "rectangular_row_major_b_spline.h"
 
 typedef struct
 {
@@ -45,12 +47,12 @@ void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods
 void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain);
-void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level);
+void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID** Grid);
 void msm_restrict(MSM* Msm);
 void msm_direct(MSM* Msm);
 void msm_direct_top(MSM* Msm);
 void msm_prolongate(MSM* Msm);
-void msm_interpolate(MSM* Msm);
+void msm_interpolate(MSM* Msm, GRID* Grid);
 void msm_exclude(MSM* Msm);
 
 //	INTERNAL HELPER Methods
