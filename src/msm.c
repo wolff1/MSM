@@ -109,21 +109,17 @@ void msm_preprocess(void* Method, double DomainRadius)
 void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 {
 	long		N = 0;
+	size_t		Size = 0;
+	void		(*Init)(void*, SIMULATION_DOMAIN*, short) = NULL;
 	GRID*		ChargeGrid = NULL;
 	MSM*		Msm = (MSM*) Method;
-
-	size_t		Size = 0;
-	void		(*Init)(void*, SIMULATION_DOMAIN*) = NULL;
 
 	assert(Msm != NULL);
 	assert(Domain != NULL);
 
-	N = Domain->Particles->N;
-//	printf("MSM Evaluation! %lu particles\n", N);
-
 	//	Initialize output variables U and f
 	Domain->Particles->U = 0.0;
-	memset(Domain->Particles->f[0], 0, sizeof(double)*N*3);
+	memset(Domain->Particles->f[0], 0, sizeof(double)*Domain->Particles->N*3);
 
 	if (Msm->opt.ComputeShortRange)
 	{
@@ -383,14 +379,28 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 {
 	//	INPUT:	particles
 	//	OUTPUT:	finest grid
-	long		n = 0;
-//	double		h = Msm->prm.h * pow(2.0, Level);
-//	short		p = Msm->prm.p;
+	PARTICLE*					r = Domain->Particles->r;
+	PARTICLE*					Min = &Domain->MinimumCoordinates;
+	short						p = Msm->prm.p;
+	long						n = 0;
+	double						h = 1.0;
+//	long						i = 0;
+//	long						j = 0;
+//	long						k = 0;
+	short						nu = 0;
+//	long						Idx = 0;
+	double*						X = NULL;
+	double*						FX = NULL;
+	double*						DFX = NULL;
+	double						dx = 0.0;
+	double						dy = 0.0;
+	double						dz = 0.0;
 
 	printf("\tMSM anterpolation!\n");
 
 	//	Create Grid <Level>
-	grid_initialize(Grid, Domain, Level, Msm->prm.h);
+	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
+	h = Grid->h;
 
 	//	Loop through all particles
 	//		-> Spread particle charge onto grid in each dimension
@@ -400,6 +410,70 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 		i = f(r[n],h);
 		grid[i] += Phi(g(r[n],h,i))*q[n];
 */
+/*
+		i = (long) floor((r[n].x-Min->x)/h) - 0.5*((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+		j = (long) floor((r[n].y-Min->y)/h) - 0.5*((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+		k = (long) floor((r[n].z-Min->z)/h) - 0.5*((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+
+		printf("Particle %02ld: (%+05.3f,%+05.3f,%+05.3f) -> (%02ld,%02ld,%02ld):(%02ld,%02ld,%02ld) -> %04ld:%04ld\n",
+			n,
+			r[n].x,r[n].y,r[n].z,
+			i, j, k,
+			i+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, j+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, k+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion,
+			(long) Grid->ijk2idx(Grid, i, j, k),
+			(long) Grid->ijk2idx(Grid, i+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, j+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, k+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion));
+*/
+
+		//	Nearest grid point indices for particle
+		dx = (r[n].x-Min->x)/h;
+		dy = (r[n].y-Min->y)/h;
+		dz = (r[n].z-Min->z)/h;
+
+		dx -= floor(dx);
+		dx -= floor(dy);
+		dx -= floor(dz);
+
+//		i = (long) floor(dx);
+//		j = (long) floor(dy);
+//		k = (long) floor(dz);
+
+		//	Get distances to the nearest grid points
+		for (nu = -p/2; nu < p/2; nu++)
+		{
+//			gx = Min->x + h*(i+nu);
+//			gy = Min->y + h*(j+nu);
+//			gz = Min->z + h*(k+nu);
+
+//			X[nu+p/2] =		(r[n].x - gx)/h;	//	x
+//			X[nu+p/2+p] =	(r[n].y - gy)/h;	//	y
+//			X[nu+p/2+2*p] =	(r[n].z - gz)/h;	//	z
+
+//			X[nu+p/2] =		(r[n].x - (Min->x + h*(i+nu)))/h;	//	x
+//			X[nu+p/2+p] =	(r[n].y - (Min->y + h*(j+nu)))/h;	//	y
+//			X[nu+p/2+2*p] =	(r[n].z - (Min->z + h*(k+nu)))/h;	//	z
+
+//			X[nu+p/2] =		(r[n].x - (Min->x + h*(floor((r[n].x-Min->x)/h)+nu)))/h;	//	x
+//			X[nu+p/2+p] =	(r[n].y - (Min->y + h*(floor((r[n].y-Min->y)/h)+nu)))/h;	//	y
+//			X[nu+p/2+2*p] =	(r[n].z - (Min->z + h*(floor((r[n].z-Min->z)/h)+nu)))/h;	//	z
+
+			X[nu+p/2] =		dx - nu;	//	x
+			X[nu+p/2+p] =	dy - nu;	//	y
+			X[nu+p/2+2*p] =	dz - nu;	//	z
+		}
+
+		//	Get interpolant values at the nearest grid points
+//		Phi(X,FX,DFX);
+
+		//	Distribute point charge to grid
+//		for (z)
+//		{
+//			for (y)
+//			{
+//				for (x)
+//				{
+//				}
+//			}
+//		}
 	}
 }
 
@@ -514,7 +588,6 @@ void msm_interpolate(MSM* Msm, GRID* ChargeGrid)
 	}
 */
 	grid_uninitialize(ChargeGrid);
-//	dynfree(ChargeGrid);
 }
 
 void msm_exclude(MSM* Msm)

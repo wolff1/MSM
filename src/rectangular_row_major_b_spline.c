@@ -6,16 +6,15 @@ rectangular_row_major_b_spline.c -
 #include "rectangular_row_major_b_spline.h"
 
 //	EXTERNAL Methods
-void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Domain /*, Phi_Len, alpha, stencil_shape*/)
+void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Expansion /*, alpha, stencil_shape*/)
 {
 	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
-	short								p = 4;//Msm->prm.p;
 
 	assert(MyGrid != NULL);
 
-	printf("Min(%4.2f,%4.2f,%4.2f) Max(%4.2f,%4.2f,%4.2f)\n",
-		Domain->MinimumCoordinates.x,Domain->MinimumCoordinates.y,Domain->MinimumCoordinates.z,
-		Domain->MaximumCoordinates.x,Domain->MaximumCoordinates.y,Domain->MaximumCoordinates.z);
+//	printf("Min(%4.2f,%4.2f,%4.2f) Max(%4.2f,%4.2f,%4.2f)\n",
+//		Domain->MinimumCoordinates.x,Domain->MinimumCoordinates.y,Domain->MinimumCoordinates.z,
+//		Domain->MaximumCoordinates.x,Domain->MaximumCoordinates.y,Domain->MaximumCoordinates.z);
 
 	//	Initialize COMMON members
 
@@ -34,18 +33,16 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 	MyGrid->cmn.uninitialize				= &rectangular_row_major_b_spline_uninitialize;
 
 	//	Initialize RECTANGULAR_ROW_MAJOR_B_SPLINE members
-	//		-> Need:
-	//			[X]	simulation domain:	for grid shape/size
-	//			[ ]	stencil info:		for stencil shape/size (cube/sphere, 2*alpha)
-	//			[X]	interpolant:		for "phi" stencil shape/size (p)
+	MyGrid->Expansion = Expansion;
+	MyGrid->Nx = (long) 2*ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / (2*MyGrid->cmn.h)) + Expansion + 1;
+	MyGrid->Ny = (long) 2*ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / (2*MyGrid->cmn.h)) + Expansion + 1;
+	MyGrid->Nz = (long) 2*ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / (2*MyGrid->cmn.h)) + Expansion + 1;
 
-	MyGrid->Nx = (long) 2*ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / (2*MyGrid->cmn.h)) + p + 1;
-	MyGrid->Ny = (long) 2*ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / (2*MyGrid->cmn.h)) + p + 1;
-	MyGrid->Nz = (long) 2*ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / (2*MyGrid->cmn.h)) + p + 1;
 printf("Grid %hd: (%ld,%ld,%ld) -> %ld\n", MyGrid->cmn.Level, MyGrid->Nx, MyGrid->Ny, MyGrid->Nz, MyGrid->Nx*MyGrid->Ny*MyGrid->Nz);
 
 	MyGrid->Data = (double*) dynvec(MyGrid->Nx*MyGrid->Ny*MyGrid->Nz, sizeof(double));
-	MyGrid->NumIntergridCoefficients = p;
+
+	MyGrid->NumIntergridCoefficients = Expansion/2 + 1;
 }
 
 void	rectangular_row_major_b_spline_copy(void* Dst, void* Src)
@@ -61,14 +58,25 @@ void	rectangular_row_major_b_spline_copy(void* Dst, void* Src)
 //	short		NumIntergridCoefficients;
 }
 
-long	rectangular_row_major_b_spline_xyz2idx(void* Grid, double x, double y , double z)
+long	rectangular_row_major_b_spline_xyz2idx(void* Grid, SIMULATION_DOMAIN* Domain, double x, double y , double z)
 {
-	return 0;
+	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+	double				h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->cmn.h;
+	PARTICLE*			Min = &Domain->MinimumCoordinates;
+
+	return rectangular_row_major_b_spline_ijk2idx(Grid,
+												  (long)floor((x - Min->x)/h)-0.5*Exp,
+												  (long)floor((y - Min->y)/h)-0.5*Exp,
+												  (long)floor((z - Min->z)/h)-0.5*Exp);
 }
 
 long	rectangular_row_major_b_spline_ijk2idx(void* Grid, long i, long j, long k)
 {
-	return 0;
+	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+	long				Nx =  ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nx;
+	long				Ny =  ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny;
+
+	return IDX(i+0.5*Exp, j+0.5*Exp, k+0.5*Exp, Nx, Ny);
 }
 
 void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* Range)

@@ -16,17 +16,18 @@ typedef struct
 	GRID		cmn;
 
 	//	MY Members
-	double*		Data;
 	long		Nx;
 	long		Ny;
 	long		Nz;
 	short		NumIntergridCoefficients;
+	short		Expansion;
+	double*		Data;
 } RECTANGULAR_ROW_MAJOR_B_SPLINE;
 
 //	EXTERNAL Methods
-void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Domain);
+void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Expansion);
 void	rectangular_row_major_b_spline_copy(void* DstGrid, void* SrcGrid);
-long	rectangular_row_major_b_spline_xyz2idx(void* Grid, double x, double y , double z);
+long	rectangular_row_major_b_spline_xyz2idx(void* Grid, SIMULATION_DOMAIN* Domain, double x, double y , double z);
 long	rectangular_row_major_b_spline_ijk2idx(void* Grid, long i, long j, long k);
 void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* Range);
 void	rectangular_row_major_b_spline_get_grid_points_coarse(void* Grid, long FineGridIndex, GRID_RANGE* Range);

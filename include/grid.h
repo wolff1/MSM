@@ -29,9 +29,9 @@ typedef struct
 	double		h;		//	Actually h_l
 
 	//	Methods
-	void		(*initialize)(void*, SIMULATION_DOMAIN*);
+	void		(*initialize)(void*, SIMULATION_DOMAIN*, short);
 	void		(*copy)(void*, void*);
-	long		(*xyz2idx)(void*, double, double, double);
+	long		(*xyz2idx)(void*, SIMULATION_DOMAIN*, double, double, double);
 	long		(*ijk2idx)(void*, long, long, long);
 	void		(*get_grid_points_all)(void*, GRID_RANGE*);
 	void		(*get_grid_points_coarse)(void*, long, GRID_RANGE*);
@@ -45,7 +45,7 @@ typedef struct
 } GRID;
 
 //	EXTERNAL Methods
-void grid_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Level, double h);
+void grid_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Level, double h, short Expansion);
 void grid_copy(void* Dst, void* Src);
 void grid_uninitialize(void* Grid);
 

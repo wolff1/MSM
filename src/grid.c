@@ -5,7 +5,7 @@ grid.c - Routines for the generic GRID class
 
 #include "grid.h"
 
-void grid_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Level, double h)
+void grid_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Level, double h, short Expansion)
 {
 	assert(Grid != NULL);
 
@@ -15,7 +15,7 @@ void grid_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Level, double 
 
 	//	Initialize Grid by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!
-	(*((GRID*) Grid)->initialize)(Grid, Domain);
+	(*((GRID*) Grid)->initialize)(Grid, Domain, Expansion);
 }
 
 void grid_copy(void* Dst, void* Src)
