@@ -40,6 +40,7 @@ void msm_initialize(void* Method)
 	Msm->opt.ComputeShortRange = 0;
 	Msm->opt.IsN = 0;
 	Msm->opt.IsNLogN = 1;
+	Msm->opt.GridType = 0;
 
 	//	Initialize INTERPOLANT
 	Ptr = NULL;
@@ -132,8 +133,10 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	if (Msm->opt.ComputeLongRange)
 	{
 		//	SET UP CONTAINER FOR FINEST GRID
-		if (1)
-		{	//	RECTANGULAR_ROW_MAJOR_B_SPLINE Grid
+		switch (Msm->opt.GridType)
+		{
+		case 0:	//	RECTANGULAR_ROW_MAJOR_B_SPLINE Grid
+		default:
 			Size = sizeof(RECTANGULAR_ROW_MAJOR_B_SPLINE);
 			Init = &rectangular_row_major_b_spline_initialize;
 		}

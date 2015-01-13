@@ -26,6 +26,7 @@ typedef struct
 	char		ComputeExclusions;
 	char		IsN;
 	char		IsNLogN;
+	char		GridType;
 } MSM_OPTIONS;
 
 typedef struct

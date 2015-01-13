@@ -15,7 +15,6 @@ void grid_initialize(void* Grid, SIMULATION_DOMAIN* Domain, short Level, double 
 
 	//	Initialize Grid by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!
-	//(*Init)(Grid, Domain);
 	(*((GRID*) Grid)->initialize)(Grid, Domain);
 }
 
