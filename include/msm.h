@@ -47,7 +47,7 @@ void msm_uninitialize(void* Msm);
 
 //	INTERNAL Methods
 void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain);
-void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID** Grid);
+void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Grid);
 void msm_restrict(MSM* Msm);
 void msm_direct(MSM* Msm);
 void msm_direct_top(MSM* Msm);
