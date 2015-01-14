@@ -73,7 +73,7 @@ void	rectangular_row_major_b_spline_display(void* Grid)
 		{
 			for (i = 0; i < MyGrid->Nx; i++)
 			{
-				printf("%+04.2f ", MyGrid->Data[IDX(i,j,k,MyGrid->Nx,MyGrid->Ny)]);
+				printf("%+06.3f ", MyGrid->Data[IDX(i,j,k,MyGrid->Nx,MyGrid->Ny)]);
 			}
 			printf("\n");
 		}
@@ -88,18 +88,18 @@ long	rectangular_row_major_b_spline_xyz2idx(void* Grid, SIMULATION_DOMAIN* Domai
 	PARTICLE*			Min = &Domain->MinimumCoordinates;
 
 	return rectangular_row_major_b_spline_ijk2idx(Grid,
-												  (long)floor((x - Min->x)/h)-0.5*Exp,
-												  (long)floor((y - Min->y)/h)-0.5*Exp,
-												  (long)floor((z - Min->z)/h)-0.5*Exp);
+												  (long)floor((x - Min->x)/h),
+												  (long)floor((y - Min->y)/h),
+												  (long)floor((z - Min->z)/h));
 }
 
 long	rectangular_row_major_b_spline_ijk2idx(void* Grid, long i, long j, long k)
 {
-	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion >> 1;
 	long				Nx =  ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nx;
 	long				Ny =  ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny;
 
-	return IDX(i+0.5*Exp, j+0.5*Exp, k+0.5*Exp, Nx, Ny);
+	return IDX(i+Exp, j+Exp, k+Exp, Nx, Ny);
 }
 
 void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* Range)

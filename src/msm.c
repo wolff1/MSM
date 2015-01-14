@@ -27,7 +27,7 @@ void msm_initialize(void* Method)
 
 	//	Initialize MSM parameters
 	Msm->prm.a = 12.5;
-	Msm->prm.h = 2.5;
+	Msm->prm.h = 1.0;//2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
@@ -38,8 +38,8 @@ void msm_initialize(void* Method)
 	Msm->opt.ComputeExclusions = 0;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 0;
-	Msm->opt.IsN = 0;
-	Msm->opt.IsNLogN = 1;
+	Msm->opt.IsN = 1;
+	Msm->opt.IsNLogN = 0;
 	Msm->opt.GridType = 0;
 
 	//	Initialize INTERPOLANT
@@ -159,15 +159,15 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 				msm_direct_top(Msm);
 				msm_interpolate(Msm, ChargeGrid);
 			}
-
-			//	Free FINEST grid memory
-			dynfree(ChargeGrid);
 		}
 
 		if (Msm->opt.ComputeExclusions)
 		{
 			msm_exclude(Msm);
 		}
+
+		//	Free FINEST grid memory
+		dynfree(ChargeGrid);
 	}
 }
 
@@ -429,34 +429,35 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	//	Loop through all particles	-> Spread particle charge onto grid in each dimension
 	for (n = 0; n < Domain->Particles->N; n++)
 	{
-		//	Nearest grid point indices for particle:	(r-min)/h - floor((r-min)/h) - p/2
+		//	Nearest grid point indices for particle
 		Dx = (r[n].x-Min->x)/h;
 		Dy = (r[n].y-Min->y)/h;
 		Dz = (r[n].z-Min->z)/h;
 
-		x = floor(Dx);
-		y = floor(Dy);
-		z = floor(Dz);
+		//	Transform (x,y,z) from nearest grid point to "lowest" grid point within support
+		x = (long) floor(Dx) - (p>>1) + 1;
+		y = (long) floor(Dy) - (p>>1) + 1;
+		z = (long) floor(Dz) - (p>>1) + 1;
 
-		Dx -= (x + (p >> 1));
-		Dy -= (y + (p >> 1));
-		Dz -= (z + (p >> 1));
+		Dx = Dx - x;
+		Dy = Dy - y;
+		Dz = Dz - z;
 
 		//	Get distances to the nearest grid points
 		for (nu = 0; nu < p; nu++)
 		{
-			X[nu] =		Dx + (double)nu;
-			X[nu+p] =	Dy + (double)nu;
-			X[nu+2*p] =	Dz + (double)nu;
+			X[nu] =		Dx - (double)nu;
+			X[nu+p] =	Dy - (double)nu;
+			X[nu+2*p] =	Dz - (double)nu;
 		}
 
 		//	Get interpolant values at the nearest grid points (in bulk)
 		(*Msm->itp->evaluate)(Msm->itp, 3*p, X, FX, DFX);
 
-		//	Transform (x,y,z) from nearest grid point to "lowest" grid point within support
-		x -= (p >> 1) - 1;
-		y -= (p >> 1) - 1;
-		z -= (p >> 1) - 1;
+//		for (nu = 0; nu < p; nu++)
+//		{
+//			printf("nu = %hd - (%+0f, %+0f, %+0f), (%+0f, %+0f, %+0f)\n", nu, X[nu], X[nu+p], X[nu+2*p], FX[nu], FX[nu+p], FX[nu+2*p]);
+//		}
 
 		//	Distribute point charge to grid
 		for (k = 0; k < p; k++)
@@ -464,7 +465,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 			ChargeZ = PhiZ[k]*r[n].q;
 			for (j = 0; j < p; j++)
 			{
-				ChargeYZ = PhiY[y]*ChargeZ;
+				ChargeYZ = PhiY[j]*ChargeZ;
 				for (i = 0; i < p; i++)
 				{
 					ChargeXYZ = PhiX[i]*ChargeYZ;
