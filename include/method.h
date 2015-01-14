@@ -9,7 +9,6 @@ method.h - Definition for the generic METHOD class
 #include "all.h"
 #include "memory.h"
 #include "simulation_domain.h"
-//#include "particle.h"
 
 typedef struct
 {

@@ -30,6 +30,7 @@ void grid_copy(void* Dst, void* Src)
 	//	Copy Methods
 	((GRID*) Dst)->initialize					= ((GRID*) Src)->initialize;
 	((GRID*) Dst)->copy							= ((GRID*) Src)->copy;
+	((GRID*) Dst)->display						= ((GRID*) Src)->display;
 	((GRID*) Dst)->xyz2idx						= ((GRID*) Src)->xyz2idx;
 	((GRID*) Dst)->ijk2idx						= ((GRID*) Src)->ijk2idx;
 	((GRID*) Dst)->get_grid_points_all			= ((GRID*) Src)->get_grid_points_all;

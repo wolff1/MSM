@@ -31,6 +31,7 @@ typedef struct
 	//	Methods
 	void		(*initialize)(void*, SIMULATION_DOMAIN*, short);
 	void		(*copy)(void*, void*);
+	void		(*display)(void*);
 	long		(*xyz2idx)(void*, SIMULATION_DOMAIN*, double, double, double);
 	long		(*ijk2idx)(void*, long, long, long);
 	void		(*get_grid_points_all)(void*, GRID_RANGE*);
@@ -38,7 +39,7 @@ typedef struct
 	void		(*get_grid_points_stencil)(void*, long, GRID_RANGE*);
 	void		(*get_grid_points_stencil_top)(void*, long, GRID_RANGE*);
 	double		(*get_grid_point_value)(void*, long);
-	void		(*increment_grid_point_value)(void*, long, double);
+	void		(*increment_grid_point_value)(void*, long, long, long, double);
 	void		(*create_finer_grid)(void*, void*);
 	void		(*create_coarser_grid)(void*, void*);
 	void		(*uninitialize)(void*);

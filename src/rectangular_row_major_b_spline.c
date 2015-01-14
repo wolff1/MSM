@@ -20,6 +20,7 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 
 	//	Initialize COMMON function pointers
 	MyGrid->cmn.copy						= &rectangular_row_major_b_spline_copy;
+	MyGrid->cmn.display						= &rectangular_row_major_b_spline_display;
 	MyGrid->cmn.xyz2idx						= &rectangular_row_major_b_spline_xyz2idx;
 	MyGrid->cmn.ijk2idx						= &rectangular_row_major_b_spline_ijk2idx;
 	MyGrid->cmn.get_grid_points_all			= &rectangular_row_major_b_spline_get_grid_points_all;
@@ -38,8 +39,6 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 	MyGrid->Ny = (long) 2*ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / (2*MyGrid->cmn.h)) + Expansion + 1;
 	MyGrid->Nz = (long) 2*ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / (2*MyGrid->cmn.h)) + Expansion + 1;
 
-printf("Grid %hd: (%ld,%ld,%ld) -> %ld\n", MyGrid->cmn.Level, MyGrid->Nx, MyGrid->Ny, MyGrid->Nz, MyGrid->Nx*MyGrid->Ny*MyGrid->Nz);
-
 	MyGrid->Data = (double*) dynvec(MyGrid->Nx*MyGrid->Ny*MyGrid->Nz, sizeof(double));
 
 	MyGrid->NumIntergridCoefficients = Expansion/2 + 1;
@@ -56,6 +55,30 @@ void	rectangular_row_major_b_spline_copy(void* Dst, void* Src)
 //	long		Ny;
 //	long		Nz;
 //	short		NumIntergridCoefficients;
+}
+
+void	rectangular_row_major_b_spline_display(void* Grid)
+{
+	long								i = 0;
+	long								j = 0;
+	long								k = 0;
+	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
+
+	printf("\nRectangular, Row-major, B-spline Grid %hd: (%ld,%ld,%ld) -> %ld:\n\n",
+			MyGrid->cmn.Level, MyGrid->Nx, MyGrid->Ny, MyGrid->Nz, MyGrid->Nx*MyGrid->Ny*MyGrid->Nz);
+
+	for (k = 0; k < MyGrid->Nz; k++)
+	{
+		for (j = 0; j < MyGrid->Ny; j++)
+		{
+			for (i = 0; i < MyGrid->Nx; i++)
+			{
+				printf("%+04.2f ", MyGrid->Data[IDX(i,j,k,MyGrid->Nx,MyGrid->Ny)]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
 }
 
 long	rectangular_row_major_b_spline_xyz2idx(void* Grid, SIMULATION_DOMAIN* Domain, double x, double y , double z)
@@ -100,8 +123,10 @@ double	rectangular_row_major_b_spline_get_grid_point_value(void* Grid, long Grid
 	return 0.0;
 }
 
-void	rectangular_row_major_b_spline_increment_grid_point_value(void* Grid, long GridIndex, double Value)
+void	rectangular_row_major_b_spline_increment_grid_point_value(void* Grid, long i, long j, long k, double Value)
 {
+	long	GridIndex = rectangular_row_major_b_spline_ijk2idx(Grid, i, j, k);
+	((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Data[GridIndex] += Value;
 }
 
 void	rectangular_row_major_b_spline_create_finer_grid(void* FineGrid, void* CoarseGrid)

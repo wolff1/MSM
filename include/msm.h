@@ -10,8 +10,6 @@ msm.h -
 #include "interpolant.h"
 #include "softener.h"
 #include "method.h"
-//#include "simulation_domain.h"
-//#include "particle.h"
 
 #include "even_powers.h"
 #include "b_spline.h"

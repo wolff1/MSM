@@ -384,17 +384,28 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	short						p = Msm->prm.p;
 	long						n = 0;
 	double						h = 1.0;
-//	long						i = 0;
-//	long						j = 0;
-//	long						k = 0;
 	short						nu = 0;
-//	long						Idx = 0;
+	double						Dx = 0.0;
+	double						Dy = 0.0;
+	double						Dz = 0.0;
 	double*						X = NULL;
 	double*						FX = NULL;
 	double*						DFX = NULL;
-	double						dx = 0.0;
-	double						dy = 0.0;
-	double						dz = 0.0;
+	double*						PhiX = NULL;
+	double*						PhiY = NULL;
+	double*						PhiZ = NULL;
+	double*						dPhiX = NULL;//can remove after interpolation
+	double*						dPhiY = NULL;//can remove after interpolation
+	double*						dPhiZ = NULL;//can remove after interpolation
+	double						ChargeZ = 0.0;
+	double						ChargeYZ = 0.0;
+	double						ChargeXYZ = 0.0;
+	long						i = 0;
+	long						j = 0;
+	long						k = 0;
+	long						x = 0;
+	long						y = 0;
+	long						z = 0;
 
 	printf("\tMSM anterpolation!\n");
 
@@ -402,79 +413,74 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
 	h = Grid->h;
 
-	//	Loop through all particles
-	//		-> Spread particle charge onto grid in each dimension
+	//	Initialize vector(s) used to hold interpolant input and output
+	X = (double*) dynvec(3*p, sizeof(double));
+	FX = (double*) dynvec(3*p, sizeof(double));
+	DFX = (double*) dynvec(3*p, sizeof(double));
+
+	PhiX = &FX[0];		
+	PhiY = &FX[p];		
+	PhiZ = &FX[2*p];	
+
+	dPhiX = &DFX[0];//can remove after interpolation
+	dPhiY = &DFX[p];//can remove after interpolation
+	dPhiZ = &DFX[2*p];//can remove after interpolation
+
+	//	Loop through all particles	-> Spread particle charge onto grid in each dimension
 	for (n = 0; n < Domain->Particles->N; n++)
 	{
-/*
-		i = f(r[n],h);
-		grid[i] += Phi(g(r[n],h,i))*q[n];
-*/
-/*
-		i = (long) floor((r[n].x-Min->x)/h) - 0.5*((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
-		j = (long) floor((r[n].y-Min->y)/h) - 0.5*((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
-		k = (long) floor((r[n].z-Min->z)/h) - 0.5*((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion;
+		//	Nearest grid point indices for particle:	(r-min)/h - floor((r-min)/h) - p/2
+		Dx = (r[n].x-Min->x)/h;
+		Dy = (r[n].y-Min->y)/h;
+		Dz = (r[n].z-Min->z)/h;
 
-		printf("Particle %02ld: (%+05.3f,%+05.3f,%+05.3f) -> (%02ld,%02ld,%02ld):(%02ld,%02ld,%02ld) -> %04ld:%04ld\n",
-			n,
-			r[n].x,r[n].y,r[n].z,
-			i, j, k,
-			i+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, j+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, k+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion,
-			(long) Grid->ijk2idx(Grid, i, j, k),
-			(long) Grid->ijk2idx(Grid, i+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, j+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion, k+((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion));
-*/
+		x = floor(Dx);
+		y = floor(Dy);
+		z = floor(Dz);
 
-		//	Nearest grid point indices for particle
-		dx = (r[n].x-Min->x)/h;
-		dy = (r[n].y-Min->y)/h;
-		dz = (r[n].z-Min->z)/h;
-
-		dx -= floor(dx);
-		dx -= floor(dy);
-		dx -= floor(dz);
-
-//		i = (long) floor(dx);
-//		j = (long) floor(dy);
-//		k = (long) floor(dz);
+		Dx -= (x + (p >> 1));
+		Dy -= (y + (p >> 1));
+		Dz -= (z + (p >> 1));
 
 		//	Get distances to the nearest grid points
-		for (nu = -p/2; nu < p/2; nu++)
+		for (nu = 0; nu < p; nu++)
 		{
-//			gx = Min->x + h*(i+nu);
-//			gy = Min->y + h*(j+nu);
-//			gz = Min->z + h*(k+nu);
-
-//			X[nu+p/2] =		(r[n].x - gx)/h;	//	x
-//			X[nu+p/2+p] =	(r[n].y - gy)/h;	//	y
-//			X[nu+p/2+2*p] =	(r[n].z - gz)/h;	//	z
-
-//			X[nu+p/2] =		(r[n].x - (Min->x + h*(i+nu)))/h;	//	x
-//			X[nu+p/2+p] =	(r[n].y - (Min->y + h*(j+nu)))/h;	//	y
-//			X[nu+p/2+2*p] =	(r[n].z - (Min->z + h*(k+nu)))/h;	//	z
-
-//			X[nu+p/2] =		(r[n].x - (Min->x + h*(floor((r[n].x-Min->x)/h)+nu)))/h;	//	x
-//			X[nu+p/2+p] =	(r[n].y - (Min->y + h*(floor((r[n].y-Min->y)/h)+nu)))/h;	//	y
-//			X[nu+p/2+2*p] =	(r[n].z - (Min->z + h*(floor((r[n].z-Min->z)/h)+nu)))/h;	//	z
-
-			X[nu+p/2] =		dx - nu;	//	x
-			X[nu+p/2+p] =	dy - nu;	//	y
-			X[nu+p/2+2*p] =	dz - nu;	//	z
+			X[nu] =		Dx + (double)nu;
+			X[nu+p] =	Dy + (double)nu;
+			X[nu+2*p] =	Dz + (double)nu;
 		}
 
-		//	Get interpolant values at the nearest grid points
-//		Phi(X,FX,DFX);
+		//	Get interpolant values at the nearest grid points (in bulk)
+		(*Msm->itp->evaluate)(Msm->itp, 3*p, X, FX, DFX);
+
+		//	Transform (x,y,z) from nearest grid point to "lowest" grid point within support
+		x -= (p >> 1) - 1;
+		y -= (p >> 1) - 1;
+		z -= (p >> 1) - 1;
 
 		//	Distribute point charge to grid
-//		for (z)
-//		{
-//			for (y)
-//			{
-//				for (x)
-//				{
-//				}
-//			}
-//		}
+		for (k = 0; k < p; k++)
+		{
+			ChargeZ = PhiZ[k]*r[n].q;
+			for (j = 0; j < p; j++)
+			{
+				ChargeYZ = PhiY[y]*ChargeZ;
+				for (i = 0; i < p; i++)
+				{
+					ChargeXYZ = PhiX[i]*ChargeYZ;
+					(*Grid->increment_grid_point_value)(Grid, x+i, y+j, z+k, ChargeXYZ);
+				}
+			}
+		}
 	}
+
+	//	Display the grid as a sanity check
+	(*Grid->display)(Grid);
+
+	//	Free dynamically allocated memory
+	dynfree(DFX);
+	dynfree(FX);
+	dynfree(X);
 }
 
 void msm_restrict(MSM* Msm)
