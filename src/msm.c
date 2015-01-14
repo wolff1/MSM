@@ -27,7 +27,7 @@ void msm_initialize(void* Method)
 
 	//	Initialize MSM parameters
 	Msm->prm.a = 12.5;
-	Msm->prm.h = 1.0;//2.5;
+	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
@@ -418,9 +418,9 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	FX = (double*) dynvec(3*p, sizeof(double));
 	DFX = (double*) dynvec(3*p, sizeof(double));
 
-	PhiX = &FX[0];		
-	PhiY = &FX[p];		
-	PhiZ = &FX[2*p];	
+	PhiX = &FX[0];
+	PhiY = &FX[p];
+	PhiZ = &FX[2*p];
 
 	dPhiX = &DFX[0];//can remove after interpolation
 	dPhiY = &DFX[p];//can remove after interpolation

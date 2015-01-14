@@ -69,9 +69,11 @@ void	rectangular_row_major_b_spline_display(void* Grid)
 
 	for (k = 0; k < MyGrid->Nz; k++)
 	{
-		for (j = 0; j < MyGrid->Ny; j++)
+//		for (j = 0; j < MyGrid->Ny; j++)
+		for (i = 0; i < MyGrid->Nx; i++)
 		{
-			for (i = 0; i < MyGrid->Nx; i++)
+//			for (i = 0; i < MyGrid->Nx; i++)
+			for (j = 0; j < MyGrid->Ny; j++)
 			{
 				printf("%+06.3f ", MyGrid->Data[IDX(i,j,k,MyGrid->Nx,MyGrid->Ny)]);
 			}
