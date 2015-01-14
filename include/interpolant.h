@@ -15,13 +15,14 @@ interpolant.h - Parent (abstract) class for interpolants. Children must
 //		-> Conflict because needed in MSM and INTERPOLANT
 typedef struct
 {
-	double		a;
-	double		h;
-	double		alpha;
-	short		p;
-	short		k;
-	short		mu;
-	double		D;
+	double		a;			//	Cut-off distance
+	double		h;			//	Finest grid spacing
+	double		alpha;		//	a/h
+	short		p;			//	Gives order of interpolation accuracy
+	short		k;			//	Gives degree of continuity for softening function
+	short		mu;			//	Gives number of terms in series expansion for B-spline interpolant
+	double		D;			//	Size of the domain
+	short		L;			//	Number of *grids* used in the method
 } MSM_PARAMETERS;
 
 typedef struct

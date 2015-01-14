@@ -33,13 +33,14 @@ void msm_initialize(void* Method)
 	Msm->prm.k = 4;
 	Msm->prm.mu = 10;
 	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
+	Msm->prm.L = 1;
 
 	//	Initialize MSM options
 	Msm->opt.ComputeExclusions = 0;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 0;
-	Msm->opt.IsN = 1;
-	Msm->opt.IsNLogN = 0;
+	Msm->opt.IsN = 0;
+	Msm->opt.IsNLogN = 1;
 	Msm->opt.GridType = 0;
 
 	//	Initialize INTERPOLANT
@@ -108,7 +109,7 @@ void msm_preprocess(void* Method, double DomainRadius)
 
 void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 {
-	long		N = 0;
+	short		l = 0;	//	Lower case L, for level
 	size_t		Size = 0;
 	void		(*Init)(void*, SIMULATION_DOMAIN*, short) = NULL;
 	GRID*		ChargeGrid = NULL;
@@ -143,22 +144,37 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		if (Msm->opt.IsN)
 		{
 			msm_anterpolate(Msm, Domain, 0, ChargeGrid);
-			msm_restrict(Msm);
-			msm_direct(Msm);
+
+			for (l = 1; l < Msm->prm.L; l++)
+			{	//	l is fine grid level
+				msm_restrict(Msm);
+				msm_direct(Msm);
+			}
+
 			msm_direct_top(Msm);
-			msm_prolongate(Msm);
+
+			for (l = Msm->prm.L-1, l > 0; l--)
+			{	//	l is fine grid level
+				msm_prolongate(Msm);
+			}
+
 			msm_interpolate(Msm, ChargeGrid);
 		}
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
 		if (Msm->opt.IsNLogN)
 		{
-			for (N = 0; N < 3; N++)
-			{	//	FIXME
-				msm_anterpolate(Msm, Domain, (short)N, ChargeGrid);
-				msm_direct_top(Msm);
+			//	Intermediate Grid Level(s)
+			for (l = 0; l < Msm->prm.L-1; l++)
+			{
+				msm_anterpolate(Msm, Domain, l, ChargeGrid);
+				msm_direct(Msm);
 				msm_interpolate(Msm, ChargeGrid);
 			}
+			//	Top Grid Level
+			msm_anterpolate(Msm, Domain, Msm->prm.L-1, ChargeGrid);
+			msm_direct_top(Msm);
+			msm_interpolate(Msm, ChargeGrid);
 		}
 
 		if (Msm->opt.ComputeExclusions)
@@ -476,7 +492,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	}
 
 	//	Display the grid as a sanity check
-	(*Grid->display)(Grid);
+//	(*Grid->display)(Grid);
 
 	//	Free dynamically allocated memory
 	dynfree(DFX);
