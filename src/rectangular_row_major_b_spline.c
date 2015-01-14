@@ -19,19 +19,20 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 	//	Initialize COMMON members
 
 	//	Initialize COMMON function pointers
-	MyGrid->cmn.copy						= &rectangular_row_major_b_spline_copy;
-	MyGrid->cmn.display						= &rectangular_row_major_b_spline_display;
-	MyGrid->cmn.xyz2idx						= &rectangular_row_major_b_spline_xyz2idx;
-	MyGrid->cmn.ijk2idx						= &rectangular_row_major_b_spline_ijk2idx;
-	MyGrid->cmn.get_grid_points_all			= &rectangular_row_major_b_spline_get_grid_points_all;
-	MyGrid->cmn.get_grid_points_coarse		= &rectangular_row_major_b_spline_get_grid_points_coarse;
-	MyGrid->cmn.get_grid_points_stencil		= &rectangular_row_major_b_spline_get_grid_points_stencil;
-	MyGrid->cmn.get_grid_points_stencil_top	= &rectangular_row_major_b_spline_get_grid_points_stencil_top;
-	MyGrid->cmn.get_grid_point_value		= &rectangular_row_major_b_spline_get_grid_point_value;
-	MyGrid->cmn.increment_grid_point_value	= &rectangular_row_major_b_spline_increment_grid_point_value;
-	MyGrid->cmn.create_finer_grid			= &rectangular_row_major_b_spline_create_finer_grid;
-	MyGrid->cmn.create_coarser_grid			= &rectangular_row_major_b_spline_create_coarser_grid;
-	MyGrid->cmn.uninitialize				= &rectangular_row_major_b_spline_uninitialize;
+	MyGrid->cmn.copy							= &rectangular_row_major_b_spline_copy;
+	MyGrid->cmn.display							= &rectangular_row_major_b_spline_display;
+	MyGrid->cmn.xyz2idx							= &rectangular_row_major_b_spline_xyz2idx;
+	MyGrid->cmn.ijk2idx							= &rectangular_row_major_b_spline_ijk2idx;
+	MyGrid->cmn.get_grid_points_all_max_slices	= &rectangular_row_major_b_spline_get_grid_points_all_max_slices;
+	MyGrid->cmn.get_grid_points_all				= &rectangular_row_major_b_spline_get_grid_points_all;
+	MyGrid->cmn.get_grid_points_coarse			= &rectangular_row_major_b_spline_get_grid_points_coarse;
+	MyGrid->cmn.get_grid_points_stencil			= &rectangular_row_major_b_spline_get_grid_points_stencil;
+	MyGrid->cmn.get_grid_points_stencil_top		= &rectangular_row_major_b_spline_get_grid_points_stencil_top;
+	MyGrid->cmn.get_grid_point_value			= &rectangular_row_major_b_spline_get_grid_point_value;
+	MyGrid->cmn.increment_grid_point_value		= &rectangular_row_major_b_spline_increment_grid_point_value;
+	MyGrid->cmn.create_finer_grid				= &rectangular_row_major_b_spline_create_finer_grid;
+	MyGrid->cmn.create_coarser_grid				= &rectangular_row_major_b_spline_create_coarser_grid;
+	MyGrid->cmn.uninitialize					= &rectangular_row_major_b_spline_uninitialize;
 
 	//	Initialize RECTANGULAR_ROW_MAJOR_B_SPLINE members
 	MyGrid->Expansion = Expansion;
@@ -102,8 +103,32 @@ long	rectangular_row_major_b_spline_ijk2idx(void* Grid, long i, long j, long k)
 	return IDX(i+Exp, j+Exp, k+Exp, Nx, Ny);
 }
 
+long	rectangular_row_major_b_spline_get_grid_points_all_max_slices(void* Grid)
+{
+	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
+	return MyGrid->Ny*MyGrid->Nz;
+}
+
 void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* Range)
 {
+	//	Return grid point indices for entire grid, from low to high
+	//		indices are memory array indices, not (i,j,k)
+	//		-> Should it be this way?
+	long		i = 0;
+	long		j = 0;
+	long		k = 0;
+	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
+
+	Range->NumSlices = 0;
+	for (k = 0; k < MyGrid->Nz; k++)
+	{
+		for (j = 0; j < MyGrid->Ny; j++)
+		{
+			Range->Ranges[Range->NumSlices].Min = k*MyGrid->Nx*MyGrid->Ny + j*MyGrid->Nx;
+			Range->Ranges[Range->NumSlices].Max = Range->Ranges[Range->NumSlices].Min + MyGrid->Nx-1;
+			Range->NumSlices++;
+		}
+	}
 }
 
 void	rectangular_row_major_b_spline_get_grid_points_coarse(void* Grid, long FineGridIndex, GRID_RANGE* Range)

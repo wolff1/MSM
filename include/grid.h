@@ -34,6 +34,7 @@ typedef struct
 	void		(*display)(void*);
 	long		(*xyz2idx)(void*, SIMULATION_DOMAIN*, double, double, double);
 	long		(*ijk2idx)(void*, long, long, long);
+	long		(*get_grid_points_all_max_slices)(void*);
 	void		(*get_grid_points_all)(void*, GRID_RANGE*);
 	void		(*get_grid_points_coarse)(void*, long, GRID_RANGE*);
 	void		(*get_grid_points_stencil)(void*, long, GRID_RANGE*);

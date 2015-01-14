@@ -28,20 +28,21 @@ void grid_copy(void* Dst, void* Src)
 	((GRID*) Dst)->Level = ((GRID*) Src)->Level;
 
 	//	Copy Methods
-	((GRID*) Dst)->initialize					= ((GRID*) Src)->initialize;
-	((GRID*) Dst)->copy							= ((GRID*) Src)->copy;
-	((GRID*) Dst)->display						= ((GRID*) Src)->display;
-	((GRID*) Dst)->xyz2idx						= ((GRID*) Src)->xyz2idx;
-	((GRID*) Dst)->ijk2idx						= ((GRID*) Src)->ijk2idx;
-	((GRID*) Dst)->get_grid_points_all			= ((GRID*) Src)->get_grid_points_all;
-	((GRID*) Dst)->get_grid_points_coarse		= ((GRID*) Src)->get_grid_points_coarse;
-	((GRID*) Dst)->get_grid_points_stencil		= ((GRID*) Src)->get_grid_points_stencil;
-	((GRID*) Dst)->get_grid_points_stencil_top	= ((GRID*) Src)->get_grid_points_stencil_top;
-	((GRID*) Dst)->get_grid_point_value			= ((GRID*) Src)->get_grid_point_value;
-	((GRID*) Dst)->increment_grid_point_value	= ((GRID*) Src)->increment_grid_point_value;
-	((GRID*) Dst)->create_finer_grid			= ((GRID*) Src)->create_finer_grid;
-	((GRID*) Dst)->create_coarser_grid			= ((GRID*) Src)->create_coarser_grid;
-	((GRID*) Dst)->uninitialize					= ((GRID*) Src)->uninitialize;
+	((GRID*) Dst)->initialize						= ((GRID*) Src)->initialize;
+	((GRID*) Dst)->copy								= ((GRID*) Src)->copy;
+	((GRID*) Dst)->display							= ((GRID*) Src)->display;
+	((GRID*) Dst)->xyz2idx							= ((GRID*) Src)->xyz2idx;
+	((GRID*) Dst)->ijk2idx							= ((GRID*) Src)->ijk2idx;
+	((GRID*) Dst)->get_grid_points_all_max_slices	= ((GRID*) Src)->get_grid_points_all_max_slices;
+	((GRID*) Dst)->get_grid_points_all				= ((GRID*) Src)->get_grid_points_all;
+	((GRID*) Dst)->get_grid_points_coarse			= ((GRID*) Src)->get_grid_points_coarse;
+	((GRID*) Dst)->get_grid_points_stencil			= ((GRID*) Src)->get_grid_points_stencil;
+	((GRID*) Dst)->get_grid_points_stencil_top		= ((GRID*) Src)->get_grid_points_stencil_top;
+	((GRID*) Dst)->get_grid_point_value				= ((GRID*) Src)->get_grid_point_value;
+	((GRID*) Dst)->increment_grid_point_value		= ((GRID*) Src)->increment_grid_point_value;
+	((GRID*) Dst)->create_finer_grid				= ((GRID*) Src)->create_finer_grid;
+	((GRID*) Dst)->create_coarser_grid				= ((GRID*) Src)->create_coarser_grid;
+	((GRID*) Dst)->uninitialize						= ((GRID*) Src)->uninitialize;
 
 	//	Call sub-class copy method
 	(*((GRID*) Src)->copy)(Dst, Src);

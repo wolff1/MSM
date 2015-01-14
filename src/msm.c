@@ -113,6 +113,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	size_t		Size = 0;
 	void		(*Init)(void*, SIMULATION_DOMAIN*, short) = NULL;
 	GRID*		ChargeGrid = NULL;
+	GRID*		PotentialGrid = NULL;
 	MSM*		Msm = (MSM*) Method;
 
 	assert(Msm != NULL);
@@ -139,22 +140,24 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		}
 		ChargeGrid = (GRID*) dynmem(Size);
 		ChargeGrid->initialize = Init;
+		PotentialGrid = (GRID*) dynmem(Size);
+		PotentialGrid->initialize = Init;
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N)
 		if (Msm->opt.IsN)
 		{
 			msm_anterpolate(Msm, Domain, 0, ChargeGrid);
 
-			for (l = 1; l < Msm->prm.L; l++)
-			{	//	l is fine grid level
+			for (l = 1; l < Msm->prm.L; l++)	//	l is fine grid level
+			{
 				msm_restrict(Msm);
 				msm_direct(Msm);
 			}
 
-			msm_direct_top(Msm);
+			msm_direct_top(Msm, ChargeGrid, PotentialGrid);
 
-			for (l = Msm->prm.L-1, l > 0; l--)
-			{	//	l is fine grid level
+			for (l = Msm->prm.L-1; l > 0; l--)	//	l is fine grid level
+			{
 				msm_prolongate(Msm);
 			}
 
@@ -173,7 +176,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			}
 			//	Top Grid Level
 			msm_anterpolate(Msm, Domain, Msm->prm.L-1, ChargeGrid);
-			msm_direct_top(Msm);
+			msm_direct_top(Msm, ChargeGrid, PotentialGrid);
 			msm_interpolate(Msm, ChargeGrid);
 		}
 
@@ -183,6 +186,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		}
 
 		//	Free FINEST grid memory
+		dynfree(PotentialGrid);
 		dynfree(ChargeGrid);
 	}
 }
@@ -548,11 +552,24 @@ void msm_direct(MSM* Msm)
 */
 }
 
-void msm_direct_top(MSM* Msm)
+void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 {
 	//	INTPUT:	charge grid
 	//	OUTPUT:	potential grid
-//	printf("\tMSM direct computation (top-level)!\n");
+
+	GRID_RANGE		Outer;
+	GRID_RANGE		Inner;
+	long			MaxSlices = 0;
+	long			m = 0;
+	long			n = 0;
+	long			i = 0;
+	long			j = 0;
+
+	printf("\tMSM direct computation (top-level)!\n");
+
+	//	Create Potential Grid for <Level>
+//	grid_copy(?);
+
 /*
 	all_ranges = *all potential grid points*
 	for (m = 0; m < all_ranges.num; m++)
@@ -570,6 +587,35 @@ void msm_direct_top(MSM* Msm)
 		}
 	}
 */
+	//	Ranges is an array of length NumSlices
+	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
+	Outer.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
+	Inner.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));//FIXME?
+
+	//	Loop over *ALL* grid points to fill in potential grid from charge grid
+	(*ChargeGrid->get_grid_points_all)(ChargeGrid, &Outer);
+	printf("Outer grid has <%ld> slices:\n", Outer.NumSlices);
+
+	for (m = 0; m < Outer.NumSlices; m++)
+	{
+		printf("Slice <%04ld> - [%04ld, %04ld]\n", m, Outer.Ranges[m].Min, Outer.Ranges[m].Max);
+		for (i = Outer.Ranges[m].Min; i <= Outer.Ranges[m].Max; i++)
+		{
+//			//	Loop over *TOP STENCIL* grid points to interact with those from the outer loop
+//			(*ChargeGrid->get_grid_points_stencil_top)(ChargeGrid, &Inner);
+//			for (n = 0; n < Inner.NumSlices; n++)
+//			{
+//				for (j = Inner.Ranges[n].Min; j <= Inner.Ranges[n].Max; j++)
+//				{
+////					PotentialGrid[i] += K[h(i,j)]*ChargeGrid[j];
+//				}
+//			}
+		}
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(Inner.Ranges);
+	dynfree(Outer.Ranges);
 }
 
 void msm_prolongate(MSM* Msm)

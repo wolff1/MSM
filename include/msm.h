@@ -49,7 +49,7 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain);
 void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Grid);
 void msm_restrict(MSM* Msm);
 void msm_direct(MSM* Msm);
-void msm_direct_top(MSM* Msm);
+void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid);
 void msm_prolongate(MSM* Msm);
 void msm_interpolate(MSM* Msm, GRID* Grid);
 void msm_exclude(MSM* Msm);
