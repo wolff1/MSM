@@ -121,7 +121,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 
 	//	Initialize output variables U and f
 	Domain->Particles->U = 0.0;
-	memset(Domain->Particles->f[0], 0, sizeof(double)*Domain->Particles->N*3);
+	memset(Domain->Particles->f[0], 0, 3*Domain->Particles->N*sizeof(double));
 
 	if (Msm->opt.ComputeShortRange)
 	{
@@ -140,8 +140,8 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		}
 		ChargeGrid = (GRID*) dynmem(Size);
 		ChargeGrid->initialize = Init;
-		PotentialGrid = (GRID*) dynmem(Size);
-		PotentialGrid->initialize = Init;
+//		PotentialGrid = (GRID*) dynmem(Size);
+//		PotentialGrid->initialize = Init;
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N)
 		if (Msm->opt.IsN)
@@ -186,7 +186,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		}
 
 		//	Free FINEST grid memory
-		dynfree(PotentialGrid);
+//		dynfree(PotentialGrid);
 		dynfree(ChargeGrid);
 	}
 }
