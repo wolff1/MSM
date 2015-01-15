@@ -426,6 +426,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	long						x = 0;
 	long						y = 0;
 	long						z = 0;
+	long						Idx =0;
 
 	printf("\tMSM anterpolation!\n");
 
@@ -479,19 +480,29 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 //			printf("nu = %hd - (%+0f, %+0f, %+0f), (%+0f, %+0f, %+0f)\n", nu, X[nu], X[nu+p], X[nu+2*p], FX[nu], FX[nu+p], FX[nu+2*p]);
 //		}
 
-		//	Distribute point charge to grid
-		for (k = 0; k < p; k++)
+		////	Distribute point charge to grid
+		//for (k = 0; k < p; k++)
+		//{
+		//	ChargeZ = PhiZ[k]*r[n].q;
+		//	for (j = 0; j < p; j++)
+		//	{
+		//		ChargeYZ = PhiY[j]*ChargeZ;
+		//		for (i = 0; i < p; i++)
+		//		{
+		//			ChargeXYZ = PhiX[i]*ChargeYZ;
+		//			(*Grid->increment_grid_point_value)(Grid, x+i, y+j, z+k, ChargeXYZ);
+		//		}
+		//	}
+		//}
+
+		//	Distribute point charge to grid (IS THIS "BETTER" THAN ABOVE B/C LOOP IS "UNROLLED"?)
+		for (Idx = 0; Idx < p*p*p; Idx++)
 		{
-			ChargeZ = PhiZ[k]*r[n].q;
-			for (j = 0; j < p; j++)
-			{
-				ChargeYZ = PhiY[j]*ChargeZ;
-				for (i = 0; i < p; i++)
-				{
-					ChargeXYZ = PhiX[i]*ChargeYZ;
-					(*Grid->increment_grid_point_value)(Grid, x+i, y+j, z+k, ChargeXYZ);
-				}
-			}
+			k = Idx / (p*p);
+			j = (Idx - k*p*p) / p;
+			i = Idx - k*p*p - j*p;
+//printf("(%ld,%ld,%ld) -> %ld\n", i,j,k,Idx);
+			(*Grid->increment_grid_point_value)(Grid, x+i, y+j, z+k, PhiX[i]*PhiY[j]*PhiZ[k]*r[n].q);
 		}
 	}
 
