@@ -165,7 +165,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 				msm_prolongate(Msm, /*OUT*/&PotentialGrid[l-1], /*IN*/&PotentialGrid[l]);
 			}
 
-			msm_interpolate(Msm, /*IN*/&ChargeGrid[0], /*IN*/&PotentialGrid[0]);
+			msm_interpolate(Msm, Domain, /*IN*/&ChargeGrid[0], /*IN*/&PotentialGrid[0]);
 		}
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
@@ -176,12 +176,12 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			{
 				msm_anterpolate(Msm, Domain, l, /*OUT*/&ChargeGrid[l]);
 				msm_direct(Msm, /*IN*/&ChargeGrid[l], /*OUT*/&PotentialGrid[l]);
-				msm_interpolate(Msm, /*IN*/&ChargeGrid[l], /*IN*/&PotentialGrid[l]);
+				msm_interpolate(Msm, Domain, /*IN*/&ChargeGrid[l], /*IN*/&PotentialGrid[l]);
 			}
 			//	Top Grid Level
 			msm_anterpolate(Msm, Domain, Msm->prm.L-1, /*OUT*/&ChargeGrid[Msm->prm.L-1]);
 			msm_direct_top(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*OUT*/&PotentialGrid[Msm->prm.L-1]);
-			msm_interpolate(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*IN*/&PotentialGrid[Msm->prm.L-1]);
+			msm_interpolate(Msm, Domain, /*IN*/&ChargeGrid[Msm->prm.L-1], /*IN*/&PotentialGrid[Msm->prm.L-1]);
 		}
 
 		if (Msm->opt.ComputeExclusions)
@@ -436,7 +436,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 
 	printf("\tMSM anterpolation!\n");
 
-	//	Create Grid <Level>
+	//	Create Grid <Level> --> Freed in interpolation
 	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
 	h = Grid->h;
 
@@ -529,7 +529,8 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	//	OUTPUT:	coarse grid
 
 	//	Create Coarse Grid for <Level> --> Freed either in direct or direct_top
-//	grid_copy_structure(?);
+//	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
+//	grid_create_coarse_structure(?);
 
 	//	printf("\tMSM restriction!\n");
 /*
@@ -558,7 +559,7 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 //	printf("\tMSM direct computation!\n");
 
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
-//	grid_copy_structure(?);
+	(*PotentialGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
 
 /*
 	all_ranges = *all potential grid points*
@@ -577,8 +578,11 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 		}
 	}
 */
-	//	Free Charge Grid if not q_0
-//	grid_uninitialize(ChargeGrid);
+	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
+	if (ChargeGrid->Level > 0)
+	{
+		grid_uninitialize(ChargeGrid);
+	}
 }
 
 void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
@@ -593,7 +597,7 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	long			n = 0;
 	long			i = 0;
 	long			j = 0;
-	double			ThisValue = 0.0;
+	double			GridValue = 0.0;
 
 	printf("\tMSM direct computation (top-level)!\n");
 
@@ -615,7 +619,7 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	}
 */
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
-//	grid_copy_structure(?);
+	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
 
 	//	Ranges is an array of length NumSlices
 	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
@@ -639,8 +643,9 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 				for (j = Inner.Ranges[n].Min; j <= Inner.Ranges[n].Max; j++)
 				{
 //					PotentialGrid[i] += K[h(i,j)]*ChargeGrid[j];
-					ThisValue = 1.0*(i*j)*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
-//					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, ThisValue);
+//	FIXME!
+					GridValue = 1.0*(i*j)*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
+					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, GridValue);
 				}
 			}
 		}
@@ -650,8 +655,11 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	dynfree(Inner.Ranges);
 	dynfree(Outer.Ranges);
 
-	//	Free Charge Grid if not q_0
-//	grid_uninitialize(ChargeGrid);
+	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
+	if (ChargeGrid->Level > 0)
+	{
+		grid_uninitialize(ChargeGrid);
+	}
 }
 
 void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
@@ -661,7 +669,8 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 //	printf("\tMSM prolongation!\n");
 
 	//	Create Fine Grid for <Level> --> Freed either in interpolate or prolongation
-//	grid_copy_structure(?);
+//	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
+//	grid_create_fine_structure(?);
 
 /*
 	all_ranges = *all fine grid points*
@@ -681,12 +690,49 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	}
 */
 	//	Free Coarse Grid
+	grid_uninitialize(CoarseGrid);
 }
 
-void msm_interpolate(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
+void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID* PotentialGrid)
 {
 	//	INPUT:	finest potential gird, finest charge grid
 	//	OUTPUT:	energy, forces
+	GRID_RANGE		Outer;
+	long			MaxSlices = 0;
+	long			m = 0;
+	double			Energy = 0.0;
+
+	PARTICLE*					r = Domain->Particles->r;
+	PARTICLE*					Min = &Domain->MinimumCoordinates;
+	short						p = Msm->prm.p;
+	long						n = 0;
+	double						h = ChargeGrid->h;
+	short						nu = 0;
+	double						Dx = 0.0;
+	double						Dy = 0.0;
+	double						Dz = 0.0;
+	double*						X = NULL;
+	double*						FX = NULL;
+	double*						DFX = NULL;
+	double*						PhiX = NULL;
+	double*						PhiY = NULL;
+	double*						PhiZ = NULL;
+	double*						dPhiX = NULL;
+	double*						dPhiY = NULL;
+	double*						dPhiZ = NULL;
+	long						i = 0;
+	long						j = 0;
+	long						k = 0;
+	long						Di = 0;
+	long						Dj = 0;
+	long						Dk = 0;
+	long						Idx = 0;
+	long						GridIdx = 0;
+	double						GridValue = 0.0;
+	double						Fx = 0.0;
+	double						Fy = 0.0;
+	double						Fz = 0.0;
+
 	printf("\tMSM interpolation! Level<%hd>\n", ChargeGrid->Level);
 /*
 	E = 0.5*q_0'*e_0;
@@ -697,8 +743,109 @@ void msm_interpolate(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 		f[n] += Phi(g(r[n],h,i)*potential_grid[i]
 	}
 */
+
+//	*** FIRST, CALCULATE THE ELECTROSTATIC ENERGY ***
+	//	Ranges is an array of length NumSlices
+	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
+	Outer.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
+	//	Loop over *ALL* grid points
+	(*ChargeGrid->get_grid_points_all)(ChargeGrid, &Outer);
+	for (m = 0; m < Outer.NumSlices; m++)
+	{
+		for (i = Outer.Ranges[m].Min; i <= Outer.Ranges[m].Max; i++)
+		{
+			Energy += (*ChargeGrid->get_grid_point_value)(ChargeGrid, i)*(*PotentialGrid->get_grid_point_value)(PotentialGrid, i);
+		}
+	}
+	Domain->Particles->U = 0.5*Energy;
+
+	//	Free dynamically allocated memory
 	grid_uninitialize(ChargeGrid);
-//	grid_uninitialize(PotentialGrid);
+	dynfree(Outer.Ranges);
+
+//	*** SECOND, CALCULATE THE CORRESPONDING FORCES ***
+	//	Initialize vector(s) used to hold interpolant input and output
+	X = (double*) dynvec(3*p, sizeof(double));
+	FX = (double*) dynvec(3*p, sizeof(double));
+	DFX = (double*) dynvec(3*p, sizeof(double));
+
+	PhiX = &FX[0];
+	PhiY = &FX[p];
+	PhiZ = &FX[2*p];
+
+	dPhiX = &DFX[0];
+	dPhiY = &DFX[p];
+	dPhiZ = &DFX[2*p];
+
+	//	Loop through all particles	-> Use grid potential to interpolate inter-particle forces
+	for (n = 0; n < Domain->Particles->N; n++)
+	{
+		//	Nearest grid point indices for particle
+		Dx = (r[n].x-Min->x)/h;
+		Dy = (r[n].y-Min->y)/h;
+		Dz = (r[n].z-Min->z)/h;
+
+		//	Transform (x,y,z) from nearest grid point to "lowest" grid point within support
+		i = (long) floor(Dx) - (p>>1) + 1;
+		j = (long) floor(Dy) - (p>>1) + 1;
+		k = (long) floor(Dz) - (p>>1) + 1;
+
+		Dx = Dx - i;
+		Dy = Dy - j;
+		Dz = Dz - k;
+
+		//	Get distances to the nearest grid points
+		for (nu = 0; nu < p; nu++)
+		{
+			X[nu] =		Dx - (double)nu;
+			X[nu+p] =	Dy - (double)nu;
+			X[nu+2*p] =	Dz - (double)nu;
+		}
+
+		//	Get interpolant values at the nearest grid points (in bulk)
+		(*Msm->itp->evaluate)(Msm->itp, 3*p, X, FX, DFX);
+
+		////	Gather contributions to particle n forces
+		//for (Dk = 0; Dk < p; Dk++)
+		//{
+		//	ChargeZ = PhiZ[Dk]*r[n].q;
+		//	for (Dj = 0; Dj < p; Dj++)
+		//	{
+		//		ChargeYZ = PhiY[Dj]*ChargeZ;
+		//		for (Di = 0; Di < p; Di++)
+		//		{
+		//			ChargeXYZ = PhiX[Di]*ChargeYZ;
+		//			(*Grid->increment_grid_point_value)(Grid, i+Di, j+Dj, k+Dk, ChargeXYZ);
+		//		}
+		//	}
+		//}
+
+		//	Gather contributions to particle n forces (IS THIS "BETTER" THAN ABOVE B/C LOOP IS "UNROLLED"?)
+		for (Idx = 0; Idx < p*p*p; Idx++)
+		{
+			Dk = Idx / (p*p);
+			Dj = (Idx - Dk*p*p) / p;
+			Di = Idx - Dk*p*p - Dj*p;
+//printf("(%ld,%ld,%ld) -> %ld\n", Di,Dj,Dk,Idx);
+			GridIdx = (*PotentialGrid->ijk2idx)(PotentialGrid, i+Di, j+Dj, k+Dk);
+			GridValue = (*PotentialGrid->get_grid_point_value)(PotentialGrid, GridIdx);
+			Fx += dPhiX[Di]*PhiY[Dj]*PhiZ[Dk]*GridValue;
+			Fy += PhiX[Di]*dPhiY[Dj]*PhiZ[Dk]*GridValue;
+			Fz += PhiX[Di]*PhiY[Dj]*dPhiZ[Dk]*GridValue;
+		}
+		Domain->Particles->f[n][0] -= Fx*r[n].q/h;
+		Domain->Particles->f[n][1] -= Fy*r[n].q/h;
+		Domain->Particles->f[n][2] -= Fz*r[n].q/h;
+	}
+
+	//	Display the forces as a sanity check
+	//		-> FIXME
+
+	//	Free more dynamically allocated memory
+	grid_uninitialize(PotentialGrid);
+	dynfree(DFX);
+	dynfree(FX);
+	dynfree(X);
 }
 
 void msm_exclude(MSM* Msm)

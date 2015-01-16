@@ -40,6 +40,7 @@ void grid_copy(void* Dst, void* Src)
 	((GRID*) Dst)->get_grid_points_stencil_top		= ((GRID*) Src)->get_grid_points_stencil_top;
 	((GRID*) Dst)->get_grid_point_value				= ((GRID*) Src)->get_grid_point_value;
 	((GRID*) Dst)->increment_grid_point_value		= ((GRID*) Src)->increment_grid_point_value;
+	((GRID*) Dst)->create_copy_grid_structure		= ((GRID*) Src)->create_copy_grid_structure;
 	((GRID*) Dst)->create_finer_grid				= ((GRID*) Src)->create_finer_grid;
 	((GRID*) Dst)->create_coarser_grid				= ((GRID*) Src)->create_coarser_grid;
 	((GRID*) Dst)->uninitialize						= ((GRID*) Src)->uninitialize;

@@ -30,6 +30,7 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 	MyGrid->cmn.get_grid_points_stencil_top		= &rectangular_row_major_b_spline_get_grid_points_stencil_top;
 	MyGrid->cmn.get_grid_point_value			= &rectangular_row_major_b_spline_get_grid_point_value;
 	MyGrid->cmn.increment_grid_point_value		= &rectangular_row_major_b_spline_increment_grid_point_value;
+	MyGrid->cmn.create_copy_grid_structure		= &rectangular_row_major_b_spline_create_copy_grid_structure;
 	MyGrid->cmn.create_finer_grid				= &rectangular_row_major_b_spline_create_finer_grid;
 	MyGrid->cmn.create_coarser_grid				= &rectangular_row_major_b_spline_create_coarser_grid;
 	MyGrid->cmn.uninitialize					= &rectangular_row_major_b_spline_uninitialize;
@@ -50,12 +51,11 @@ void	rectangular_row_major_b_spline_copy(void* Dst, void* Src)
 	assert(Dst != NULL);
 	assert(Src != NULL);
 
-	//	COMMON items copied in grid_copy
-//	double*		Data;
-//	long		Nx;
-//	long		Ny;
-//	long		Nz;
-//	short		NumIntergridCoefficients;
+	//	Create copy of structure
+	rectangular_row_major_b_spline_create_copy_grid_structure(Dst, Src);
+
+	//	Copy data from Src to Dst
+	//		-> FIXME
 }
 
 void	rectangular_row_major_b_spline_display(void* Grid)
@@ -152,6 +152,28 @@ double	rectangular_row_major_b_spline_get_grid_point_value(void* Grid, long Grid
 void	rectangular_row_major_b_spline_increment_grid_point_value(void* Grid, long GridIndex, double Value)
 {
 	((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Data[GridIndex] += Value;
+}
+
+void	rectangular_row_major_b_spline_create_copy_grid_structure(void* DstGrid, void* SrcGrid)
+{
+	SIMULATION_DOMAIN		Domain;
+	short					Level = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) SrcGrid)->cmn.Level;
+	double					h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) SrcGrid)->cmn.h;
+	long					Nx = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) SrcGrid)->Nx;
+	long					Ny = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) SrcGrid)->Ny;
+	long					Nz = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) SrcGrid)->Nz;
+	short					Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) SrcGrid)->Expansion;
+
+	Domain.MinimumCoordinates.x = 0.0;
+	Domain.MinimumCoordinates.y = 0.0;
+	Domain.MinimumCoordinates.z = 0.0;
+
+	Domain.MaximumCoordinates.x = (double) h*(Nx - Exp - 1.0);
+	Domain.MaximumCoordinates.y = (double) h*(Ny - Exp - 1.0);
+	Domain.MaximumCoordinates.z = (double) h*(Nz - Exp - 1.0);
+
+	//	Initialize just like any other grid, except Nx,Ny,Nz will be set how we want them
+	grid_initialize(DstGrid, &Domain, Level, h, Exp);
 }
 
 void	rectangular_row_major_b_spline_create_finer_grid(void* FineGrid, void* CoarseGrid)
