@@ -38,7 +38,7 @@ void msm_initialize(void* Method)
 	//	Initialize MSM options
 	Msm->opt.ComputeExclusions = 0;
 	Msm->opt.ComputeLongRange = 1;
-	Msm->opt.ComputeShortRange = 0;
+	Msm->opt.ComputeShortRange = 1;
 	Msm->opt.IsN = 0;
 	Msm->opt.IsNLogN = 1;
 	Msm->opt.GridType = 0;
@@ -115,6 +115,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	GRID*		ChargeGrid = NULL;
 	GRID*		PotentialGrid = NULL;
 	MSM*		Msm = (MSM*) Method;
+	long		i = 0;
 
 	assert(Msm != NULL);
 	assert(Domain != NULL);
@@ -192,6 +193,12 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		//	Free FINEST grid memory
 		dynfree(ChargeGrid);
 		dynfree(PotentialGrid);
+	}
+
+	printf("Electrostatic Energy: %f kcal/mol\n\n", Domain->Particles->U);
+	for (i = 0; i < Domain->Particles->N; i++)
+	{
+		printf("Particle %04ld Force: (%+0f, %+0f, %+0f)\n", i, Domain->Particles->f[i][0], Domain->Particles->f[i][1], Domain->Particles->f[i][2]);
 	}
 }
 
@@ -598,6 +605,13 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	long			i = 0;
 	long			j = 0;
 	double			GridValue = 0.0;
+	long			Idx = 0;
+	long			i1 = 0;
+	long			j1 = 0;
+	long			k1 = 0;
+	long			i2 = 0;
+	long			j2 = 0;
+	long			k2 = 0;
 
 	printf("\tMSM direct computation (top-level)!\n");
 
@@ -643,8 +657,15 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 				for (j = Inner.Ranges[n].Min; j <= Inner.Ranges[n].Max; j++)
 				{
 //					PotentialGrid[i] += K[h(i,j)]*ChargeGrid[j];
-//	FIXME!
-					GridValue = 1.0*(i*j)*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
+/*
+					i -> (x1,y1,z1);
+					j -> (x2,y2,z2);
+*/
+					(*ChargeGrid->idx2ijk)(ChargeGrid, i, &i1, &j1, &k1);
+					(*ChargeGrid->idx2ijk)(ChargeGrid, j, &i2, &j2, &k2);
+					Idx = STENCIL_MAP_X(abs(i2-i1)) + STENCIL_MAP_Y(abs(j2-j1)) + STENCIL_MAP_Z(abs(k2-k1));
+
+					GridValue = (Msm->itp->tg2g->Data[Idx])*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
 					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, GridValue);
 				}
 			}

@@ -33,6 +33,7 @@ void grid_copy(void* Dst, void* Src)
 	((GRID*) Dst)->display							= ((GRID*) Src)->display;
 	((GRID*) Dst)->xyz2idx							= ((GRID*) Src)->xyz2idx;
 	((GRID*) Dst)->ijk2idx							= ((GRID*) Src)->ijk2idx;
+	((GRID*) Dst)->idx2ijk							= ((GRID*) Src)->idx2ijk;
 	((GRID*) Dst)->get_grid_points_all_max_slices	= ((GRID*) Src)->get_grid_points_all_max_slices;
 	((GRID*) Dst)->get_grid_points_all				= ((GRID*) Src)->get_grid_points_all;
 	((GRID*) Dst)->get_grid_points_coarse			= ((GRID*) Src)->get_grid_points_coarse;

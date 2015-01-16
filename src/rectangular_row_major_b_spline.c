@@ -23,6 +23,7 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 	MyGrid->cmn.display							= &rectangular_row_major_b_spline_display;
 	MyGrid->cmn.xyz2idx							= &rectangular_row_major_b_spline_xyz2idx;
 	MyGrid->cmn.ijk2idx							= &rectangular_row_major_b_spline_ijk2idx;
+	MyGrid->cmn.idx2ijk							= &rectangular_row_major_b_spline_idx2ijk;
 	MyGrid->cmn.get_grid_points_all_max_slices	= &rectangular_row_major_b_spline_get_grid_points_all_max_slices;
 	MyGrid->cmn.get_grid_points_all				= &rectangular_row_major_b_spline_get_grid_points_all;
 	MyGrid->cmn.get_grid_points_coarse			= &rectangular_row_major_b_spline_get_grid_points_coarse;
@@ -63,7 +64,12 @@ void	rectangular_row_major_b_spline_display(void* Grid)
 	long								i = 0;
 	long								j = 0;
 	long								k = 0;
+	long								Idx = 0;
+	long								q = 0;
+	long								r = 0;
+	long								s = 0;
 	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
+	short								Exp = MyGrid->Expansion >> 1;
 
 	printf("\nRectangular, Row-major, B-spline Grid %hd: (%ld,%ld,%ld) -> %ld:\n\n",
 			MyGrid->cmn.Level, MyGrid->Nx, MyGrid->Ny, MyGrid->Nz, MyGrid->Nx*MyGrid->Ny*MyGrid->Nz);
@@ -80,6 +86,23 @@ void	rectangular_row_major_b_spline_display(void* Grid)
 		}
 		printf("\n");
 	}
+
+/*
+	for (k = 0; k < MyGrid->Nz; k++)
+	{
+		for (j = 0; j < MyGrid->Ny; j++)
+		{
+			for (i = 0; i < MyGrid->Nx; i++)
+			{
+				Idx = (*MyGrid->cmn.ijk2idx)(Grid, i-Exp,j-Exp,k-Exp);
+				(*MyGrid->cmn.idx2ijk)(Grid, Idx, &q, &r, &s);
+				printf("(%03ld,%03ld,%03ld) -> %ld -> (%03ld,%03ld,%03ld)\n", i-Exp,j-Exp,k-Exp, Idx, q,r,s);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+*/
 }
 
 long	rectangular_row_major_b_spline_xyz2idx(void* Grid, SIMULATION_DOMAIN* Domain, double x, double y , double z)
@@ -101,6 +124,19 @@ long	rectangular_row_major_b_spline_ijk2idx(void* Grid, long i, long j, long k)
 	long				Ny =  ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny;
 
 	return IDX(i+Exp, j+Exp, k+Exp, Nx, Ny);
+}
+
+void	rectangular_row_major_b_spline_idx2ijk(void* Grid, long Idx, long* i, long* j, long* k)
+{
+	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion >> 1;
+	long				Nx = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nx;
+	long				Ny = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny;
+	long				Nz = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nz;
+
+	//	Convert Idx into components (i,j,k)
+	*k = Idx / (Nx*Ny) - Exp;
+	*j = (Idx - (*k+Exp)*Nx*Ny) / Nx - Exp;
+	*i = Idx - (*k+Exp)*Nx*Ny - (*j+Exp)*Nx - Exp;
 }
 
 long	rectangular_row_major_b_spline_get_grid_points_all_max_slices(void* Grid)
