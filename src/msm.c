@@ -130,7 +130,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 
 	if (Msm->opt.ComputeLongRange)
 	{
-		//	SET UP CONTAINER FOR FINEST GRID
+		//	SET UP GRID(S)
 		switch (Msm->opt.GridType)
 		{
 		case 0:	//	RECTANGULAR_ROW_MAJOR_B_SPLINE Grid
@@ -138,30 +138,34 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			Size = sizeof(RECTANGULAR_ROW_MAJOR_B_SPLINE);
 			Init = &rectangular_row_major_b_spline_initialize;
 		}
-		ChargeGrid = (GRID*) dynmem(Size);
-		ChargeGrid->initialize = Init;
-//		PotentialGrid = (GRID*) dynmem(Size);
-//		PotentialGrid->initialize = Init;
+		//	Create and set initialization routine for array of anterpolation/restriction hierarchy CHARGE grids
+		ChargeGrid = (GRID*) dynmem(Size*Msm->prm.L);
+		PotentialGrid = (GRID*) dynmem(Size*Msm->prm.L);	//	FIXME: !!!This can be implemented with only 2 grid containers!!!
+		for (l = 0; l < Msm->prm.L; l++)
+		{
+			ChargeGrid[l].initialize = Init;
+			PotentialGrid[l].initialize = Init;
+		}
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N)
 		if (Msm->opt.IsN)
 		{
-			msm_anterpolate(Msm, Domain, 0, ChargeGrid);
+			msm_anterpolate(Msm, Domain, 0, /*OUT*/&ChargeGrid[0]);
 
 			for (l = 1; l < Msm->prm.L; l++)	//	l is fine grid level
 			{
-				msm_restrict(Msm);
-				msm_direct(Msm);
+				msm_restrict(Msm, /*IN*/&ChargeGrid[l-1], /*OUT*/&ChargeGrid[l]);
 			}
 
-			msm_direct_top(Msm, ChargeGrid, PotentialGrid);
+			msm_direct_top(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*OUT*/&PotentialGrid[Msm->prm.L-1]);
 
 			for (l = Msm->prm.L-1; l > 0; l--)	//	l is fine grid level
 			{
-				msm_prolongate(Msm);
+				msm_direct(Msm, /*IN*/&ChargeGrid[l-1], /*OUT*/&PotentialGrid[l-1]);
+				msm_prolongate(Msm, /*OUT*/&PotentialGrid[l-1], /*IN*/&PotentialGrid[l]);
 			}
 
-			msm_interpolate(Msm, ChargeGrid);
+			msm_interpolate(Msm, /*IN*/&ChargeGrid[0], /*IN*/&PotentialGrid[0]);
 		}
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
@@ -170,14 +174,14 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			//	Intermediate Grid Level(s)
 			for (l = 0; l < Msm->prm.L-1; l++)
 			{
-				msm_anterpolate(Msm, Domain, l, ChargeGrid);
-				msm_direct(Msm);
-				msm_interpolate(Msm, ChargeGrid);
+				msm_anterpolate(Msm, Domain, l, /*OUT*/&ChargeGrid[l]);
+				msm_direct(Msm, /*IN*/&ChargeGrid[l], /*OUT*/&PotentialGrid[l]);
+				msm_interpolate(Msm, /*IN*/&ChargeGrid[l], /*IN*/&PotentialGrid[l]);
 			}
 			//	Top Grid Level
-			msm_anterpolate(Msm, Domain, Msm->prm.L-1, ChargeGrid);
-			msm_direct_top(Msm, ChargeGrid, PotentialGrid);
-			msm_interpolate(Msm, ChargeGrid);
+			msm_anterpolate(Msm, Domain, Msm->prm.L-1, /*OUT*/&ChargeGrid[Msm->prm.L-1]);
+			msm_direct_top(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*OUT*/&PotentialGrid[Msm->prm.L-1]);
+			msm_interpolate(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*IN*/&PotentialGrid[Msm->prm.L-1]);
 		}
 
 		if (Msm->opt.ComputeExclusions)
@@ -186,8 +190,8 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		}
 
 		//	Free FINEST grid memory
-//		dynfree(PotentialGrid);
 		dynfree(ChargeGrid);
+		dynfree(PotentialGrid);
 	}
 }
 
@@ -417,16 +421,18 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	double*						dPhiX = NULL;//can remove after interpolation
 	double*						dPhiY = NULL;//can remove after interpolation
 	double*						dPhiZ = NULL;//can remove after interpolation
-	double						ChargeZ = 0.0;
-	double						ChargeYZ = 0.0;
-	double						ChargeXYZ = 0.0;
+//	double						ChargeZ = 0.0;
+//	double						ChargeYZ = 0.0;
+//	double						ChargeXYZ = 0.0;
 	long						i = 0;
 	long						j = 0;
 	long						k = 0;
-	long						x = 0;
-	long						y = 0;
-	long						z = 0;
-	long						Idx =0;
+	long						Di = 0;
+	long						Dj = 0;
+	long						Dk = 0;
+	long						Idx = 0;
+	long						ThisIdx = 0;
+	double						ThisValue = 0.0;
 
 	printf("\tMSM anterpolation!\n");
 
@@ -456,13 +462,13 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 		Dz = (r[n].z-Min->z)/h;
 
 		//	Transform (x,y,z) from nearest grid point to "lowest" grid point within support
-		x = (long) floor(Dx) - (p>>1) + 1;
-		y = (long) floor(Dy) - (p>>1) + 1;
-		z = (long) floor(Dz) - (p>>1) + 1;
+		i = (long) floor(Dx) - (p>>1) + 1;
+		j = (long) floor(Dy) - (p>>1) + 1;
+		k = (long) floor(Dz) - (p>>1) + 1;
 
-		Dx = Dx - x;
-		Dy = Dy - y;
-		Dz = Dz - z;
+		Dx = Dx - i;
+		Dy = Dy - j;
+		Dz = Dz - k;
 
 		//	Get distances to the nearest grid points
 		for (nu = 0; nu < p; nu++)
@@ -481,16 +487,16 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 //		}
 
 		////	Distribute point charge to grid
-		//for (k = 0; k < p; k++)
+		//for (Dk = 0; Dk < p; Dk++)
 		//{
-		//	ChargeZ = PhiZ[k]*r[n].q;
-		//	for (j = 0; j < p; j++)
+		//	ChargeZ = PhiZ[Dk]*r[n].q;
+		//	for (Dj = 0; Dj < p; Dj++)
 		//	{
-		//		ChargeYZ = PhiY[j]*ChargeZ;
-		//		for (i = 0; i < p; i++)
+		//		ChargeYZ = PhiY[Dj]*ChargeZ;
+		//		for (Di = 0; Di < p; Di++)
 		//		{
-		//			ChargeXYZ = PhiX[i]*ChargeYZ;
-		//			(*Grid->increment_grid_point_value)(Grid, x+i, y+j, z+k, ChargeXYZ);
+		//			ChargeXYZ = PhiX[Di]*ChargeYZ;
+		//			(*Grid->increment_grid_point_value)(Grid, i+Di, j+Dj, k+Dk, ChargeXYZ);
 		//		}
 		//	}
 		//}
@@ -498,11 +504,13 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 		//	Distribute point charge to grid (IS THIS "BETTER" THAN ABOVE B/C LOOP IS "UNROLLED"?)
 		for (Idx = 0; Idx < p*p*p; Idx++)
 		{
-			k = Idx / (p*p);
-			j = (Idx - k*p*p) / p;
-			i = Idx - k*p*p - j*p;
-//printf("(%ld,%ld,%ld) -> %ld\n", i,j,k,Idx);
-			(*Grid->increment_grid_point_value)(Grid, x+i, y+j, z+k, PhiX[i]*PhiY[j]*PhiZ[k]*r[n].q);
+			Dk = Idx / (p*p);
+			Dj = (Idx - Dk*p*p) / p;
+			Di = Idx - Dk*p*p - Dj*p;
+//printf("(%ld,%ld,%ld) -> %ld\n", Di,Dj,Dk,Idx);
+			ThisIdx = (*Grid->ijk2idx)(Grid, i+Di, j+Dj, k+Dk);
+			ThisValue = PhiX[Di]*PhiY[Dj]*PhiZ[Dk]*r[n].q;
+			(*Grid->increment_grid_point_value)(Grid, ThisIdx, ThisValue);
 		}
 	}
 
@@ -515,11 +523,15 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	dynfree(X);
 }
 
-void msm_restrict(MSM* Msm)
+void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 {
 	//	INPUT:	fine grid
 	//	OUTPUT:	coarse grid
-//	printf("\tMSM restriction!\n");
+
+	//	Create Coarse Grid for <Level> --> Freed either in direct or direct_top
+//	grid_copy_structure(?);
+
+	//	printf("\tMSM restriction!\n");
 /*
 	all_ranges = *all fine grid points*
 	for (m = 0; m < all_ranges.num; m++)
@@ -539,11 +551,15 @@ void msm_restrict(MSM* Msm)
 */
 }
 
-void msm_direct(MSM* Msm)
+void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 {
 	//	INTPUT:	charge grid
 	//	OUTPUT:	potential grid
 //	printf("\tMSM direct computation!\n");
+
+	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
+//	grid_copy_structure(?);
+
 /*
 	all_ranges = *all potential grid points*
 	for (m = 0; m < all_ranges.num; m++)
@@ -561,6 +577,8 @@ void msm_direct(MSM* Msm)
 		}
 	}
 */
+	//	Free Charge Grid if not q_0
+//	grid_uninitialize(ChargeGrid);
 }
 
 void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
@@ -575,11 +593,9 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	long			n = 0;
 	long			i = 0;
 	long			j = 0;
+	double			ThisValue = 0.0;
 
 	printf("\tMSM direct computation (top-level)!\n");
-
-	//	Create Potential Grid for <Level>
-//	grid_copy(?);
 
 /*
 	all_ranges = *all potential grid points*
@@ -598,42 +614,55 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 		}
 	}
 */
+	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
+//	grid_copy_structure(?);
+
 	//	Ranges is an array of length NumSlices
 	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
 	Outer.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
-	Inner.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));//FIXME?
+	Inner.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));//FIXME - use value from STENCIL instead of MaxSlices?
 
 	//	Loop over *ALL* grid points to fill in potential grid from charge grid
 	(*ChargeGrid->get_grid_points_all)(ChargeGrid, &Outer);
-	printf("Outer grid has <%ld> slices:\n", Outer.NumSlices);
-
+//	printf("Outer grid has <%ld> slices:\n", Outer.NumSlices);
 	for (m = 0; m < Outer.NumSlices; m++)
 	{
-		printf("Slice <%04ld> - [%04ld, %04ld]\n", m, Outer.Ranges[m].Min, Outer.Ranges[m].Max);
+//		printf("Slice <%04ld> - [%04ld, %04ld]\n", m, Outer.Ranges[m].Min, Outer.Ranges[m].Max);
 		for (i = Outer.Ranges[m].Min; i <= Outer.Ranges[m].Max; i++)
 		{
-//			//	Loop over *TOP STENCIL* grid points to interact with those from the outer loop
-//			(*ChargeGrid->get_grid_points_stencil_top)(ChargeGrid, &Inner);
-//			for (n = 0; n < Inner.NumSlices; n++)
-//			{
-//				for (j = Inner.Ranges[n].Min; j <= Inner.Ranges[n].Max; j++)
-//				{
-////					PotentialGrid[i] += K[h(i,j)]*ChargeGrid[j];
-//				}
-//			}
+			//	Loop over *TOP STENCIL* grid points to interact with those from the outer loop
+			(*ChargeGrid->get_grid_points_stencil_top)(ChargeGrid, i, &Inner);
+//			printf("\tInner grid has <%ld> slices:\n", Inner.NumSlices);
+			for (n = 0; n < Inner.NumSlices; n++)
+			{
+//				printf("\tSlice <%04ld> - [%04ld, %04ld]\n", n, Inner.Ranges[n].Min, Inner.Ranges[n].Max);
+				for (j = Inner.Ranges[n].Min; j <= Inner.Ranges[n].Max; j++)
+				{
+//					PotentialGrid[i] += K[h(i,j)]*ChargeGrid[j];
+					ThisValue = 1.0*(i*j)*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
+//					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, ThisValue);
+				}
+			}
 		}
 	}
 
 	//	Free dynamically allocated memory
 	dynfree(Inner.Ranges);
 	dynfree(Outer.Ranges);
+
+	//	Free Charge Grid if not q_0
+//	grid_uninitialize(ChargeGrid);
 }
 
-void msm_prolongate(MSM* Msm)
+void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 {
 	//	INPUT:	coarse grid
 	//	OUTPUT:	fine grid
 //	printf("\tMSM prolongation!\n");
+
+	//	Create Fine Grid for <Level> --> Freed either in interpolate or prolongation
+//	grid_copy_structure(?);
+
 /*
 	all_ranges = *all fine grid points*
 	for (m = 0; m < all_ranges.num; m++)
@@ -651,13 +680,14 @@ void msm_prolongate(MSM* Msm)
 		}
 	}
 */
+	//	Free Coarse Grid
 }
 
-void msm_interpolate(MSM* Msm, GRID* ChargeGrid)
+void msm_interpolate(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 {
 	//	INPUT:	finest potential gird, finest charge grid
 	//	OUTPUT:	energy, forces
-	printf("\tMSM interpolation!\n");
+	printf("\tMSM interpolation! Level<%hd>\n", ChargeGrid->Level);
 /*
 	E = 0.5*q_0'*e_0;
 
@@ -668,6 +698,7 @@ void msm_interpolate(MSM* Msm, GRID* ChargeGrid)
 	}
 */
 	grid_uninitialize(ChargeGrid);
+//	grid_uninitialize(PotentialGrid);
 }
 
 void msm_exclude(MSM* Msm)

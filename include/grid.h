@@ -40,7 +40,7 @@ typedef struct
 	void		(*get_grid_points_stencil)(void*, long, GRID_RANGE*);
 	void		(*get_grid_points_stencil_top)(void*, long, GRID_RANGE*);
 	double		(*get_grid_point_value)(void*, long);
-	void		(*increment_grid_point_value)(void*, long, long, long, double);
+	void		(*increment_grid_point_value)(void*, long, double);
 	void		(*create_finer_grid)(void*, void*);
 	void		(*create_coarser_grid)(void*, void*);
 	void		(*uninitialize)(void*);

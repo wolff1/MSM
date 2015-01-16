@@ -114,9 +114,8 @@ void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* 
 	//	Return grid point indices for entire grid, from low to high
 	//		indices are memory array indices, not (i,j,k)
 	//		-> Should it be this way?
-	long		i = 0;
-	long		j = 0;
-	long		k = 0;
+	long								j = 0;
+	long								k = 0;
 	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
 
 	Range->NumSlices = 0;
@@ -141,16 +140,17 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 
 void	rectangular_row_major_b_spline_get_grid_points_stencil_top(void* Grid, long GridIndex, GRID_RANGE* Range)
 {
+	//	Currently, the top gird calculation is "all to all"
+	rectangular_row_major_b_spline_get_grid_points_all(Grid, Range);
 }
 
 double	rectangular_row_major_b_spline_get_grid_point_value(void* Grid, long GridIndex)
 {
-	return 0.0;
+	return ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Data[GridIndex];
 }
 
-void	rectangular_row_major_b_spline_increment_grid_point_value(void* Grid, long i, long j, long k, double Value)
+void	rectangular_row_major_b_spline_increment_grid_point_value(void* Grid, long GridIndex, double Value)
 {
-	long	GridIndex = rectangular_row_major_b_spline_ijk2idx(Grid, i, j, k);
 	((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Data[GridIndex] += Value;
 }
 
