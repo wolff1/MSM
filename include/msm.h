@@ -52,7 +52,7 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid);
 void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid);
 void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid);
 void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID* PotentialGrid);
-void msm_exclude(MSM* Msm);
+void msm_exclude(MSM* Msm, SIMULATION_DOMAIN* Domain);
 
 //	INTERNAL HELPER Methods
 void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount);

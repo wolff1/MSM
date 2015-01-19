@@ -108,7 +108,7 @@ void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS
 //	printf("\tB_SPLINE compute_tg2g\n");
 
 	//	Pre-processing (Top level)
-	Size = (long) ceil(MsmParams->D);
+	Size = (long) 2*ceil(2.0*MsmParams->D/(pow(2.0,MsmParams->L)*MsmParams->h)) + MsmParams->p;	//	FIXME-Decouple from grid?
 	Scale = MsmParams->h/MsmParams->a;
 
 	//	Compute Gamma sequence (defined by gamma function) for top level grid
@@ -122,7 +122,7 @@ void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS
 	stencil_initialize(Bs->cmn.tg2g, Size, Bs->GammaTop->Shape);
 	stencil_shift_infinite(Bs->GammaTop, Bs->cmn.p/2 + Bs->mu, Bs->omegap, Bs->cmn.tg2g);
 
-	stencil_free(Bs->GammaTop);	//	We only need g2g, so its OK to delete Gamma sequence (FIXME - Save to file in case we need to enlarge later?)
+	stencil_free(Bs->GammaTop);	//	We only need tg2g, so its OK to delete Gamma sequence (FIXME - Save to file in case we need to enlarge later?)
 	dynfree(Bs->GammaTop);
 //	stencil_display(Bs->cmn.tg2g, 1.0);
 

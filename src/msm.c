@@ -36,7 +36,7 @@ void msm_initialize(void* Method)
 	Msm->prm.L = 1;
 
 	//	Initialize MSM options
-	Msm->opt.ComputeExclusions = 0;
+	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
 	Msm->opt.IsN = 0;
@@ -115,7 +115,6 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	GRID*		ChargeGrid = NULL;
 	GRID*		PotentialGrid = NULL;
 	MSM*		Msm = (MSM*) Method;
-	long		i = 0;
 
 	assert(Msm != NULL);
 	assert(Domain != NULL);
@@ -187,18 +186,12 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 
 		if (Msm->opt.ComputeExclusions)
 		{
-			msm_exclude(Msm);
+			msm_exclude(Msm, Domain);
 		}
 
 		//	Free FINEST grid memory
 		dynfree(ChargeGrid);
 		dynfree(PotentialGrid);
-	}
-
-	printf("Electrostatic Energy: %f kcal/mol\n\n", Domain->Particles->U);
-	for (i = 0; i < Domain->Particles->N; i++)
-	{
-		printf("Particle %04ld Force: (%+0f, %+0f, %+0f)\n", i, Domain->Particles->f[i][0], Domain->Particles->f[i][1], Domain->Particles->f[i][2]);
 	}
 }
 
@@ -612,8 +605,21 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	long			i2 = 0;
 	long			j2 = 0;
 	long			k2 = 0;
+	long			di = 0;
+	long			dj = 0;
+	long			dk = 0;
+	long			MaxIdx = 0;
+	long			MinIdx = 220;
+	double			a_l = 1.0;
 
 	printf("\tMSM direct computation (top-level)!\n");
+
+	for (i = 0; i < ChargeGrid->Level; i++)
+	{
+		//	NOTE: Actual a_l = (2^Level)*a, this is 1/a_l
+		a_l *= 0.5;
+	}
+	a_l /= Msm->prm.a;
 
 /*
 	all_ranges = *all potential grid points*
@@ -663,14 +669,65 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 */
 					(*ChargeGrid->idx2ijk)(ChargeGrid, i, &i1, &j1, &k1);
 					(*ChargeGrid->idx2ijk)(ChargeGrid, j, &i2, &j2, &k2);
-					Idx = STENCIL_MAP_X(abs(i2-i1)) + STENCIL_MAP_Y(abs(j2-j1)) + STENCIL_MAP_Z(abs(k2-k1));
-
+//FIXME - The following is cringe-worthy:
+					di = abs(i2-i1);
+					dj = abs(j2-j1);
+					dk = abs(k2-k1);
+					if (di <= dj)
+					{
+						if (dj <= dk)
+						{
+							//	i <= j <= k
+							Idx = STENCIL_MAP_X(di) + STENCIL_MAP_Y(dj) + STENCIL_MAP_Z(dk);
+						}
+						else
+						{
+							if (di <= dk)
+							{
+								//	i <= k <= j
+								Idx = STENCIL_MAP_X(di) + STENCIL_MAP_Y(dk) + STENCIL_MAP_Z(dj);
+							}
+							else
+							{
+								//	k <= i <= j
+								Idx = STENCIL_MAP_X(dk) + STENCIL_MAP_Y(di) + STENCIL_MAP_Z(dj);
+							}
+						}
+					}
+					else
+					{
+						if (dk <= dj)
+						{
+							//	k <= j <= i
+							Idx = STENCIL_MAP_X(dk) + STENCIL_MAP_Y(dj) + STENCIL_MAP_Z(di);
+						}
+						else
+						{
+							if (di <= dk)
+							{
+								//	j <= i <= k
+								Idx = STENCIL_MAP_X(dj) + STENCIL_MAP_Y(di) + STENCIL_MAP_Z(dk);
+							}
+							else
+							{
+								//	j <= k <= i
+								Idx = STENCIL_MAP_X(dj) + STENCIL_MAP_Y(dk) + STENCIL_MAP_Z(di);
+							}
+						}
+					}
+					if (Idx > MaxIdx)
+						MaxIdx = Idx;
+					if (Idx < MinIdx)
+						MinIdx = Idx;
+//printf("i=%+04ld (%+04ld,%+04ld,%+04ld), j=%+04ld (%+04ld,%+04ld,%+04ld), Idx=%+04ld, K=%f\n", i,i1,j1,k1, j,i2,j2,k2, Idx, Msm->itp->tg2g->Data[Idx]);
 					GridValue = (Msm->itp->tg2g->Data[Idx])*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
-					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, GridValue);
+					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, GridValue*a_l);
 				}
 			}
 		}
 	}
+	printf("Min/Max = %ld/%ld\n", MinIdx, MaxIdx);
+//	(*PotentialGrid->display)(PotentialGrid);
 
 	//	Free dynamically allocated memory
 	dynfree(Inner.Ranges);
@@ -778,7 +835,7 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 			Energy += (*ChargeGrid->get_grid_point_value)(ChargeGrid, i)*(*PotentialGrid->get_grid_point_value)(PotentialGrid, i);
 		}
 	}
-	Domain->Particles->U = 0.5*Energy;
+	Domain->Particles->U += 0.5*Energy;
 
 	//	Free dynamically allocated memory
 	grid_uninitialize(ChargeGrid);
@@ -827,6 +884,9 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 		(*Msm->itp->evaluate)(Msm->itp, 3*p, X, FX, DFX);
 
 		////	Gather contributions to particle n forces
+		Fx = 0.0;
+		Fy = 0.0;
+		Fz = 0.0;
 		//for (Dk = 0; Dk < p; Dk++)
 		//{
 		//	ChargeZ = PhiZ[Dk]*r[n].q;
@@ -850,17 +910,14 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 //printf("(%ld,%ld,%ld) -> %ld\n", Di,Dj,Dk,Idx);
 			GridIdx = (*PotentialGrid->ijk2idx)(PotentialGrid, i+Di, j+Dj, k+Dk);
 			GridValue = (*PotentialGrid->get_grid_point_value)(PotentialGrid, GridIdx);
-			Fx += dPhiX[Di]*PhiY[Dj]*PhiZ[Dk]*GridValue;
-			Fy += PhiX[Di]*dPhiY[Dj]*PhiZ[Dk]*GridValue;
-			Fz += PhiX[Di]*PhiY[Dj]*dPhiZ[Dk]*GridValue;
+			Fx += dPhiX[Di]* PhiY[Dj]* PhiZ[Dk]*GridValue;
+			Fy +=  PhiX[Di]*dPhiY[Dj]* PhiZ[Dk]*GridValue;
+			Fz +=  PhiX[Di]* PhiY[Dj]*dPhiZ[Dk]*GridValue;
 		}
 		Domain->Particles->f[n][0] -= Fx*r[n].q/h;
 		Domain->Particles->f[n][1] -= Fy*r[n].q/h;
 		Domain->Particles->f[n][2] -= Fz*r[n].q/h;
 	}
-
-	//	Display the forces as a sanity check
-	//		-> FIXME
 
 	//	Free more dynamically allocated memory
 	grid_uninitialize(PotentialGrid);
@@ -869,9 +926,24 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 	dynfree(X);
 }
 
-void msm_exclude(MSM* Msm)
+void msm_exclude(MSM* Msm, SIMULATION_DOMAIN* Domain)
 {
 //	printf("\tMSM exclusions!\n");
+	double		X = 0.0;
+	double		FX = 0.0;
+	double		DFX = 0.0;
+	double		SelfEnergy = 0.0;
+	long		i = 0;
+
+	//	Self Energy = (1/2) q^Tq gamma(0.0)
+	(*Msm->sft->soften)(Msm->sft, 1, &X, &FX, &DFX);
+
+	for (i = 0; i < Domain->Particles->N; i++)
+	{
+		SelfEnergy += Domain->Particles->r[i].q*Domain->Particles->r[i].q;
+	}
+
+	Domain->Particles->U -= 0.5*FX*SelfEnergy/Msm->prm.a;
 }
 
 //	INTERNAL HELPER Methods

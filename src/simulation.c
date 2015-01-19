@@ -49,12 +49,12 @@ void simulation_run(SIMULATION* Simulation)
 		}
 	}
 
-//	printf("Energy: %+f\n", Simulation->Domain->Particles->U);
-//	printf("Forces:\n");
-//	for (i = 0; i < Simulation->Domain->Particles->N; i++)
-//	{
-//		printf("%+f\t%+f\t%+f\n", Simulation->Domain->Particles->f[i][0], Simulation->Domain->Particles->f[i][1], Simulation->Domain->Particles->f[i][2]);
-//	}
+	printf("Energy: %+f\n", Simulation->Domain->Particles->U);
+	printf("Forces:\n");
+	for (i = 0; i < Simulation->Domain->Particles->N; i++)
+	{
+		printf("%+f\t%+f\t%+f\n", Simulation->Domain->Particles->f[i][0], Simulation->Domain->Particles->f[i][1], Simulation->Domain->Particles->f[i][2]);
+	}
 }
 
 void simulation_uninitialize(SIMULATION* Simulation)
