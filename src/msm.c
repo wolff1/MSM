@@ -26,14 +26,14 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 12.5;
+	Msm->prm.a = 1.0;//12.5;
 	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
 	Msm->prm.mu = 10;
 	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
-	Msm->prm.L = 1;
+	Msm->prm.L = 2;
 
 	//	Initialize MSM options
 	Msm->opt.ComputeExclusions = 1;
@@ -557,10 +557,19 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 {
 	//	INTPUT:	charge grid
 	//	OUTPUT:	potential grid
-//	printf("\tMSM direct computation!\n");
+
+	GRID_RANGE			Range;
+	long				MaxSlices = 0;
+
+	printf("\tMSM direct computation!\n");
+
+	//	Ranges is an array of length NumSlices
+	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
+	Range.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
+	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
 
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
-	(*PotentialGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
+	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
 
 /*
 	all_ranges = *all potential grid points*
@@ -579,6 +588,9 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 		}
 	}
 */
+	//	Free dynamically allocated memory
+	dynfree(Range.Ranges);
+
 	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
 	if (ChargeGrid->Level > 0)
 	{

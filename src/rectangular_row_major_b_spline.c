@@ -179,14 +179,174 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	//		-> What is stencil size?
 	//		-> How to handle edge cases
 	//		-> Grid memory is probably more important than stencil memory
+	//		-> How many slices are there?
 /*
-	Idx -> (i,j,k)
-	Range: (i-x,j-y,k-z) to (i+x,j+y,k+z) where (x,y,z) come from stencil shape and size
-
 	for (this slice)
 	{
-		min = max(i-x, -2);
+		min = max(i-x, -p);
 		max = min(i+x, ?);
+	}
+*/
+	long								Dk = 0;
+	long								Dj = 0;
+	long								Di = 0;
+	long								k = 0;
+	long								j = 0;
+	long								i = 0;
+	long								z = 0;
+	long								y = 0;
+//	long								x = 0;
+	long								Idx = 0;
+	double								d = 0.0;
+	long								Slices = 0;
+	long								X = 0;
+	long								Min = 0;
+	long								Max = 0;
+	RECTANGULAR_ROW_MAJOR_B_SPLINE*		MyGrid = (RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid;
+
+	//	Find the  number of slices
+	for (Dk = 0; Dk <= Stencil->Size; Dk++)
+	{
+//	FIXME: THIS MAY NOT ACCOUNT FOR ALL OF THE STENCIL... MAYBE 1/48
+		Slices += Stencil->YMax[Dk];
+	}
+
+	//	GridIndex -> (i,j,k)
+	rectangular_row_major_b_spline_idx2ijk(Grid, GridIndex, &i, &j, &k);
+printf("GridIndex: %04ld (%04ld, %04ld, %04ld)\n", GridIndex, i,j,k);
+
+#if 0
+	//	For each slice, find the min/max of the range
+	Range->NumSlices = 0;
+	for (Dk = 0; Dk <= Stencil->Size; Dk++)
+	{
+		for (Dj = 0; Dj <= Stencil->YMax[Dk]; Dj++)
+		{
+/*
+			for (x = 0; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				d = h_a*sqrt((double) x*x + y*y + z*z);
+				idx = STENCIL_MAP_X(x) + STENCIL_MAP_Y(y) + STENCIL_MAP_Z(z);
+				printf("(%ld,%ld,%ld) -> %e -> %+e\n", x,y,z, d, Stencil->Data[idx]);
+			}
+*/
+			//		For each slice: (i+x, j+y, k+z) -> Idx
+			Idx = rectangular_row_major_b_spline_ijk2idx(Grid, i+Di, j+Dj, k+Dk);
+
+			//	Min/Max range are *grid indices*
+			Range->Ranges[Range->NumSlices].Min = 0; //k*MyGrid->Nx*MyGrid->Ny + j*MyGrid->Nx;
+			Range->Ranges[Range->NumSlices].Max = 0; //Range->Ranges[Range->NumSlices].Min + MyGrid->Nx-1;
+			Range->NumSlices++;
+		}
+	}
+#endif
+/*
+	(i-x, j-y, k-z) \
+	(i+x, j-y, k-z) /
+
+	(i-x, j+y, k-z) \
+	(i+x, j+y, k-z) /
+
+	(i-x, j-y, k+z) \
+	(i+x, j-y, k+z) /
+
+	(i-x, j+y, k+z) \
+	(i+x, j+y, k+z) /
+*/
+	for (z = -Stencil->Size; z < 0; z++)
+	{
+		for (y = -Stencil->YMax[-z]; y < 0; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(-y) + STENCIL_MAP_Y(-z)];
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X, j+y, k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X, j+y, k+z);
+printf("(%04ld,%04ld,%04ld) -> (%04ld,%04ld,%04ld), %04ld -> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min,Max);
+		}
+printf("\n");
+
+		for (y = 0; y <= Stencil->YMax[-z]; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(-z)];
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X, j+y, k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X, j+y, k+z);
+printf("(%04ld,%04ld,%04ld) -> (%04ld,%04ld,%04ld), %04ld -> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min,Max);
+		}
+printf("\n");
+	}
+printf("\n");
+
+	for (z = 0; z <= Stencil->Size; z++)
+	{
+		for (y = -Stencil->YMax[z]; y < 0; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(-y) + STENCIL_MAP_Y(z)];
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X, j+y, k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X, j+y, k+z);
+printf("(%04ld,%04ld,%04ld) -> (%04ld,%04ld,%04ld), %04ld -> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min,Max);
+		}
+printf("\n");
+
+		for (y = 0; y <= Stencil->YMax[z]; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X, j+y, k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X, j+y, k+z);
+printf("(%04ld,%04ld,%04ld) -> (%04ld,%04ld,%04ld), %04ld -> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min,Max);
+		}
+printf("\n");
+	}
+printf("\n");
+
+/*
+	//	i <= j <= k in STENCIL_MAP stuff
+
+	for (z = 0; z <= Stencil-Size; z++)
+	{
+		for (y = 0; y <= Stencil->YMax[z]; y++)
+		{
+			for (x = 0; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+				(+x,+y,+z) -> (+x,+z,+y) -> (+y,+x,+z) -> (+y,+z,+x) -> (+z,+x,+y) -> (+z,+y,+x)
+				(-x,+y,+z) -> (-x,+z,+y) -> (+y,-x,+z) -> (+y,+z,-x) -> (+z,-x,+y) -> (+z,+y,-x)
+				(+x,-y,+z) -> (+x,+z,-y) -> (-y,+x,+z) -> (-y,+z,+x) -> (+z,+x,-y) -> (+z,-y,+x)
+				(-x,-y,+z) -> (-x,+z,-y) -> (-y,-x,+z) -> (-y,+z,-x) -> (+z,-x,-y) -> (+z,-y,-x)
+				(+x,+y,-z) -> (+x,-z,+y) -> (+y,+x,-z) -> (+y,-z,+x) -> (-z,+x,+y) -> (-z,+y,+x)
+				(-x,+y,-z) -> (-x,-z,+y) -> (+y,-x,-z) -> (+y,-z,-x) -> (-z,-x,+y) -> (-z,+y,-x)
+				(+x,-y,-z) -> (+x,-z,-y) -> (-y,+x,-z) -> (-y,-z,+x) -> (-z,+x,-y) -> (-z,-y,+x)
+				(-x,-y,-z) -> (-x,-z,-y) -> (-y,-x,-z) -> (-y,-z,-x) -> (-z,-x,-y) -> (-z,-y,-x)
+
+				//	FIXME: USE THE FOLLOWING TO DETERMINE GRID INDICES FOR USE WITH STENCIL IN ASCENDING MEMORY ADDRESS ORDER
+				(-x,-y,-z) -> (+x,-y,-z)
+				(-x,+y,-z) -> (+x,+y,-z)
+				(-y,-x,-z) -> (+y,-x,-z)
+				(-y,+x,-z) -> (+y,+x,-z)
+
+				(-x,-z,-y) -> (+x,-z,-y)
+				(-x,+z,-y) -> (+x,+z,-y)
+				(-z,-x,-y) -> (+z,-x,-y)
+				(-z,+x,-y) -> (+z,+x,-y)
+
+				(-y,-z,-x) -> (+y,-z,-x)
+				(-y,+z,-x) -> (+y,+z,-x)
+				(-z,-y,-x) -> (+z,-y,-x)
+				(-z,+y,-x) -> (+z,+y,-x)
+
+				(-y,-z,+x) -> (+y,-z,+x)
+				(-y,+z,+x) -> (+y,+z,+x)
+				(-z,-y,+x) -> (+z,-y,+x)
+				(-z,+y,+x) -> (+z,+y,+x)
+
+				(-x,-z,+y) -> (+x,-z,+y)
+				(-x,+z,+y) -> (+x,+z,+y)
+				(-z,-x,+y) -> (+z,-x,+y)
+				(-z,+x,+y) -> (+z,+x,+y)
+
+				(-x,-y,+z) -> (+x,-y,+z)
+				(-x,+y,+z) -> (+x,+y,+z)
+				(-y,-x,+z) -> (+y,-x,+z)
+				(-y,+x,+z) -> (+y,+x,+z)
+			}
+		}
 	}
 */
 }

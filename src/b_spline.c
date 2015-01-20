@@ -80,7 +80,8 @@ void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS*
 
 	//	Compute Gamma sequence (defined by theta function) for intermediate level grid(s)
 	Bs->GammaIntermediate = (STENCIL*) dynmem(sizeof(STENCIL));
-	stencil_initialize(Bs->GammaIntermediate, Size, STENCIL_SHAPE_SPHERE);
+//	stencil_initialize(Bs->GammaIntermediate, Size, STENCIL_SHAPE_SPHERE);
+	stencil_initialize(Bs->GammaIntermediate, Size, STENCIL_SHAPE_CUBE);
 	stencil_populate(Bs->GammaIntermediate, Softener, STENCIL_FUNCTION_TYPE_THETA, Scale);
 //	stencil_display(Bs->GammaIntermediate, MsmParams->h/MsmParams->a);
 
