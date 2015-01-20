@@ -8,7 +8,6 @@ rectangular_row_major_b_spline.h -
 
 #include "all.h"
 #include "grid.h"
-#include "stencil.h"
 
 typedef struct
 {
@@ -34,7 +33,7 @@ void	rectangular_row_major_b_spline_idx2ijk(void* Grid, long Idx, long* i, long*
 long	rectangular_row_major_b_spline_get_grid_points_all_max_slices(void* Grid);
 void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* Range);
 void	rectangular_row_major_b_spline_get_grid_points_coarse(void* Grid, long FineGridIndex, GRID_RANGE* Range);
-void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, GRID_RANGE* Range);
+void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, STENCIL* Stencil, GRID_RANGE* Range);
 void	rectangular_row_major_b_spline_get_grid_points_stencil_top(void* Grid, long GridIndex, GRID_RANGE* Range);
 double	rectangular_row_major_b_spline_get_grid_point_value(void* Grid, long GridIndex);
 void	rectangular_row_major_b_spline_increment_grid_point_value(void* Grid, long GridIndex, double Value);

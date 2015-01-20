@@ -9,6 +9,7 @@ grid.h -
 #include "all.h"
 #include "memory.h"
 #include "simulation_domain.h"
+#include "stencil.h"
 
 typedef struct
 {
@@ -38,7 +39,7 @@ typedef struct
 	long		(*get_grid_points_all_max_slices)(void*);
 	void		(*get_grid_points_all)(void*, GRID_RANGE*);
 	void		(*get_grid_points_coarse)(void*, long, GRID_RANGE*);
-	void		(*get_grid_points_stencil)(void*, long, GRID_RANGE*);
+	void		(*get_grid_points_stencil)(void*, long, STENCIL*, GRID_RANGE*);
 	void		(*get_grid_points_stencil_top)(void*, long, GRID_RANGE*);
 	double		(*get_grid_point_value)(void*, long);
 	void		(*increment_grid_point_value)(void*, long, double);

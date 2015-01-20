@@ -168,10 +168,27 @@ void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* 
 
 void	rectangular_row_major_b_spline_get_grid_points_coarse(void* Grid, long FineGridIndex, GRID_RANGE* Range)
 {
+	//	FIXME
 }
 
-void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, GRID_RANGE* Range)
+void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, STENCIL* Stencil, GRID_RANGE* Range)
 {
+	//	FIXME
+	//	Given a grid point index, return the *valid* grid point indices corresponding to the input grid point index.
+	//		-> What is stencil shape?
+	//		-> What is stencil size?
+	//		-> How to handle edge cases
+	//		-> Grid memory is probably more important than stencil memory
+/*
+	Idx -> (i,j,k)
+	Range: (i-x,j-y,k-z) to (i+x,j+y,k+z) where (x,y,z) come from stencil shape and size
+
+	for (this slice)
+	{
+		min = max(i-x, -2);
+		max = min(i+x, ?);
+	}
+*/
 }
 
 void	rectangular_row_major_b_spline_get_grid_points_stencil_top(void* Grid, long GridIndex, GRID_RANGE* Range)
@@ -214,10 +231,12 @@ void	rectangular_row_major_b_spline_create_copy_grid_structure(void* DstGrid, vo
 
 void	rectangular_row_major_b_spline_create_finer_grid(void* FineGrid, void* CoarseGrid)
 {
+	//	FIXME
 }
 
 void	rectangular_row_major_b_spline_create_coarser_grid(void* CoarseGrid, void* FineGrid)
 {
+	//	FIXME
 }
 
 void	rectangular_row_major_b_spline_uninitialize(void* Grid)
