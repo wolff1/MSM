@@ -171,6 +171,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
 		if (Msm->opt.IsNLogN)
 		{
+//FIXME: Save off U and f in case O(N) method was also performed. U and f need to be re-initialized before proceeding here!
 			//	Intermediate Grid Level(s)
 			for (l = 0; l < Msm->prm.L-1; l++)
 			{
@@ -775,10 +776,10 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 {
 	//	INPUT:	finest potential gird, finest charge grid
 	//	OUTPUT:	energy, forces
-	GRID_RANGE		Outer;
-	long			MaxSlices = 0;
-	long			m = 0;
-	double			Energy = 0.0;
+	GRID_RANGE					Outer;
+	long						MaxSlices = 0;
+	long						m = 0;
+	double						Energy = 0.0;
 
 	PARTICLE*					r = Domain->Particles->r;
 	PARTICLE*					Min = &Domain->MinimumCoordinates;
@@ -823,6 +824,7 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 */
 
 //	*** FIRST, CALCULATE THE ELECTROSTATIC ENERGY ***
+//FIXME: Consider doing this calculation in prolongation. Instead of storing e_0, do the dot product with q_0 as e_0 is formed.
 	//	Ranges is an array of length NumSlices
 	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
 	Outer.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
@@ -935,7 +937,7 @@ void msm_exclude(MSM* Msm, SIMULATION_DOMAIN* Domain)
 	double		SelfEnergy = 0.0;
 	long		i = 0;
 
-	//	Self Energy = (1/2) q^Tq gamma(0.0)
+	//	Self Energy = (1/2) (q^T,q) gamma(0.0)
 	(*Msm->sft->soften)(Msm->sft, 1, &X, &FX, &DFX);
 
 	for (i = 0; i < Domain->Particles->N; i++)

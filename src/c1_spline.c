@@ -70,7 +70,8 @@ void c1_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETER
 //	printf("\tC1_SPLINE compute_tg2g\n");
 
 	//	Pre-processing (Top level)
-	Size = (long) ceil(MsmParams->D);
+//	Size = (long) ceil(MsmParams->D);
+	Size = (long) 2*ceil(2.0*MsmParams->D/(pow(2.0,MsmParams->L)*MsmParams->h)) + MsmParams->p;	//	FIXME-Decouple from grid?
 	Scale = MsmParams->h/MsmParams->a;
 
 	//	Compute K^L sequence (defined by gamma function) for top level grid
