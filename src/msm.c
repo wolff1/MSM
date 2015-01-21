@@ -26,7 +26,7 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 1.0;//12.5;
+	Msm->prm.a = 2.0;//12.5;
 	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;

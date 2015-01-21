@@ -28,11 +28,11 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 	for (z = 0; z <= s->Size; z++)
 	{
 		zi_2d = STENCIL_MAP_Y(z);
-		s->YMax[z] = -1;
-		for (y = 0; y <= s->YMax[z]; y++)
+		for (y = 0; y <= s->Size; y++)
 		{
 			s->XMax[STENCIL_MAP_X(y) + zi_2d] = -1;
 		}
+		s->YMax[z] = -1;
 	}
 
 	//	Set up loop ranges
@@ -58,12 +58,10 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 		for (z = 0; z <= s->Size; z++)
 		{
 			zi_2d = STENCIL_MAP_Y(z);
-			s->YMax[z] = z;
-//			s->YMax[z] = s->Size;
+			s->YMax[z] = s->Size;
 			for (y = 0; y <= s->YMax[z]; y++)
 			{
-				s->XMax[STENCIL_MAP_X(y) + zi_2d] = y;
-//				s->XMax[STENCIL_MAP_X(y) + zi_2d] = s->Size;
+				s->XMax[STENCIL_MAP_X(y) + zi_2d] = s->Size;
 			}
 		}
 	}

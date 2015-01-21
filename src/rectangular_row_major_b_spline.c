@@ -195,7 +195,7 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	long								i = 0;
 	long								z = 0;
 	long								y = 0;
-//	long								x = 0;
+	long								x = 0;
 	long								Idx = 0;
 	double								d = 0.0;
 	long								Slices = 0;
@@ -214,6 +214,304 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	//	GridIndex -> (i,j,k)
 	rectangular_row_major_b_spline_idx2ijk(Grid, GridIndex, &i, &j, &k);
 printf("GridIndex: %04ld (%04ld, %04ld, %04ld)\n", GridIndex, i,j,k);
+
+	for (z = Stencil->Size; z > 0; z--)
+	{
+		for (y = Stencil->YMax[z]; y > 0; y--)
+		{
+			for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+			{
+//				(i-x,j-y,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j-y,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+
+			x = 0;
+//			(i,j-y,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j-y,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+//				(i+x,j-y,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j-y,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+printf("\n");
+		}
+printf("\n");
+
+		y = 0;
+		for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+		{
+//			(i-x,j,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+
+		x = 0;
+//		(i,j,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+		for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+		{
+//			(i+x,j,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+printf("\n");
+
+		for (y = 1; y <= Stencil->YMax[z]; y++)
+		{
+			for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+			{
+//				(i-x,j+y,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j+y,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+
+			x = 0;
+//			(i,j+y,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j+y,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+			for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+
+//				(i+x,j+y,k-z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j+y,k-z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+printf("\n");
+		}
+printf("\n");
+	}
+
+	z = 0;
+	for (y = Stencil->YMax[z]; y > 0; y--)
+	{
+		for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+		{
+//			(i-x,j-y,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j-y,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+
+		x = 0;
+//		(i,j-y,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j-y,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+		for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+		{
+//			(i+x,j-y,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j-y,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+printf("\n");
+	}
+
+	y = 0;
+	for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+	{
+//		(i-x,j,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+	}
+
+	x = 0;
+//	(i,j,k)				***	MIDDLE ***
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+	for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+	{
+//		(i+x,j,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+	}
+printf("\n");
+
+	for (y = 1; y <= Stencil->YMax[z]; y++)
+	{
+		for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+		{
+//			(i-x,j+y,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j+y,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+
+		x = 0;
+//		(i,j+y,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j+y,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+		for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+		{
+//			(i+x,j+y,k)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j+y,k);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+printf("\n");
+	}
+printf("\n");
+
+	for (z = 1; z <= Stencil->Size; z++)
+	{
+		for (y = Stencil->YMax[z]; y > 0; y--)
+		{
+			for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+			{
+//				(i-x,j-y,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j-y,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+
+			x = 0;
+//			(i,j-y,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j-y,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+			for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+//				(i+x,j-y,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j-y,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+printf("\n");
+		}
+
+		y = 0;
+		for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+		{
+//			(i-x,j,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+
+		x = 0;
+//		(i,j,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+		for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+		{
+//			(i+x,j,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+		}
+printf("\n");
+
+		for (y = 1; y <= Stencil->YMax[z]; y++)
+		{
+			for (x = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x > 0; x--)
+			{
+//				(i-x,j+y,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i-x,j+y,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+
+			x = 0;
+//			(i,j+y,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i,j+y,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+
+			for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+
+//				(i+x,j+y,k+z)
+//printf("(%+03ld,%+03ld,%+03ld)\n", i+x,j+y,k+z);
+printf("(%+03ld,%+03ld,%+03ld)\n", x,y,z);
+			}
+printf("\n");
+		}
+printf("\n");
+	}
+
+#if 0
+//-------------------------
+	x = y = z = 0;
+//	(i,j,k)
+
+	for (z = 1; z <= Stencil->Size; z++)
+	{
+		for (y = 1; y <= Stencil->YMax[z]; y++)
+		{
+			for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+			{
+/*
+				(i-x,j-y,k-z)
+				(i+x,j-y,k-z)
+				(i-x,j+y,k-z)
+				(i+x,j+y,k-z)
+
+				(i-x,j-y,k+z)
+				(i+x,j-y,k+z)
+				(i-x,j+y,k+z)
+				(i+x,j+y,k+z)
+*/
+			}
+		}
+	}
+
+	z = 0;
+	for (y = 1; y <= Stencil->YMax[z]; y++)
+	{
+		//	x = 0
+//		(i,j-y,k)
+//		(i,j+y,k)
+
+		for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+		{
+/*
+			(i-x,j-y,k)
+			(i+x,j-y,k)
+			(i-x,j+y,k)
+			(i+x,j+y,k)
+*/
+		}
+	}
+
+	y = 0;
+	for (z = 1; z <= Stencil->Size; z++)
+	{
+		//	x = 0
+//		(i,j,k+z);
+//		(i,j,k-z);
+
+		for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+		{
+/*
+			(i-x,j,k-z)
+			(i+x,j,k-z)
+			(i-x,j,k+z)
+			(i+x,j,k+z)
+*/
+		}
+	}
+
+	x = 0;
+	for (z = 1; z <= Stencil->Size; z++)
+	{
+		for (y = 1; y <= Stencil->YMax[z]; y++)
+		{
+/*
+			(i,j-y,k-z)*
+			(i,j+y,k-z)*
+			(i,j-y,k+z)
+			(i,j+y,k+z)
+*/
+		}
+	}
+
+	z = 0;
+	y = 0;
+	for (x = 1; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
+	{
+//		(i-x,y,z)
+//		(i+x,y,z)
+	}
+#endif
 
 #if 0
 	//	For each slice, find the min/max of the range
@@ -239,7 +537,7 @@ printf("GridIndex: %04ld (%04ld, %04ld, %04ld)\n", GridIndex, i,j,k);
 			Range->NumSlices++;
 		}
 	}
-#endif
+
 /*
 	(i-x, j-y, k-z) \
 	(i+x, j-y, k-z) /
@@ -296,16 +594,16 @@ printf("(%04ld,%04ld,%04ld) -> (%04ld,%04ld,%04ld), %04ld -> %04ld\n", i-X,j+y,k
 printf("\n");
 	}
 printf("\n");
-
+#endif
 /*
-	//	i <= j <= k in STENCIL_MAP stuff
-
 	for (z = 0; z <= Stencil-Size; z++)
 	{
 		for (y = 0; y <= Stencil->YMax[z]; y++)
 		{
 			for (x = 0; x <= Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)]; x++)
 			{
+				Need (i+x,j+y,k+z) in (contiguous) memory access order
+
 				(+x,+y,+z) -> (+x,+z,+y) -> (+y,+x,+z) -> (+y,+z,+x) -> (+z,+x,+y) -> (+z,+y,+x)
 				(-x,+y,+z) -> (-x,+z,+y) -> (+y,-x,+z) -> (+y,+z,-x) -> (+z,-x,+y) -> (+z,+y,-x)
 				(+x,-y,+z) -> (+x,+z,-y) -> (-y,+x,+z) -> (-y,+z,+x) -> (+z,+x,-y) -> (+z,-y,+x)
