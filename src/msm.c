@@ -439,6 +439,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 
 	//	Create Grid <Level> --> Freed in interpolation
 	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
+printf("after grid initialize in anterpolate!\n");
 	h = Grid->h;
 
 	//	Initialize vector(s) used to hold interpolant input and output
@@ -564,12 +565,19 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	printf("\tMSM direct computation!\n");
 
 	//	Ranges is an array of length NumSlices
-	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
-	Range.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
-	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
+	MaxSlices = (2*(Msm->itp->g2g->Size)+1)*(2*(Msm->itp->g2g->Size)+1);
+//	Range.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
+
+//	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
+
+//	for (MaxSlices = 0; MaxSlices < Range.NumSlices; MaxSlices++)
+//	{
+//		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, Range.Ranges[MaxSlices].Min, Range.Ranges[MaxSlices].Max);
+//	}
 
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
 	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
+printf("After grid structure copy!\n");
 
 /*
 	all_ranges = *all potential grid points*
@@ -589,10 +597,10 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	}
 */
 	//	Free dynamically allocated memory
-	dynfree(Range.Ranges);
+//	dynfree(Range.Ranges);
 
 	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
-	if (ChargeGrid->Level > 0)
+	if ((Msm->opt.IsN) && (ChargeGrid->Level > 0))
 	{
 		grid_uninitialize(ChargeGrid);
 	}
