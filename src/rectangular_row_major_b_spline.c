@@ -208,8 +208,9 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	Slices += (2*(Stencil->YMax[0]) + 1);			//	"Middle" of plane from -X to +X
 	for (Dk = 1; Dk <= Stencil->Size; Dk++)
 	{
+		if (Stencil->YMax[Dk] < 0) continue;
 		Slices += 2*(2*(Stencil->YMax[Dk]) + 1);	//	Slices away from middle, reflected about "middle"
-//		printf("Dk = %ld, Slices: %ld, YMax[%ld] = %ld\n", Dk, Slices, Dk, Stencil->YMax[Dk]);
+//		printf("Dk = %ld, Slices: %ld, YMax[%ld] = %ld\n", Dk, Slices, Dk, 2*(2*(Stencil->YMax[Dk]) + 1));
 	}
 
 	//	GridIndex -> (i,j,k)
@@ -222,32 +223,37 @@ printf("GridIndex: %04ld (%04ld, %04ld, %04ld) --> %ld slices\n", GridIndex, i,j
 		for (y = Stencil->YMax[z]; y > z; y--)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(z) + STENCIL_MAP_Y(y)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j-y,k-z, i+X,j-y,k-z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,-y,-z, +X,-y,-z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +X,-y,-z, sqrt(x*x+y*y+z*z));
 		}
 		for (y = z; y > 0; y--)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j-y,k-z, i+X,j-y,k-z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,-y,-z, +X,-y,-z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +X,-y,-z, sqrt(x*x+y*y+z*z));
 		}
 
 		y = 0;
 		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+		if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j,k-z, i+X,j,k-z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,-z, +X,y,-z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, sqrt(x*x+y*y+z*z));
 
 		for (y = 1; y < z; y++)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j+y,k-z, i+X,j+y,k-z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,-z, +X,y,-z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, sqrt(x*x+y*y+z*z));
 		}
 		for (y = z; y <= Stencil->YMax[z]; y++)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(z) + STENCIL_MAP_Y(y)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j+y,k-z, i+X,j+y,k-z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,-z, +X,y,-z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, sqrt(x*x+y*y+z*z));
 		}
 	}
 
@@ -255,20 +261,25 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,-z, +X,y,-z);
 	for (y = Stencil->YMax[z]; y > 0; y--)
 	{
 		X = Stencil->XMax[STENCIL_MAP_X(z) + STENCIL_MAP_Y(y)];
+		if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j-y,k, i+X,j-y,k);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,-y,z, +X,-y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, sqrt(x*x+y*y+z*z));
 	}
 
 	y = 0;
 	X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+	if (X > -1)
+	{
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j,k, i+X,j,k);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,z, +X,y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, sqrt(x*x+y*y+z*z));
+	}
 
 	for (y = 1; y <= Stencil->YMax[z]; y++)
 	{
 		X = Stencil->XMax[STENCIL_MAP_X(z) + STENCIL_MAP_Y(y)];
+		if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j+y,k, i+X,j+y,k);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,z, +X,y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, sqrt(x*x+y*y+z*z));
 	}
 
 	for (z = 1; z <= Stencil->Size; z++)
@@ -276,32 +287,37 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,z, +X,y,z);
 		for (y = Stencil->YMax[z]; y > z; y--)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(z) + STENCIL_MAP_Y(y)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j-y,k+z, i+X,j-y,k+z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,-y,z, +X,-y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, sqrt(x*x+y*y+z*z));
 		}
 		for (y = z; y > 0; y--)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j-y,k+z, i+X,j-y,k+z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,-y,z, +X,-y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, sqrt(x*x+y*y+z*z));
 		}
 
 		y = 0;
 		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+		if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j,k+z, i+X,j,k+z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,z, +X,y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, sqrt(x*x+y*y+z*z));
 
 		for (y = 1; y < z; y++)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j+y,k+z, i+X,j+y,k+z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,z, +X,y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, sqrt(x*x+y*y+z*z));
 		}
 		for (y = z; y <= Stencil->YMax[z]; y++)
 		{
 			X = Stencil->XMax[STENCIL_MAP_X(z) + STENCIL_MAP_Y(y)];
+			if (X < 0) continue;
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", i-X,j+y,k+z, i+X,j+y,k+z);
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\n", -X,y,z, +X,y,z);
+printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, sqrt(x*x+y*y+z*z));
 		}
 	}
 }
