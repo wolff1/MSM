@@ -419,12 +419,6 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	double*						PhiX = NULL;
 	double*						PhiY = NULL;
 	double*						PhiZ = NULL;
-	double*						dPhiX = NULL;//can remove after interpolation
-	double*						dPhiY = NULL;//can remove after interpolation
-	double*						dPhiZ = NULL;//can remove after interpolation
-//	double						ChargeZ = 0.0;
-//	double						ChargeYZ = 0.0;
-//	double						ChargeXYZ = 0.0;
 	long						i = 0;
 	long						j = 0;
 	long						k = 0;
@@ -450,10 +444,6 @@ printf("after grid initialize in anterpolate!\n");
 	PhiX = &FX[0];
 	PhiY = &FX[p];
 	PhiZ = &FX[2*p];
-
-	dPhiX = &DFX[0];//can remove after interpolation
-	dPhiY = &DFX[p];//can remove after interpolation
-	dPhiZ = &DFX[2*p];//can remove after interpolation
 
 	//	Loop through all particles	-> Spread particle charge onto grid in each dimension
 	for (n = 0; n < Domain->Particles->N; n++)
@@ -755,7 +745,7 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	dynfree(Outer.Ranges);
 
 	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
-	if (ChargeGrid->Level > 0)
+	if ((Msm->opt.IsN) && (ChargeGrid->Level > 0))
 	{
 		grid_uninitialize(ChargeGrid);
 	}
@@ -905,23 +895,10 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 		//	Get interpolant values at the nearest grid points (in bulk)
 		(*Msm->itp->evaluate)(Msm->itp, 3*p, X, FX, DFX);
 
-		////	Gather contributions to particle n forces
+		//	Gather contributions to particle n forces
 		Fx = 0.0;
 		Fy = 0.0;
 		Fz = 0.0;
-		//for (Dk = 0; Dk < p; Dk++)
-		//{
-		//	ChargeZ = PhiZ[Dk]*r[n].q;
-		//	for (Dj = 0; Dj < p; Dj++)
-		//	{
-		//		ChargeYZ = PhiY[Dj]*ChargeZ;
-		//		for (Di = 0; Di < p; Di++)
-		//		{
-		//			ChargeXYZ = PhiX[Di]*ChargeYZ;
-		//			(*Grid->increment_grid_point_value)(Grid, i+Di, j+Dj, k+Dk, ChargeXYZ);
-		//		}
-		//	}
-		//}
 
 		//	Gather contributions to particle n forces (IS THIS "BETTER" THAN ABOVE B/C LOOP IS "UNROLLED"?)
 		for (Idx = 0; Idx < p*p*p; Idx++)
