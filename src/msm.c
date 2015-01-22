@@ -234,13 +234,14 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 	long*		ParticlesPerBin = NULL;
 	long		ParticlesInBin = 0;
 	short		EdgeCaseCount = 0;
+	long		MyIdx = 0;
 
 	printf("\tMSM short range computation!\n");
 
 	//	Set up number of bins in each dimension (NOTE: MATLAB code has floor() + 1)
-	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a);
-	YBinCount = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / a);
-	ZBinCount = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / a);
+	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a) + 1;	// NOTE: +1 b/c if r[n] is at max, then it is in bin # XBinCount, NOT XBinCount-1
+	YBinCount = (long) ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / a) + 1;	//			99% of the time, these +1 will NOT be necessary
+	ZBinCount = (long) ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / a) + 1;
 //printf("\t\t%ldx%ldx%ld bins\n", XBinCount, YBinCount, ZBinCount);
 	//	Dynamically allocate memory for lists of bins
 	First = (long*) dynvec(XBinCount*YBinCount*ZBinCount, sizeof(long));
@@ -259,9 +260,11 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 		i = (long) floor((r[n].x-Domain->MinimumCoordinates.x) / a);
 		j = (long) floor((r[n].y-Domain->MinimumCoordinates.y) / a);
 		k = (long) floor((r[n].z-Domain->MinimumCoordinates.z) / a);
-		Next[n] = First[IDX(i,j,k,XBinCount,YBinCount)];
-		First[IDX(i,j,k,XBinCount,YBinCount)] = n;
-		ParticlesPerBin[IDX(i,j,k,XBinCount,YBinCount)]++;
+		MyIdx = IDX(i,j,k,XBinCount,YBinCount);
+//printf("(%ld,%ld,%ld) = %ld\n", i,j,k, MyIdx);
+		Next[n] = First[MyIdx];
+		First[MyIdx] = n;
+		ParticlesPerBin[MyIdx]++;
 	}
 /*
 	//	Loop over bins
@@ -1211,7 +1214,6 @@ void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long*
 			dy = r[j].y - r[i].y;
 			dz = r[j].z - r[i].z;
 			d = sqrt(dx*dx + dy*dy + dz*dz);
-			assert(d > 0.0);
 
 			if (d < a)
 			{
