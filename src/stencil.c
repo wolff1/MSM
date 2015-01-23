@@ -28,7 +28,7 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 	for (z = 0; z <= s->Size; z++)
 	{
 		zi_2d = STENCIL_MAP_Y(z);
-		for (y = 0; y <= s->Size; y++)
+		for (y = 0; y <= z; y++)
 		{
 			s->XMax[STENCIL_MAP_X(y) + zi_2d] = -1;
 		}
@@ -38,7 +38,7 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 	//	Set up loop ranges
 	if (s->Shape == STENCIL_SHAPE_SPHERE)
 	{
-		//	SPHERIC (FIXME: COULD THIS BE MADE SMALLER?)
+		//	SPHERIC
 		rr = (double) s->Size * s->Size;
 		for (z = 0; z <= s->Size; z++)
 		{
@@ -58,10 +58,10 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 		for (z = 0; z <= s->Size; z++)
 		{
 			zi_2d = STENCIL_MAP_Y(z);
-			s->YMax[z] = s->Size;
+			s->YMax[z] = s->Size;//z;
 			for (y = 0; y <= s->YMax[z]; y++)
 			{
-				s->XMax[STENCIL_MAP_X(y) + zi_2d] = s->Size;
+				s->XMax[STENCIL_MAP_X(y) + zi_2d] = s->Size;//y;
 			}
 		}
 	}

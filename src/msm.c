@@ -26,8 +26,8 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 2.0;//12.5;
-	Msm->prm.h = 2.5;
+	Msm->prm.a = 2.0;//12.5
+	Msm->prm.h = 1.0;//2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
@@ -555,22 +555,22 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	GRID_RANGE			Range;
 	long				MaxSlices = 0;
 
-	printf("\tMSM direct computation!\n");
+	printf("\tMSM direct computation! Stencil Radius: %ld\n", Msm->itp->g2g->Size);
 
 	//	Ranges is an array of length NumSlices
 	MaxSlices = (2*(Msm->itp->g2g->Size)+1)*(2*(Msm->itp->g2g->Size)+1);
-//	Range.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
+	Range.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
 
-//	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
+	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
 
-//	for (MaxSlices = 0; MaxSlices < Range.NumSlices; MaxSlices++)
-//	{
-//		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, Range.Ranges[MaxSlices].Min, Range.Ranges[MaxSlices].Max);
-//	}
+	for (MaxSlices = 0; MaxSlices < Range.NumSlices; MaxSlices++)
+	{
+		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, Range.Ranges[MaxSlices].Min, Range.Ranges[MaxSlices].Max);
+	}
 
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
 	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
-printf("After grid structure copy!\n");
+//printf("After grid structure copy!\n");
 
 /*
 	all_ranges = *all potential grid points*
@@ -590,7 +590,7 @@ printf("After grid structure copy!\n");
 	}
 */
 	//	Free dynamically allocated memory
-//	dynfree(Range.Ranges);
+	dynfree(Range.Ranges);
 
 	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
 	if ((Msm->opt.IsN) && (ChargeGrid->Level > 0))
