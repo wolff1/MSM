@@ -26,14 +26,14 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 2.0;//12.5
-	Msm->prm.h = 1.0;//2.5;
+	Msm->prm.a = 5.0;//2.0;//12.5
+	Msm->prm.h = 2.5;//1.0;//2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
 	Msm->prm.mu = 10;
 	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
-	Msm->prm.L = 2;
+	Msm->prm.L = 2;		//	# of grids
 
 	//	Initialize MSM options
 	Msm->opt.ComputeExclusions = 1;
@@ -112,8 +112,8 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 	short		l = 0;	//	Lower case L, for level
 	size_t		Size = 0;
 	void		(*Init)(void*, SIMULATION_DOMAIN*, short) = NULL;
-	GRID*		ChargeGrid = NULL;
-	GRID*		PotentialGrid = NULL;
+	GRID**		ChargeGrid = NULL;
+	GRID**		PotentialGrid = NULL;
 	MSM*		Msm = (MSM*) Method;
 
 	assert(Msm != NULL);
@@ -139,33 +139,35 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			Init = &rectangular_row_major_b_spline_initialize;
 		}
 		//	Create and set initialization routine for array of anterpolation/restriction hierarchy CHARGE grids
-		ChargeGrid = (GRID*) dynmem(Size*Msm->prm.L);
-		PotentialGrid = (GRID*) dynmem(Size*Msm->prm.L);	//	FIXME: !!!This can be implemented with only 2 grid containers!!!
+		ChargeGrid = (GRID**) dynmem(sizeof(GRID*)*Msm->prm.L);
+		PotentialGrid = (GRID**) dynmem(sizeof(GRID*)*Msm->prm.L);	//	FIXME: !!!This can be implemented with only 2 grid containers!!!
 		for (l = 0; l < Msm->prm.L; l++)
 		{
-			ChargeGrid[l].initialize = Init;
-			PotentialGrid[l].initialize = Init;
+			ChargeGrid[l] = (GRID*) dynmem(Size);
+			PotentialGrid[l] = (GRID*) dynmem(Size);
+			((GRID*)ChargeGrid[l])->initialize = Init;
+			((GRID*)PotentialGrid[l])->initialize = Init;
 		}
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N)
 		if (Msm->opt.IsN)
 		{
-			msm_anterpolate(Msm, Domain, 0, /*OUT*/&ChargeGrid[0]);
+			msm_anterpolate(Msm, Domain, 0, /*OUT*/ChargeGrid[0]);
 
 			for (l = 1; l < Msm->prm.L; l++)	//	l is fine grid level
 			{
-				msm_restrict(Msm, /*IN*/&ChargeGrid[l-1], /*OUT*/&ChargeGrid[l]);
+				msm_restrict(Msm, /*IN*/ChargeGrid[l-1], /*OUT*/ChargeGrid[l]);
 			}
 
-			msm_direct_top(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*OUT*/&PotentialGrid[Msm->prm.L-1]);
+			msm_direct_top(Msm, /*IN*/ChargeGrid[Msm->prm.L-1], /*OUT*/PotentialGrid[Msm->prm.L-1]);
 
 			for (l = Msm->prm.L-1; l > 0; l--)	//	l is fine grid level
 			{
-				msm_direct(Msm, /*IN*/&ChargeGrid[l-1], /*OUT*/&PotentialGrid[l-1]);
-				msm_prolongate(Msm, /*OUT*/&PotentialGrid[l-1], /*IN*/&PotentialGrid[l]);
+				msm_direct(Msm, /*IN*/ChargeGrid[l-1], /*OUT*/PotentialGrid[l-1]);
+				msm_prolongate(Msm, /*OUT*/PotentialGrid[l-1], /*IN*/PotentialGrid[l]);
 			}
 
-			msm_interpolate(Msm, Domain, /*IN*/&ChargeGrid[0], /*IN*/&PotentialGrid[0]);
+			msm_interpolate(Msm, Domain, /*IN*/ChargeGrid[0], /*IN*/PotentialGrid[0]);
 		}
 
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
@@ -175,14 +177,14 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			//	Intermediate Grid Level(s)
 			for (l = 0; l < Msm->prm.L-1; l++)
 			{
-				msm_anterpolate(Msm, Domain, l, /*OUT*/&ChargeGrid[l]);
-				msm_direct(Msm, /*IN*/&ChargeGrid[l], /*OUT*/&PotentialGrid[l]);
-				msm_interpolate(Msm, Domain, /*IN*/&ChargeGrid[l], /*IN*/&PotentialGrid[l]);
+				msm_anterpolate(Msm, Domain, l, /*OUT*/ChargeGrid[l]);
+				msm_direct(Msm, /*IN*/ChargeGrid[l], /*OUT*/PotentialGrid[l]);
+				msm_interpolate(Msm, Domain, /*IN*/ChargeGrid[l], /*IN*/PotentialGrid[l]);
 			}
 			//	Top Grid Level
-			msm_anterpolate(Msm, Domain, Msm->prm.L-1, /*OUT*/&ChargeGrid[Msm->prm.L-1]);
-			msm_direct_top(Msm, /*IN*/&ChargeGrid[Msm->prm.L-1], /*OUT*/&PotentialGrid[Msm->prm.L-1]);
-			msm_interpolate(Msm, Domain, /*IN*/&ChargeGrid[Msm->prm.L-1], /*IN*/&PotentialGrid[Msm->prm.L-1]);
+			msm_anterpolate(Msm, Domain, Msm->prm.L-1, /*OUT*/ChargeGrid[Msm->prm.L-1]);
+			msm_direct_top(Msm, /*IN*/ChargeGrid[Msm->prm.L-1], /*OUT*/PotentialGrid[Msm->prm.L-1]);
+			msm_interpolate(Msm, Domain, /*IN*/ChargeGrid[Msm->prm.L-1], /*IN*/PotentialGrid[Msm->prm.L-1]);
 		}
 
 		if (Msm->opt.ComputeExclusions)
@@ -190,7 +192,14 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 			msm_exclude(Msm, Domain);
 		}
 
-		//	Free FINEST grid memory
+		//	Free individual grid pointers
+		for (l = 0; l < Msm->prm.L; l++)
+		{
+			dynfree(ChargeGrid[l]);
+			dynfree(PotentialGrid[l]);
+		}
+
+		//	Free array of grid pointers
 		dynfree(ChargeGrid);
 		dynfree(PotentialGrid);
 	}
@@ -782,7 +791,7 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	}
 */
 	//	Free Coarse Grid
-	grid_uninitialize(CoarseGrid);
+//	grid_uninitialize(CoarseGrid);
 }
 
 void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID* PotentialGrid)
