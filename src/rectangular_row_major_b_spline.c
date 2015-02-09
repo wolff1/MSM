@@ -230,7 +230,7 @@ printf("GridIndex: %04ld (%04ld, %04ld, %04ld) --> %ld slices\n", GridIndex, i,j
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k-z, i+X,j-y,k-z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -248,7 +248,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k-z, i+X,j-y,k-z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -266,7 +266,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k-z, i+X,j,k-z, Min, Max);
 		for (x = Min; x <= Max; x++)
 		{
-			d = sqrt(x*x+y*y+z*z);
+			d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 		}
@@ -284,7 +284,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k-z, i+X,j+y,k-z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -302,7 +302,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k-z, i+X,j+y,k-z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -323,7 +323,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k, i+X,j-y,k, Min, Max);
 		for (x = Min; x <= Max; x++)
 		{
-			d = sqrt(x*x+y*y+z*z);
+			d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 		}
@@ -342,7 +342,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k, i+X,j,k, Min, Max);
 		for (x = Min; x <= Max; x++)
 		{
-			d = sqrt(x*x+y*y+z*z);
+			d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 		}
@@ -361,7 +361,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k, i+X,j+y,k, Min, Max);
 		for (x = Min; x <= Max; x++)
 		{
-			d = sqrt(x*x+y*y+z*z);
+			d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 		}
@@ -382,7 +382,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k+z, i+X,j-y,k+z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -400,7 +400,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k+z, i+X,j-y,k+z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -418,7 +418,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k+z, i+X,j,k+z, Min, Max);
 		for (x = Min; x <= Max; x++)
 		{
-			d = sqrt(x*x+y*y+z*z);
+			d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 		}
@@ -436,7 +436,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -454,7 +454,7 @@ printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,
 //printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min, Max);
 			for (x = Min; x <= Max; x++)
 			{
-				d = sqrt(x*x+y*y+z*z);
+				d = sqrt((double)x*x+y*y+z*z);
 //				if (d < s)	{MyPoints++;}
 				MyPoints++;
 			}
@@ -501,7 +501,7 @@ void	rectangular_row_major_b_spline_create_copy_grid_structure(void* DstGrid, vo
 	Domain.MaximumCoordinates.z = (double) h*(Nz - Exp - 1.0);
 
 	//	Initialize just like any other grid, except Nx,Ny,Nz will be set how we want them
-	grid_initialize(DstGrid, &Domain, Level, h, Exp);
+	grid_initialize(DstGrid, &Domain, Level, h/pow(2.0, Level), Exp);
 }
 
 void	rectangular_row_major_b_spline_create_finer_grid(void* FineGrid, void* CoarseGrid)

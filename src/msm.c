@@ -26,8 +26,8 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 5.0;//2.0;//12.5
-	Msm->prm.h = 2.5;//1.0;//2.5;
+	Msm->prm.a = 2.0;//12.5
+	Msm->prm.h = 1.0;//2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
@@ -743,6 +743,7 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 					if (Idx < MinIdx)
 						MinIdx = Idx;
 //printf("i=%+04ld (%+04ld,%+04ld,%+04ld), j=%+04ld (%+04ld,%+04ld,%+04ld), Idx=%+04ld, K=%f\n", i,i1,j1,k1, j,i2,j2,k2, Idx, Msm->itp->tg2g->Data[Idx]);
+//	NOTE: stencil access should be more encapsulated!
 					GridValue = (Msm->itp->tg2g->Data[Idx])*(*ChargeGrid->get_grid_point_value)(ChargeGrid, j);
 					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, GridValue*a_l);
 				}
@@ -791,7 +792,7 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	}
 */
 	//	Free Coarse Grid
-//	grid_uninitialize(CoarseGrid);
+	grid_uninitialize(CoarseGrid);
 }
 
 void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID* PotentialGrid)
