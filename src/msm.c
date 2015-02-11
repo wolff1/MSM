@@ -572,10 +572,10 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 
 	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
 
-	for (MaxSlices = 0; MaxSlices < Range.NumSlices; MaxSlices++)
-	{
-		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, Range.Ranges[MaxSlices].Min, Range.Ranges[MaxSlices].Max);
-	}
+//	for (MaxSlices = 0; MaxSlices < Range.NumSlices; MaxSlices++)
+//	{
+//		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, Range.Ranges[MaxSlices].Min, Range.Ranges[MaxSlices].Max);
+//	}
 
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
 	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);

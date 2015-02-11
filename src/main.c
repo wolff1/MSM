@@ -271,6 +271,38 @@ void test_simulator(void)
 
 void test_parallel_division(void)
 {
+	int		xp = 0;
+	int		yp = 0;
+	int		zp = 0;
+	int		x = 0;
+	int		y = 0;
+	int		z = 0;
+	int		q = 0;
+	int		m = 0;
+	int		n = 0;
+	int		idx = 0;
+
+	for (zp = -2; zp <= 2; zp++)
+	{
+		for (yp = -2; yp <= 2; yp++)
+		{
+			for (xp = -2; xp <= 2; xp++)
+			{
+//				q = MIN(abs(x),MIN(abs(y),abs(z)));
+//				n = MAX(abs(x),MAX(abs(y),abs(z)));
+//				m = MIN(abs(x)-q,abs(y)-q) + MIN(abs(y)-q,abs(z)-q) + MIN(abs(x)-q,abs(z)-q) + q;
+
+//				z = abs(zp);	y = abs(yp);	x = abs(xp);
+//				if (x < y)	{if (x < z) {q = x;	if (y < z) {m = y; n = z;} else {m = z; n = y;}} else {q = z; m = x; n = y;}}
+//				else		{if (y < z) {q = y;	if (x < z) {m = x; n = z;} else {m = z; n = x;}} else {q = z; m = y; n = x;}}
+//				idx = STENCIL_MAP_X(q) + STENCIL_MAP_Y(m) + STENCIL_MAP_Z(n);
+
+				SORT_RTN_STNCL_IDX(abs(xp),abs(yp),abs(zp),q,m,n,idx);
+				printf("(%+d,%+d,%+d) -> (%+d,%+d,%+d) -> (%+d,%+d,%+d) -> %+d\n", xp,yp,zp, abs(x),abs(y),abs(z), q,m,n, idx);
+			}
+		}
+	}
+/*
 	long		N = 0;				//	# particles
 	long		K = 0;				//	# grid points
 	long		P = 0;				//	# procs
@@ -306,7 +338,7 @@ void test_parallel_division(void)
 
 	alpha = 2.0*a/h;
 	printf("2*alpha = %f\n", alpha);
-
+*/
 /*
 	Work per step = (Work per point)*(number of points)
 	Time per step = (Time/Work)*Work
