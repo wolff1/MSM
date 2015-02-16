@@ -198,7 +198,7 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	long								TotalPoints = (2*s+1)*(2*s+1)*(2*s+1);
 	long								MyPoints = 0;
 	double								d = 0.0;
-return;
+//return;
 	//	Find the  number of slices
 	Slices += (2*(Stencil->YMax[Stencil->Size]) + 1);			//	"Middle" of plane from -X to +X
 	for (k = Stencil->Size-1; k > -1; k--)
