@@ -23,6 +23,8 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 	s->Data = (double*) dynvec(STENCIL_STORAGE(s->Size), sizeof(double));
 	s->YMax = (long*) dynvec(s->Size+1, sizeof(long));						//	One max per z
 	s->XMax = (long*) dynvec(STENCIL_STORAGE_2D(s->Size), sizeof(long));	//	One max per (y,z)
+	s->YMax2 = (long*) dynvec(s->Size+1, sizeof(long));						//	One max per z
+	s->XMax2 = (long*) dynvec(STENCIL_STORAGE_2D(s->Size), sizeof(long));	//	One max per (y,z)
 
 	//	Default all YMax and XMax values to -1
 	for (z = 0; z <= s->Size; z++)
@@ -35,7 +37,7 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 		s->YMax[z] = -1;
 	}
 
-	//	Set up loop ranges
+	//	Set up INTERIOR loop ranges
 	if (s->Shape == STENCIL_SHAPE_SPHERE)
 	{
 		//	SPHERIC
@@ -44,11 +46,11 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 		{
 			zz = z*z;
 			zi_2d = STENCIL_MAP_Y(z);
-			s->YMax[z] = (long) floor(sqrt(rr - zz));
+			s->YMax[z] = MIN(z, (long) floor(sqrt(rr - zz)));
 			for (y = 0; y <= s->YMax[z]; y++)
 			{
 				yyzz = y*y + zz;
-				s->XMax[STENCIL_MAP_X(y) + zi_2d] = (long) floor(sqrt(rr - yyzz));
+				s->XMax[STENCIL_MAP_X(y) + zi_2d] = MIN(y, (long) floor(sqrt(rr - yyzz)));
 			}
 		}
 	}
@@ -59,22 +61,55 @@ void stencil_initialize(STENCIL* s, long Size, short Shape)
 		{
 			zi_2d = STENCIL_MAP_Y(z);
 			s->YMax[z] = z;
-//			s->YMax[z] = s->Size;
 			for (y = 0; y <= s->YMax[z]; y++)
 			{
 				s->XMax[STENCIL_MAP_X(y) + zi_2d] = y;
-//				s->XMax[STENCIL_MAP_X(y) + zi_2d] = s->Size;
 			}
 		}
 	}
 
-	for (z = 0; z <= s->Size; z++)
+	//	Set up EXTERIOR loop ranges
+	if (s->Shape == STENCIL_SHAPE_SPHERE)
 	{
-		for (y = 0; y <= s->YMax[z]; y++)
+		//	SPHERIC
+		rr = (double) s->Size * s->Size;
+		for (z = 0; z <= s->Size; z++)
 		{
-			printf("(%ld,%ld,%ld) -> (%ld,%ld,%ld)\n", 0,y,z, s->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)],y,z);
+			zz = z*z;
+			zi_2d = STENCIL_MAP_Y(z);
+			s->YMax2[z] = (long) floor(sqrt(rr - zz));
+			for (y = 0; y <= s->YMax2[z]; y++)
+			{
+				yyzz = y*y + zz;
+				s->XMax2[STENCIL_MAP_X(y) + zi_2d] = (long) floor(sqrt(rr - yyzz));
+				s->Slices++;
+			}
 		}
 	}
+	else
+	{
+		//	CUBIC
+		for (z = 0; z <= s->Size; z++)
+		{
+			zi_2d = STENCIL_MAP_Y(z);
+			s->YMax2[z] = s->Size;
+			for (y = 0; y <= s->YMax2[z]; y++)
+			{
+				s->XMax2[STENCIL_MAP_X(y) + zi_2d] = s->Size;
+				s->Slices++;
+			}
+		}
+	}
+/*
+printf("Slices of stencil: %ld\n", s->Slices);
+for (z = 0; z <= s->Size; z++)
+{
+	for (y = 0; y <= s->YMax2[z]; y++)
+	{
+		printf("(%ld,%ld,%ld) -> (%ld,%ld,%ld)\n", -s->XMax2[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)],y,z, s->XMax2[STENCIL_MAP_X(y) + STENCIL_MAP_Y(z)],y,z);
+	}
+}
+*/
 }
 
 void stencil_copy(STENCIL* Dst, STENCIL* Src)
@@ -82,6 +117,7 @@ void stencil_copy(STENCIL* Dst, STENCIL* Src)
 	//	Initialize stencil
 	Dst->Shape = Src->Shape;
 	Dst->Size = Src->Size;
+	Dst->Slices = Src->Slices;
 
 	Dst->Data = (double*) dynvec(STENCIL_STORAGE(Dst->Size), sizeof(double));
 	memcpy(Dst->Data, Src->Data, STENCIL_STORAGE(Dst->Size)*sizeof(double));
@@ -91,6 +127,12 @@ void stencil_copy(STENCIL* Dst, STENCIL* Src)
 
 	Dst->XMax = (long*) dynvec(STENCIL_STORAGE_2D(Dst->Size), sizeof(long));	//	One max per (y,z)
 	memcpy(Dst->XMax, Src->XMax, STENCIL_STORAGE_2D(Dst->Size)*sizeof(long));
+
+	Dst->YMax2 = (long*) dynvec(Dst->Size+1, sizeof(long));						//	One max per z
+	memcpy(Dst->YMax2, Src->YMax2, (Dst->Size+1)*sizeof(long));
+
+	Dst->XMax2 = (long*) dynvec(STENCIL_STORAGE_2D(Dst->Size), sizeof(long));	//	One max per (y,z)
+	memcpy(Dst->XMax2, Src->XMax2, STENCIL_STORAGE_2D(Dst->Size)*sizeof(long));
 }
 
 void stencil_populate(STENCIL* s, SOFTENER* Softener, short FunctionType, double Scale)
@@ -779,6 +821,12 @@ void stencil_free(STENCIL* s)
 
 	if (s->YMax != NULL)
 		dynfree(s->YMax);
+
+	if (s->XMax2 != NULL)
+		dynfree(s->XMax2);
+
+	if (s->YMax2 != NULL)
+		dynfree(s->YMax2);
 }
 
 #if 0

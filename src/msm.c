@@ -26,8 +26,8 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 2.0;//12.5
-	Msm->prm.h = 1.0;//2.5;
+	Msm->prm.a = 12.5;
+	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
 	Msm->prm.p = 4;
 	Msm->prm.k = 4;
@@ -445,7 +445,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 
 	//	Create Grid <Level> --> Freed in interpolation
 	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
-printf("after grid initialize in anterpolate!\n");
+//printf("after grid initialize in anterpolate!\n");
 	h = Grid->h;
 
 	//	Initialize vector(s) used to hold interpolant input and output
@@ -561,25 +561,61 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	//	INTPUT:	charge grid
 	//	OUTPUT:	potential grid
 
-	GRID_RANGE			Range;
+	GRID_RANGE			OuterRange;
+	GRID_RANGE			InnerRange;
 	long				MaxSlices = 0;
+	long				ii = 0;
+	long				jj = 0;
+	long				kk = 0;
+	long				m = 0;
+	long				n = 0;
+	long				i = 0;
+	long				j = 0;
 
 	printf("\tMSM direct computation! Stencil Radius: %ld\n", Msm->itp->g2g->Size);
 
-	//	Ranges is an array of length NumSlices
+	//	Ranges are arrays of length MaxSlices
+	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
+//printf("Max Outer Slices = %ld\n", MaxSlices);
+	OuterRange.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices, sizeof(GRID_RANGE_MIN_MAX));
+	(*ChargeGrid->get_grid_points_all)(ChargeGrid, &OuterRange);
+
 	MaxSlices = (2*(Msm->itp->g2g->Size)+1)*(2*(Msm->itp->g2g->Size)+1);
-	Range.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
-
-	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &Range);
-
-//	for (MaxSlices = 0; MaxSlices < Range.NumSlices; MaxSlices++)
-//	{
-//		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, Range.Ranges[MaxSlices].Min, Range.Ranges[MaxSlices].Max);
-//	}
-
+//printf("Max Inner Slices = %ld\n", MaxSlices);
+	InnerRange.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
+/*
+	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &InnerRange);
+	for (MaxSlices = 0; MaxSlices < InnerRange.NumSlices; MaxSlices++)
+	{
+		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, InnerRange.Ranges[MaxSlices].Min, InnerRange.Ranges[MaxSlices].Max);
+	}
+*/
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
 	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
 //printf("After grid structure copy!\n");
+
+printf("\n");
+	for (m = 0; m < OuterRange.NumSlices; m++)
+	{
+		for (i = OuterRange.Ranges[m].Min; i <= OuterRange.Ranges[m].Max; i++)
+		{
+(*ChargeGrid->idx2ijk)(ChargeGrid, i, &ii, &jj, &kk);
+printf("%04ld - (%ld,%ld,%ld)\n", i, ii,jj,kk);
+			(*ChargeGrid->get_grid_points_stencil)(ChargeGrid, i, Msm->itp->g2g, &InnerRange);
+			for (n = 0; n < InnerRange.NumSlices; n++)
+			{
+				for (j = InnerRange.Ranges[n].Min; j <= InnerRange.Ranges[n].Max; j++)
+				{
+(*ChargeGrid->idx2ijk)(ChargeGrid, j, &ii, &jj, &kk);
+printf("\t\t(%ld,%ld,%ld)\n", ii,jj,kk);
+//					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, Msm->itp->g2g[]*(*ChargeGrid->get_grid_point_value)(ChargeGrid,j));
+				}
+printf("\n");
+			}
+scanf("%ld", &j);
+		}
+	}
+printf("\n");
 
 /*
 	all_ranges = *all potential grid points*
@@ -599,7 +635,8 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	}
 */
 	//	Free dynamically allocated memory
-	dynfree(Range.Ranges);
+	dynfree(OuterRange.Ranges);
+	dynfree(InnerRange.Ranges);
 
 	//	Free Charge Grid if not finest charge grid (b/c its needed in interpolation)
 	if ((Msm->opt.IsN) && (ChargeGrid->Level > 0))
@@ -750,7 +787,7 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 			}
 		}
 	}
-	printf("Min/Max = %ld/%ld\n", MinIdx, MaxIdx);
+//printf("Min/Max = %ld/%ld\n", MinIdx, MaxIdx);
 //	(*PotentialGrid->display)(PotentialGrid);
 
 	//	Free dynamically allocated memory

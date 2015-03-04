@@ -173,297 +173,48 @@ void	rectangular_row_major_b_spline_get_grid_points_coarse(void* Grid, long Fine
 
 void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, STENCIL* Stencil, GRID_RANGE* Range)
 {
+	long				i = 0;
+	long				j = 0;
+	long				k = 0;
+	long				x = 0;
+	long				y = 0;
+	long				z = 0;
+	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion >> 1;
+	double				h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->cmn.h;
+	long				iMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nx - Exp - 1;
+	long				jMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny - Exp - 1;
+	long				kMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nz - Exp - 1;
+	long				X = 0;
+
 	//	Given a grid point index, return the *valid* grid point indices corresponding to the input grid point index.
 	//		-> How to handle edge cases
 	//		-> Grid memory is probably more important than stencil memory
 	//		-> How many slices are there?
-/*
-	for (this slice)
-	{
-		min = max(i-x, -p);
-		max = min(i+x, ?);
-	}
-*/
-	long								k = 0;
-	long								j = 0;
-	long								i = 0;
-	long								z = 0;
-	long								y = 0;
-	long								x = 0;
-	long								Slices = 0;
-	long								X = 0;
-	long								Min = 0;
-	long								Max = 0;
-	long								s = Stencil->Size;
-	long								TotalPoints = (2*s+1)*(2*s+1)*(2*s+1);
-	long								MyPoints = 0;
-	double								d = 0.0;
-//return;
-	//	Find the  number of slices
-	Slices += (2*(Stencil->YMax[Stencil->Size]) + 1);			//	"Middle" of plane from -X to +X
-	for (k = Stencil->Size-1; k > -1; k--)
-	{
-		if (Stencil->YMax[k] < 0) continue;
-		Slices += 2*(2*(Stencil->YMax[k]) + 1);	//	Slices away from middle, reflected about "middle"
-		printf("k = %ld, Slices: %ld, YMax[%ld] = %ld\n", k, Slices, k, 2*(2*(Stencil->YMax[k]) + 1));
-	}
 
-	//	Reset the number of slices for the given grid point
-	Range->NumSlices = 0;
+	//	Figure out the number of "slices" (HOLD OFF - THIS SHOULD BE DONE IN THE STENCIL ITSELF)
+
+	//	Figure out which grid point (indices?) go with each slice
+	//		For z(size) -> x-y plane
+	//			for y(z) -> x line
+	//				Each slice is a line, return the range of x(z,y) coordinates valid for the stencil
 
 	//	GridIndex -> (i,j,k)
 	rectangular_row_major_b_spline_idx2ijk(Grid, GridIndex, &i, &j, &k);
-printf("GridIndex: %04ld (%04ld, %04ld, %04ld) --> %ld slices\n", GridIndex, i,j,k, Slices);
+//printf("GridIndex: %04ld (%04ld, %04ld, %04ld) --> %ld slices\n", GridIndex, i,j,k, Slices);
 
-	//	Stencil index -> (x,y,z)
-	for (z = Stencil->Size; z > 0; z--)
+	Range->NumSlices = 0;
+	for (z = -Stencil->Size; z <= Stencil->Size; z++)
 	{
-		for (y = Stencil->YMax[s-z]; y > s-z; y--)
+		if (k-abs(z) < -Exp || k+abs(z) > kMax)	continue;
+		for (y = -Stencil->YMax2[abs(z)]; y <= Stencil->YMax2[abs(z)]; y++)
 		{
-			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k-z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k-z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
+			if (j-abs(y) < -Exp || j+abs(y) > jMax) continue;
+			X = Stencil->XMax2[STENCIL_MAP_X(MIN(abs(y),abs(z))) + STENCIL_MAP_Y(MAX(abs(z),abs(y)))];	//	Assumes y <= z
+			Range->Ranges[Range->NumSlices].Min = rectangular_row_major_b_spline_ijk2idx(Grid, MAX(i-X, -Exp),j+y,k+z);
+			Range->Ranges[Range->NumSlices].Max = rectangular_row_major_b_spline_ijk2idx(Grid, MIN(i+X, iMax),j+y,k+z);
 			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k-z, i+X,j-y,k-z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +X,-y,-z, d);
-		}
-		for (y = s-z; y > 0; y--)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k-z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k-z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k-z, i+X,j-y,k-z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +X,-y,-z, d);
-		}
-
-		y = 0;
-		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//		if (X < 0) continue;
-		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j,k-z);
-		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j,k-z);
-		Range->Ranges[Range->NumSlices].Min = Min;
-		Range->Ranges[Range->NumSlices].Max = Max;
-		Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k-z, i+X,j,k-z, Min, Max);
-		for (x = Min; x <= Max; x++)
-		{
-			d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-		}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, d);
-
-		for (y = 1; y <= s-z; y++)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k-z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k-z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k-z, i+X,j+y,k-z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, d);
-		}
-		for (y = s-z+1; y <= Stencil->YMax[s-z]; y++)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k-z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k-z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k-z, i+X,j+y,k-z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, d);
 		}
 	}
-
-	z = 0;
-	for (y = Stencil->YMax[s-z]; y > 0; y--)
-	{
-		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//		if (X < 0) continue;
-		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k);
-		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k);
-		Range->Ranges[Range->NumSlices].Min = Min;
-		Range->Ranges[Range->NumSlices].Max = Max;
-		Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k, i+X,j-y,k, Min, Max);
-		for (x = Min; x <= Max; x++)
-		{
-			d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-		}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, d);
-	}
-
-	y = 0;
-	X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//	if (X > -1)
-	{
-		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j,k);
-		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j,k);
-		Range->Ranges[Range->NumSlices].Min = Min;
-		Range->Ranges[Range->NumSlices].Max = Max;
-		Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k, i+X,j,k, Min, Max);
-		for (x = Min; x <= Max; x++)
-		{
-			d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-		}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
-	}
-
-	for (y = 1; y <= Stencil->YMax[s-z]; y++)
-	{
-		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//		if (X < 0) continue;
-		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k);
-		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k);
-		Range->Ranges[Range->NumSlices].Min = Min;
-		Range->Ranges[Range->NumSlices].Max = Max;
-		Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k, i+X,j+y,k, Min, Max);
-		for (x = Min; x <= Max; x++)
-		{
-			d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-		}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
-	}
-
-	for (z = 1; z <= Stencil->Size; z++)
-	{
-		for (y = Stencil->YMax[s-z]; y > s-z; y--)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k+z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k+z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k+z, i+X,j-y,k+z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, d);
-		}
-		for (y = s-z; y > 0; y--)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k+z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k+z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k+z, i+X,j-y,k+z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, d);
-		}
-
-		y = 0;
-		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//		if (X < 0) continue;
-		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j,k+z);
-		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j,k+z);
-		Range->Ranges[Range->NumSlices].Min = Min;
-		Range->Ranges[Range->NumSlices].Max = Max;
-		Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k+z, i+X,j,k+z, Min, Max);
-		for (x = Min; x <= Max; x++)
-		{
-			d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-		}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
-
-		for (y = 1; y <= s-z; y++)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k+z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k+z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
-		}
-		for (y = s-z+1; y <= Stencil->YMax[s-z]; y++)
-		{
-			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
-//			if (X < 0) continue;
-			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k+z);
-			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k+z);
-			Range->Ranges[Range->NumSlices].Min = Min;
-			Range->Ranges[Range->NumSlices].Max = Max;
-			Range->NumSlices++;
-//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min, Max);
-			for (x = Min; x <= Max; x++)
-			{
-				d = sqrt((double)x*x+y*y+z*z);
-//				if (d < s)	{MyPoints++;}
-				MyPoints++;
-			}
-printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
-		}
-	}
-
-d = 100.0*MyPoints/(double)TotalPoints;
-printf("Percentage of points within sphere of radius %ld: %f, Total: %ld, Mine: %ld\n", s, d, TotalPoints, MyPoints);
 }
 
 void	rectangular_row_major_b_spline_get_grid_points_stencil_top(void* Grid, long GridIndex, GRID_RANGE* Range)
@@ -527,6 +278,301 @@ void	rectangular_row_major_b_spline_uninitialize(void* Grid)
 //	End of file
 
 #if 0
+void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, STENCIL* Stencil, GRID_RANGE* Range)
+{
+	//	Given a grid point index, return the *valid* grid point indices corresponding to the input grid point index.
+	//		-> How to handle edge cases
+	//		-> Grid memory is probably more important than stencil memory
+	//		-> How many slices are there?
+/*
+	for (this slice)
+	{
+		min = max(i-x, -p);
+		max = min(i+x, ?);
+	}
+*/
+	long								k = 0;
+	long								j = 0;
+	long								i = 0;
+	long								z = 0;
+	long								y = 0;
+	long								x = 0;
+	long								Slices = 0;
+	long								X = 0;
+	long								Min = 0;
+	long								Max = 0;
+	long								s = Stencil->Size;
+	long								TotalPoints = (2*s+1)*(2*s+1)*(2*s+1);
+	long								MyPoints = 0;
+	double								d = 0.0;
+//return;
+	//	Find the  number of slices
+	Slices += (2*(Stencil->YMax[Stencil->Size]) + 1);			//	"Middle" of plane from -X to +X
+	for (k = Stencil->Size-1; k > -1; k--)
+	{
+		if (Stencil->YMax[k] < 0) continue;
+		Slices += 2*(2*(Stencil->YMax[k]) + 1);	//	Slices away from middle, reflected about "middle"
+//printf("k = %ld, Slices: %ld, YMax[%ld] = %ld\n", k, Slices, k, 2*(2*(Stencil->YMax[k]) + 1));
+	}
+
+	//	Reset the number of slices for the given grid point
+	Range->NumSlices = 0;
+
+	//	GridIndex -> (i,j,k)
+	rectangular_row_major_b_spline_idx2ijk(Grid, GridIndex, &i, &j, &k);
+//printf("GridIndex: %04ld (%04ld, %04ld, %04ld) --> %ld slices\n", GridIndex, i,j,k, Slices);
+
+	//	Stencil index -> (x,y,z)
+	for (z = Stencil->Size; z > 0; z--)
+	{
+		for (y = Stencil->YMax[s-z]; y > s-z; y--)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k-z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k-z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k-z, i+X,j-y,k-z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +X,-y,-z, d);
+		}
+		for (y = s-z; y > 0; y--)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k-z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k-z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k-z, i+X,j-y,k-z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,-z, +X,-y,-z, d);
+		}
+
+		y = 0;
+		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//		if (X < 0) continue;
+		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j,k-z);
+		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j,k-z);
+		Range->Ranges[Range->NumSlices].Min = Min;
+		Range->Ranges[Range->NumSlices].Max = Max;
+		Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k-z, i+X,j,k-z, Min, Max);
+		for (x = Min; x <= Max; x++)
+		{
+			d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+		}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, d);
+
+		for (y = 1; y <= s-z; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k-z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k-z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k-z, i+X,j+y,k-z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, d);
+		}
+		for (y = s-z+1; y <= Stencil->YMax[s-z]; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k-z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k-z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k-z, i+X,j+y,k-z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,-z, +X,y,-z, d);
+		}
+	}
+
+	z = 0;
+	for (y = Stencil->YMax[s-z]; y > 0; y--)
+	{
+		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//		if (X < 0) continue;
+		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k);
+		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k);
+		Range->Ranges[Range->NumSlices].Min = Min;
+		Range->Ranges[Range->NumSlices].Max = Max;
+		Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k, i+X,j-y,k, Min, Max);
+		for (x = Min; x <= Max; x++)
+		{
+			d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+		}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, d);
+	}
+
+	y = 0;
+	X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//	if (X > -1)
+	{
+		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j,k);
+		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j,k);
+		Range->Ranges[Range->NumSlices].Min = Min;
+		Range->Ranges[Range->NumSlices].Max = Max;
+		Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k, i+X,j,k, Min, Max);
+		for (x = Min; x <= Max; x++)
+		{
+			d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+		}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
+	}
+
+	for (y = 1; y <= Stencil->YMax[s-z]; y++)
+	{
+		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//		if (X < 0) continue;
+		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k);
+		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k);
+		Range->Ranges[Range->NumSlices].Min = Min;
+		Range->Ranges[Range->NumSlices].Max = Max;
+		Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k, i+X,j+y,k, Min, Max);
+		for (x = Min; x <= Max; x++)
+		{
+			d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+		}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
+	}
+
+	for (z = 1; z <= Stencil->Size; z++)
+	{
+		for (y = Stencil->YMax[s-z]; y > s-z; y--)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k+z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k+z, i+X,j-y,k+z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, d);
+		}
+		for (y = s-z; y > 0; y--)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j-y,k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j-y,k+z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j-y,k+z, i+X,j-y,k+z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,-y,z, +X,-y,z, d);
+		}
+
+		y = 0;
+		X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//		if (X < 0) continue;
+		Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j,k+z);
+		Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j,k+z);
+		Range->Ranges[Range->NumSlices].Min = Min;
+		Range->Ranges[Range->NumSlices].Max = Max;
+		Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j,k+z, i+X,j,k+z, Min, Max);
+		for (x = Min; x <= Max; x++)
+		{
+			d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+		}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
+
+		for (y = 1; y <= s-z; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(y) + STENCIL_MAP_Y(s-z)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k+z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
+		}
+		for (y = s-z+1; y <= Stencil->YMax[s-z]; y++)
+		{
+			X = Stencil->XMax[STENCIL_MAP_X(s-z) + STENCIL_MAP_Y(y)];
+//			if (X < 0) continue;
+			Min = rectangular_row_major_b_spline_ijk2idx(Grid, i-X,j+y,k+z);
+			Max = rectangular_row_major_b_spline_ijk2idx(Grid, i+X,j+y,k+z);
+			Range->Ranges[Range->NumSlices].Min = Min;
+			Range->Ranges[Range->NumSlices].Max = Max;
+			Range->NumSlices++;
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld)\t%04ld --> %04ld\n", i-X,j+y,k+z, i+X,j+y,k+z, Min, Max);
+			for (x = Min; x <= Max; x++)
+			{
+				d = sqrt((double)x*x+y*y+z*z);
+//				if (d < s)	{MyPoints++;}
+				MyPoints++;
+			}
+//printf("(%+03ld,%+03ld,%+03ld) --> (%+03ld,%+03ld,%+03ld) --> %f\n", -X,y,z, +X,y,z, d);
+		}
+	}
+
+d = 100.0*MyPoints/(double)TotalPoints;
+//printf("Percentage of points within sphere of radius %ld: %f, Total: %ld, Mine: %ld\n", s, d, TotalPoints, MyPoints);
+}
+
 void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, STENCIL* Stencil, GRID_RANGE* Range)
 {
 	//	Given a grid point index, return the *valid* grid point indices corresponding to the input grid point index.

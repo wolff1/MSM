@@ -49,25 +49,23 @@ void simulation_run(SIMULATION* Simulation)
 		}
 	}
 
-	printf("Energy: %+f\n", Simulation->Domain->Particles->U);
+	printf("\nEnergy: %+f\n", Simulation->Domain->Particles->U);
+/*
 	printf("Forces:\n");
 	for (i = 0; i < Simulation->Domain->Particles->N; i++)
 	{
 		printf("%+f\t%+f\t%+f\n", Simulation->Domain->Particles->f[i][0], Simulation->Domain->Particles->f[i][1], Simulation->Domain->Particles->f[i][2]);
 	}
+*/
 }
 
 void simulation_uninitialize(SIMULATION* Simulation)
 {
 	//	Free dynamically allocated memory
-//printf("before simulation_domain_uninit\n");
   	simulation_domain_uninitialize(Simulation->Domain);
-//printf("before dynfree(Simulation->Domain)\n");
 	dynfree(Simulation->Domain);
 
-//printf("before method_uninit\n");
 	method_uninitialize(Simulation->Method);
-//printf("before dynfree(Simulation->Method)\n");
 	dynfree(Simulation->Method);
 }
 

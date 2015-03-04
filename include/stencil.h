@@ -36,6 +36,9 @@ typedef struct
 	long			Size;	//	= zmax
 	long*			YMax;
 	long*			XMax;
+	long			Slices;
+	long*			YMax2;
+	long*			XMax2;
 	double*			Data;
 } STENCIL;
 
