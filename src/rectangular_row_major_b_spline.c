@@ -205,10 +205,12 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	Range->NumSlices = 0;
 	for (z = -Stencil->Size; z <= Stencil->Size; z++)
 	{
-		if (k-abs(z) < -Exp || k+abs(z) > kMax)	continue;
+//		if (k-abs(z) < -Exp || k+abs(z) > kMax)	continue;
+		if (k+z < -Exp || k+z > kMax)	continue;
 		for (y = -Stencil->YMax2[abs(z)]; y <= Stencil->YMax2[abs(z)]; y++)
 		{
-			if (j-abs(y) < -Exp || j+abs(y) > jMax) continue;
+//			if (j-abs(y) < -Exp || j+abs(y) > jMax) continue;
+			if (j+y < -Exp || j+y > jMax) continue;
 			X = Stencil->XMax2[STENCIL_MAP_X(MIN(abs(y),abs(z))) + STENCIL_MAP_Y(MAX(abs(z),abs(y)))];	//	Assumes y <= z
 			Range->Ranges[Range->NumSlices].Min = rectangular_row_major_b_spline_ijk2idx(Grid, MAX(i-X, -Exp),j+y,k+z);
 			Range->Ranges[Range->NumSlices].Max = rectangular_row_major_b_spline_ijk2idx(Grid, MIN(i+X, iMax),j+y,k+z);

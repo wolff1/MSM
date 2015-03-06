@@ -564,15 +564,31 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	GRID_RANGE			OuterRange;
 	GRID_RANGE			InnerRange;
 	long				MaxSlices = 0;
-	long				ii = 0;
-	long				jj = 0;
-	long				kk = 0;
+	long				i1 = 0;
+	long				j1 = 0;
+	long				k1 = 0;
+	long				i2 = 0;
+	long				j2 = 0;
+	long				k2 = 0;
 	long				m = 0;
 	long				n = 0;
 	long				i = 0;
 	long				j = 0;
+	long				Idx = 0;
+	double				ChargeGridValue = 0.0;
+	long				a = 0;
+	long				b = 0;
+	long				c = 0;
+	double				a_l = 1.0;
 
 	printf("\tMSM direct computation! Stencil Radius: %ld\n", Msm->itp->g2g->Size);
+
+	for (i = 0; i < ChargeGrid->Level; i++)
+	{
+		//	NOTE: Actual a_l = (2^Level)*a, this is 1/a_l
+		a_l *= 0.5;
+	}
+	a_l /= Msm->prm.a;
 
 	//	Ranges are arrays of length MaxSlices
 	MaxSlices = (*ChargeGrid->get_grid_points_all_max_slices)(ChargeGrid);
@@ -583,57 +599,39 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	MaxSlices = (2*(Msm->itp->g2g->Size)+1)*(2*(Msm->itp->g2g->Size)+1);
 //printf("Max Inner Slices = %ld\n", MaxSlices);
 	InnerRange.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices,sizeof(GRID_RANGE_MIN_MAX));
-/*
-	rectangular_row_major_b_spline_get_grid_points_stencil(ChargeGrid, rectangular_row_major_b_spline_ijk2idx(ChargeGrid,0,0,0), Msm->itp->g2g, &InnerRange);
-	for (MaxSlices = 0; MaxSlices < InnerRange.NumSlices; MaxSlices++)
-	{
-		printf("Slice %03ld: (%04ld, %04ld)\n", MaxSlices, InnerRange.Ranges[MaxSlices].Min, InnerRange.Ranges[MaxSlices].Max);
-	}
-*/
+
 	//	Create Potential Grid for <Level> --> Freed either in interpolate or prolongation
 	(*ChargeGrid->create_copy_grid_structure)(PotentialGrid, ChargeGrid);
 //printf("After grid structure copy!\n");
 
-printf("\n");
+//printf("\n");
 	for (m = 0; m < OuterRange.NumSlices; m++)
 	{
 		for (i = OuterRange.Ranges[m].Min; i <= OuterRange.Ranges[m].Max; i++)
 		{
-(*ChargeGrid->idx2ijk)(ChargeGrid, i, &ii, &jj, &kk);
-printf("%04ld - (%ld,%ld,%ld)\n", i, ii,jj,kk);
+			(*ChargeGrid->idx2ijk)(ChargeGrid, i, &i1, &j1, &k1);
+//printf("%04ld - (%ld,%ld,%ld)\n", i, i1,j1,k1);
 			(*ChargeGrid->get_grid_points_stencil)(ChargeGrid, i, Msm->itp->g2g, &InnerRange);
 			for (n = 0; n < InnerRange.NumSlices; n++)
 			{
 				for (j = InnerRange.Ranges[n].Min; j <= InnerRange.Ranges[n].Max; j++)
 				{
-(*ChargeGrid->idx2ijk)(ChargeGrid, j, &ii, &jj, &kk);
-printf("\t\t(%ld,%ld,%ld)\n", ii,jj,kk);
-//					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, Msm->itp->g2g[]*(*ChargeGrid->get_grid_point_value)(ChargeGrid,j));
+					(*ChargeGrid->idx2ijk)(ChargeGrid, j, &i2, &j2, &k2);
+//printf("\t\t(%ld,%ld,%ld)\n", ii,jj,kk);
+					Idx = 0;
+					SORT_RTN_STNCL_IDX(abs(i1-i2),abs(j1-j2),abs(k1-k2),a,b,c,Idx)
+					ChargeGridValue = (*ChargeGrid->get_grid_point_value)(ChargeGrid,j);
+printf("(%ld,%ld,%ld), (%ld,%ld,%ld), (%ld,%ld,%ld) -> %ld, %f\n", i1,j1,k1, i2,j2,k2, a,b,c, Idx, Msm->itp->g2g->Data[Idx]);
+					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, Msm->itp->g2g->Data[Idx]*ChargeGridValue*a_l);
 				}
-printf("\n");
+//printf("\t\t%ld -> %ld\n", n, InnerRange.Ranges[n].Max - InnerRange.Ranges[n].Min + 1);
+//printf("\n");
 			}
-scanf("%ld", &j);
+//scanf("%ld", &j);
 		}
 	}
-printf("\n");
+//printf("\n");
 
-/*
-	all_ranges = *all potential grid points*
-	for (m = 0; m < all_ranges.num; m++)
-	{
-		for (i = all_ranges[m].min; i <= all_ranges[m].max; i++)
-		{
-			stencil_ranges = *corresponding charge grid points* for grid point, i
-			for (n = 0; n < stencil_ranges.num; n++)
-			{
-				for (j = stencil_ranges[n].min; j <= stencil_ranges[n].max; j++)
-				{
-					potential_grid[i] += K(h(i,j))*charge_grid[j];
-				}
-			}
-		}
-	}
-*/
 	//	Free dynamically allocated memory
 	dynfree(OuterRange.Ranges);
 	dynfree(InnerRange.Ranges);
