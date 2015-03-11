@@ -41,6 +41,7 @@ void	rectangular_row_major_b_spline_initialize(void* Grid, SIMULATION_DOMAIN* Do
 	MyGrid->Nx = (long) 2*ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / (2*MyGrid->cmn.h)) + Expansion + 1;
 	MyGrid->Ny = (long) 2*ceil((Domain->MaximumCoordinates.y - Domain->MinimumCoordinates.y) / (2*MyGrid->cmn.h)) + Expansion + 1;
 	MyGrid->Nz = (long) 2*ceil((Domain->MaximumCoordinates.z - Domain->MinimumCoordinates.z) / (2*MyGrid->cmn.h)) + Expansion + 1;
+printf("Grid Level <%ld> (%ld, %ld, %ld)\n", MyGrid->cmn.Level, MyGrid->Nx, MyGrid->Ny, MyGrid->Nz);
 
 	MyGrid->Data = (double*) dynvec(MyGrid->Nx*MyGrid->Ny*MyGrid->Nz, sizeof(double));
 
@@ -264,7 +265,24 @@ void	rectangular_row_major_b_spline_create_finer_grid(void* FineGrid, void* Coar
 
 void	rectangular_row_major_b_spline_create_coarser_grid(void* CoarseGrid, void* FineGrid)
 {
-	//	FIXME
+	SIMULATION_DOMAIN		Domain;
+	short					Level = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->cmn.Level;
+	double					h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->cmn.h;
+	long					Nx = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->Nx;
+	long					Ny = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->Ny;
+	long					Nz = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->Nz;
+	short					Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->Expansion;
+
+	Domain.MinimumCoordinates.x = 0.0;
+	Domain.MinimumCoordinates.y = 0.0;
+	Domain.MinimumCoordinates.z = 0.0;
+
+	Domain.MaximumCoordinates.x = (double) h*(Nx - Exp - 1.0);
+	Domain.MaximumCoordinates.y = (double) h*(Ny - Exp - 1.0);
+	Domain.MaximumCoordinates.z = (double) h*(Nz - Exp - 1.0);
+
+	//	Initialize just like any other grid, except Nx,Ny,Nz will be set how we want them
+	grid_initialize(CoarseGrid, &Domain, Level+1, h/pow(2.0, Level), Exp);
 }
 
 void	rectangular_row_major_b_spline_uninitialize(void* Grid)

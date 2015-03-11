@@ -39,8 +39,8 @@ void msm_initialize(void* Method)
 	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
-	Msm->opt.IsN = 0;
-	Msm->opt.IsNLogN = 1;
+	Msm->opt.IsN = 1;
+	Msm->opt.IsNLogN = 0;
 	Msm->opt.GridType = 0;
 
 	//	Initialize INTERPOLANT
@@ -531,12 +531,11 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 {
 	//	INPUT:	fine grid
 	//	OUTPUT:	coarse grid
+	printf("\tMSM restriction!\n");
 
-	//	Create Coarse Grid for <Level> --> Freed either in direct or direct_top
-//	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
-//	grid_create_coarse_structure(?);
-
-	//	printf("\tMSM restriction!\n");
+	//	Create Coarse Grid --> Freed either in direct or direct_top
+//	grid_initialize(CoarseGrid, Domain, FineGrid->Level+1, Msm->h, Msm->prm.p);	//	doesn't align grids
+	(*FineGrid->create_coarser_grid)(CoarseGrid, FineGrid);
 /*
 	all_ranges = *all fine grid points*
 	for (m = 0; m < all_ranges.num; m++)
@@ -621,7 +620,7 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 					Idx = 0;
 					SORT_RTN_STNCL_IDX(abs(i1-i2),abs(j1-j2),abs(k1-k2),a,b,c,Idx)
 					ChargeGridValue = (*ChargeGrid->get_grid_point_value)(ChargeGrid,j);
-printf("(%ld,%ld,%ld), (%ld,%ld,%ld), (%ld,%ld,%ld) -> %ld, %f\n", i1,j1,k1, i2,j2,k2, a,b,c, Idx, Msm->itp->g2g->Data[Idx]);
+//printf("(%ld,%ld,%ld), (%ld,%ld,%ld), (%ld,%ld,%ld) -> %ld, %f\n", i1,j1,k1, i2,j2,k2, a,b,c, Idx, Msm->itp->g2g->Data[Idx]);
 					(*PotentialGrid->increment_grid_point_value)(PotentialGrid, i, Msm->itp->g2g->Data[Idx]*ChargeGridValue*a_l);
 				}
 //printf("\t\t%ld -> %ld\n", n, InnerRange.Ranges[n].Max - InnerRange.Ranges[n].Min + 1);
@@ -803,7 +802,7 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 {
 	//	INPUT:	coarse grid
 	//	OUTPUT:	fine grid
-//	printf("\tMSM prolongation!\n");
+	printf("\tMSM prolongation!\n");
 
 	//	Create Fine Grid for <Level> --> Freed either in interpolate or prolongation
 //	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
