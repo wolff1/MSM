@@ -161,10 +161,10 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 
 			msm_direct_top(Msm, /*IN*/ChargeGrid[Msm->prm.L-1], /*OUT*/PotentialGrid[Msm->prm.L-1]);
 
-			for (l = Msm->prm.L-1; l > 0; l--)	//	l is fine grid level
+			for (l = Msm->prm.L-2; l >= 0; l--)	//	l is fine grid level
 			{
-				msm_direct(Msm, /*IN*/ChargeGrid[l-1], /*OUT*/PotentialGrid[l-1]);
-				msm_prolongate(Msm, /*OUT*/PotentialGrid[l-1], /*IN*/PotentialGrid[l]);
+				msm_direct(Msm, /*IN*/ChargeGrid[l], /*OUT*/PotentialGrid[l]);
+				msm_prolongate(Msm, /*OUT*/PotentialGrid[l], /*IN*/PotentialGrid[l+1]);
 			}
 
 			msm_interpolate(Msm, Domain, /*IN*/ChargeGrid[0], /*IN*/PotentialGrid[0]);
@@ -534,7 +534,6 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	printf("\tMSM restriction!\n");
 
 	//	Create Coarse Grid --> Freed either in direct or direct_top
-//	grid_initialize(CoarseGrid, Domain, FineGrid->Level+1, Msm->h, Msm->prm.p);	//	doesn't align grids
 	(*FineGrid->create_coarser_grid)(CoarseGrid, FineGrid);
 /*
 	all_ranges = *all fine grid points*
@@ -803,10 +802,6 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	//	INPUT:	coarse grid
 	//	OUTPUT:	fine grid
 	printf("\tMSM prolongation!\n");
-
-	//	Create Fine Grid for <Level> --> Freed either in interpolate or prolongation
-//	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
-//	grid_create_fine_structure(?);
 
 /*
 	all_ranges = *all fine grid points*
