@@ -170,7 +170,36 @@ void	rectangular_row_major_b_spline_get_grid_points_all(void* Grid, GRID_RANGE* 
 
 void	rectangular_row_major_b_spline_get_grid_points_coarse(void* Grid, long FineGridIndex, GRID_RANGE* Range)
 {
-	//	FIXME
+	long				i = 0;
+	long				j = 0;
+	long				k = 0;
+//	long				x = 0;
+	long				y = 0;
+	long				z = 0;
+	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion >> 1;
+//	double				h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->cmn.h;
+	long				iMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nx - Exp - 1;
+	long				jMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny - Exp - 1;
+	long				kMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nz - Exp - 1;
+	long				X = Exp;
+
+	//	GridIndex -> (i,j,k)
+	rectangular_row_major_b_spline_idx2ijk(Grid, FineGridIndex, &i, &j, &k);
+//printf("GridIndex: %04ld (%04ld, %04ld, %04ld) --> %ld slices\n", GridIndex, i,j,k, Slices);
+
+	Range->NumSlices = 0;
+	for (z = -Exp; z <= Exp; z++)
+	{
+		if (k+z < -Exp || k+z > kMax)	continue;
+		for (y = -Exp; y <= Exp; y++)
+		{
+			if (j+y < -Exp || j+y > jMax) continue;
+//FIXME - THIS NEEDS TO RETURN INDICES FOR THE ***COARSE GRID***
+			Range->Ranges[Range->NumSlices].Min = rectangular_row_major_b_spline_ijk2idx(Grid, MAX(i-X, -Exp),j+y,k+z);
+			Range->Ranges[Range->NumSlices].Max = rectangular_row_major_b_spline_ijk2idx(Grid, MIN(i+X, iMax),j+y,k+z);
+			Range->NumSlices++;
+		}
+	}
 }
 
 void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long GridIndex, STENCIL* Stencil, GRID_RANGE* Range)
@@ -178,11 +207,11 @@ void	rectangular_row_major_b_spline_get_grid_points_stencil(void* Grid, long Gri
 	long				i = 0;
 	long				j = 0;
 	long				k = 0;
-	long				x = 0;
+//	long				x = 0;
 	long				y = 0;
 	long				z = 0;
 	short				Exp = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Expansion >> 1;
-	double				h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->cmn.h;
+//	double				h = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->cmn.h;
 	long				iMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nx - Exp - 1;
 	long				jMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Ny - Exp - 1;
 	long				kMax = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) Grid)->Nz - Exp - 1;

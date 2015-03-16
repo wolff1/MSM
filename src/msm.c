@@ -529,6 +529,24 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 
 void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 {
+	GRID_RANGE			OuterRange;
+	GRID_RANGE			InnerRange;
+	long				MaxSlices = 0;
+	long				m = 0;
+	long				n = 0;
+	long				i = 0;
+	long				j = 0;
+	double				Val = 0.0;
+	long				x = 0;
+	long				y = 0;
+	long				z = 0;
+	long				i1 = 0;
+	long				j1 = 0;
+	long				k1 = 0;
+	long				i2 = 0;
+	long				j2 = 0;
+	long				k2 = 0;
+
 	//	INPUT:	fine grid
 	//	OUTPUT:	coarse grid
 	printf("\tMSM restriction!\n");
@@ -552,6 +570,38 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 		}
 	}
 */
+
+	//	Ranges are arrays of length MaxSlices
+	MaxSlices = (*FineGrid->get_grid_points_all_max_slices)(FineGrid);
+	OuterRange.Ranges = (GRID_RANGE_MIN_MAX*) dynvec(MaxSlices, sizeof(GRID_RANGE_MIN_MAX));
+	InnerRange.Ranges = (GRID_RANGE_MIN_MAX*) dynvec((Msm->prm.p+1)*(Msm->prm.p+1), sizeof(GRID_RANGE_MIN_MAX));	//	FIXME
+
+	(*FineGrid->get_grid_points_all)(FineGrid, &OuterRange);
+	for (m = 0; m < OuterRange.NumSlices; m++)
+	{
+		for (i = OuterRange.Ranges[m].Min; i <= OuterRange.Ranges[m].Max; i++)
+		{
+//			(*FineGrid->idx2ijk)(FineGrid, i, &i1, &j1, &k1);
+			(*FineGrid->get_grid_points_coarse)(FineGrid, i, &InnerRange);
+			for (n = 0; n < InnerRange.NumSlices; n++)
+			{
+				for (j = InnerRange.Ranges[n].Min; j <= InnerRange.Ranges[n].Max; j++)
+				{
+//					(*CoarseGrid->idx2ijk)(CoarseGrid, j, &i2, &j2, &k2);
+					x = abs(i1-i2);
+					y = abs(j1-j2);
+					z = abs(k1-k2);
+//					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*FineGrid->get_grid_point_value)(FineGrid, i);
+//printf("(i,j) = (%ld,%ld)\n", i,j);
+//					(*CoarseGrid->increment_grid_point_value)(CoarseGrid, j, Val);
+				}
+			}
+		}
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(OuterRange.Ranges);
+	dynfree(InnerRange.Ranges);
 }
 
 void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
