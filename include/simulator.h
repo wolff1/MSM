@@ -28,6 +28,7 @@ typedef struct
 //	EXTERNAL Methods
 void simulator_initialize(SIMULATOR* Simulator);
 void simulator_run(SIMULATOR* Simulator);
+void simulator_examine_results(SIMULATOR* Simulator);
 void simulator_uninitialize(SIMULATOR* Simulator);
 
 //	INTERNAL Methods

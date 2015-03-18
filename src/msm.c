@@ -245,7 +245,7 @@ void msm_short_range(MSM* Msm, SIMULATION_DOMAIN* Domain)
 	short		EdgeCaseCount = 0;
 	long		MyIdx = 0;
 
-	printf("\tMSM short range computation!\n");
+//	printf("\tMSM short range computation!\n");
 
 	//	Set up number of bins in each dimension (NOTE: MATLAB code has floor() + 1)
 	XBinCount = (long) ceil((Domain->MaximumCoordinates.x - Domain->MinimumCoordinates.x) / a) + 1;	// NOTE: +1 b/c if r[n] is at max, then it is in bin # XBinCount, NOT XBinCount-1
@@ -441,7 +441,7 @@ void msm_anterpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, short Level, GRID* Gri
 	long						ThisIdx = 0;
 	double						ThisValue = 0.0;
 
-	printf("\tMSM anterpolation!\n");
+//	printf("\tMSM anterpolation!\n");
 
 	//	Create Grid <Level> --> Freed in interpolation
 	grid_initialize(Grid, Domain, Level, Msm->prm.h, Msm->prm.p);
@@ -547,12 +547,12 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	long				j2 = 0;
 	long				k2 = 0;
 
-	long				mymin = 2*Msm->prm.p;
-	long				mymax = 0;
+//	long				mymin = 2*Msm->prm.p;
+//	long				mymax = 0;
 
 	//	INPUT:	fine grid
 	//	OUTPUT:	coarse grid
-	printf("\tMSM restriction!\n");
+//	printf("\tMSM restriction!\n");
 
 	//	Create Coarse Grid --> Freed either in direct or direct_top
 	(*FineGrid->create_coarser_grid)(CoarseGrid, FineGrid);
@@ -595,8 +595,8 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 					x = abs(i1-2*i2);
 					y = abs(j1-2*j2);
 					z = abs(k1-2*k2);
-					mymin = MIN(mymin, MIN(x, MIN(y,z)));
-					mymax = MAX(mymax, MAX(x, MAX(y,z)));
+//					mymin = MIN(mymin, MIN(x, MIN(y,z)));
+//					mymax = MAX(mymax, MAX(x, MAX(y,z)));
 					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*FineGrid->get_grid_point_value)(FineGrid, i);
 //printf("(i,j) = (%ld,%ld)\n", i,j);
 					(*CoarseGrid->increment_grid_point_value)(CoarseGrid, j, Val);
@@ -605,7 +605,7 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 		}
 	}
 //printf("Max inner range slices: %ld\n", (Msm->prm.p+1)*(Msm->prm.p+1));
-printf("p = %hd: (%ld, %ld)\n", Msm->prm.p, mymin, mymax);
+//printf("p = %hd: (%ld, %ld)\n", Msm->prm.p, mymin, mymax);
 
 	//	Free dynamically allocated memory
 	dynfree(OuterRange.Ranges);
@@ -637,7 +637,7 @@ void msm_direct(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	long				c = 0;
 	double				a_l = 1.0;
 
-	printf("\tMSM direct computation! Stencil Radius: %ld\n", Msm->itp->g2g->Size);
+//	printf("\tMSM direct computation! Stencil Radius: %ld\n", Msm->itp->g2g->Size);
 
 	for (i = 0; i < ChargeGrid->Level; i++)
 	{
@@ -726,7 +726,7 @@ void msm_direct_top(MSM* Msm, GRID* ChargeGrid, GRID* PotentialGrid)
 	long			MinIdx = 220;
 	double			a_l = 1.0;
 
-	printf("\tMSM direct computation (top-level)!\n");
+//	printf("\tMSM direct computation (top-level)!\n");
 
 	for (i = 0; i < ChargeGrid->Level; i++)
 	{
@@ -875,12 +875,12 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	long				j2 = 0;
 	long				k2 = 0;
 
-	long				mymin = 2*Msm->prm.p;
-	long				mymax = 0;
+//	long				mymin = 2*Msm->prm.p;
+//	long				mymax = 0;
 
 	//	INPUT:	coarse grid
 	//	OUTPUT:	fine grid
-	printf("\tMSM prolongation!\n");
+//	printf("\tMSM prolongation!\n");
 
 /*
 	all_ranges = *all fine grid points*
@@ -920,8 +920,8 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 					x = abs(i1-2*i2);
 					y = abs(j1-2*j2);
 					z = abs(k1-2*k2);
-					mymin = MIN(mymin, MIN(x, MIN(y,z)));
-					mymax = MAX(mymax, MAX(x, MAX(y,z)));
+//					mymin = MIN(mymin, MIN(x, MIN(y,z)));
+//					mymax = MAX(mymax, MAX(x, MAX(y,z)));
 //					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*FineGrid->get_grid_point_value)(FineGrid, i);
 					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*CoarseGrid->get_grid_point_value)(CoarseGrid, j);
 //printf("(i,j) = (%ld,%ld)\n", i,j);
@@ -932,7 +932,7 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 		}
 	}
 //printf("Max inner range slices: %ld\n", (Msm->prm.p+1)*(Msm->prm.p+1));
-printf("p = %hd: (%ld, %ld)\n", Msm->prm.p, mymin, mymax);
+//printf("p = %hd: (%ld, %ld)\n", Msm->prm.p, mymin, mymax);
 
 	//	Free dynamically allocated memory
 	dynfree(OuterRange.Ranges);
@@ -982,7 +982,7 @@ void msm_interpolate(MSM* Msm, SIMULATION_DOMAIN* Domain, GRID* ChargeGrid, GRID
 	double						Fy = 0.0;
 	double						Fz = 0.0;
 
-	printf("\tMSM interpolation! Level<%hd>\n", ChargeGrid->Level);
+//	printf("\tMSM interpolation! Level<%hd>\n", ChargeGrid->Level);
 /*
 	E = 0.5*q_0'*e_0;
 

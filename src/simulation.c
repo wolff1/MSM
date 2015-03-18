@@ -47,10 +47,11 @@ void simulation_run(SIMULATION* Simulation)
 			//	Resize K
 			(*Simulation->Method->preprocess)(Simulation->Method, Simulation->Domain->Radius);
 		}
+//	FIXME - Write out start/stop file information
 	}
 
-	printf("\nEnergy: %+f\n", Simulation->Domain->Particles->U);
 /*
+	printf("\nEnergy: %+f\n", Simulation->Domain->Particles->U);
 	printf("Forces:\n");
 	for (i = 0; i < Simulation->Domain->Particles->N; i++)
 	{

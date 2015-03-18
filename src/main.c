@@ -264,6 +264,7 @@ void test_simulator(void)
 
 	simulator_initialize(MySimulator);
 	simulator_run(MySimulator);
+	simulator_examine_results(MySimulator);
 	simulator_uninitialize(MySimulator);
 
 	dynfree(MySimulator);

@@ -74,7 +74,7 @@ void simulator_run(SIMULATOR* Simulator)
 	{
 		printf("Which method type (NAIVE=0,MSM=1) is method #%hd: ", i);
 		scanf("%hd", &SelectedMethod);
-
+//	FIXME - ADD SOMETHING FOR METHOD OPTIONS
 		for (j = 0; j < Simulator->NumDomains; j++)
 		{
 			printf("Apply method <%hd> to domain <%s>? [0|1]: ", i, Simulator->Domains[j]->Name);
@@ -140,6 +140,16 @@ void simulator_run(SIMULATOR* Simulator)
 	simulator_run_simulations(Simulator);
 }
 
+void simulator_examine_results(SIMULATOR* Simulator)
+{
+	printf("These are your results, jerk-face!\n");
+
+	//	at most one naive method per domain (run if no file or file is more than a day old)
+	//	for each domain, compare the different methods to naive and each other
+	//		energy errors (abs / rel)
+	//		force errors (abs / rel)
+}
+
 void simulator_uninitialize(SIMULATOR* Simulator)
 {
 	//	Free dynamically allocated memorys
@@ -188,6 +198,7 @@ void simulator_run_simulations(SIMULATOR* Simulator)
 		printf("Simulator running Simulation <%hd>\n", i);
 		simulator_run_simulation(Simulator, i);
 	}
+	printf("\n");
 }
 
 void simulator_run_simulation(SIMULATOR* Simulator, short Index)
