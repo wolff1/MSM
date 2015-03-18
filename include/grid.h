@@ -38,7 +38,7 @@ typedef struct
 	void		(*idx2ijk)(void*, long, long*, long*, long*);
 	long		(*get_grid_points_all_max_slices)(void*);
 	void		(*get_grid_points_all)(void*, GRID_RANGE*);
-	void		(*get_grid_points_coarse)(void*, long, GRID_RANGE*);
+	void		(*get_grid_points_coarse)(void*, long, void*, GRID_RANGE*);
 	void		(*get_grid_points_stencil)(void*, long, STENCIL*, GRID_RANGE*);
 	void		(*get_grid_points_stencil_top)(void*, long, GRID_RANGE*);
 	double		(*get_grid_point_value)(void*, long);
