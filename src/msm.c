@@ -547,6 +547,9 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	long				j2 = 0;
 	long				k2 = 0;
 
+	long				mymin = 2*Msm->prm.p;
+	long				mymax = 0;
+
 	//	INPUT:	fine grid
 	//	OUTPUT:	coarse grid
 	printf("\tMSM restriction!\n");
@@ -589,9 +592,11 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 				for (j = InnerRange.Ranges[n].Min; j <= InnerRange.Ranges[n].Max; j++)
 				{
 					(*CoarseGrid->idx2ijk)(CoarseGrid, j, &i2, &j2, &k2);
-					x = abs(i1-i2);
-					y = abs(j1-j2);
-					z = abs(k1-k2);
+					x = abs(i1-2*i2);
+					y = abs(j1-2*j2);
+					z = abs(k1-2*k2);
+					mymin = MIN(mymin, MIN(x, MIN(y,z)));
+					mymax = MAX(mymax, MAX(x, MAX(y,z)));
 					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*FineGrid->get_grid_point_value)(FineGrid, i);
 //printf("(i,j) = (%ld,%ld)\n", i,j);
 					(*CoarseGrid->increment_grid_point_value)(CoarseGrid, j, Val);
@@ -600,6 +605,7 @@ void msm_restrict(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 		}
 	}
 //printf("Max inner range slices: %ld\n", (Msm->prm.p+1)*(Msm->prm.p+1));
+printf("p = %hd: (%ld, %ld)\n", Msm->prm.p, mymin, mymax);
 
 	//	Free dynamically allocated memory
 	dynfree(OuterRange.Ranges);
@@ -869,6 +875,9 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 	long				j2 = 0;
 	long				k2 = 0;
 
+	long				mymin = 2*Msm->prm.p;
+	long				mymax = 0;
+
 	//	INPUT:	coarse grid
 	//	OUTPUT:	fine grid
 	printf("\tMSM prolongation!\n");
@@ -908,9 +917,11 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 				for (j = InnerRange.Ranges[n].Min; j <= InnerRange.Ranges[n].Max; j++)
 				{
 					(*CoarseGrid->idx2ijk)(CoarseGrid, j, &i2, &j2, &k2);
-					x = abs(i1-i2);
-					y = abs(j1-j2);
-					z = abs(k1-k2);
+					x = abs(i1-2*i2);
+					y = abs(j1-2*j2);
+					z = abs(k1-2*k2);
+					mymin = MIN(mymin, MIN(x, MIN(y,z)));
+					mymax = MAX(mymax, MAX(x, MAX(y,z)));
 //					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*FineGrid->get_grid_point_value)(FineGrid, i);
 					Val = Msm->itp->g2fg[x] * Msm->itp->g2fg[y] * Msm->itp->g2fg[z] * (*CoarseGrid->get_grid_point_value)(CoarseGrid, j);
 //printf("(i,j) = (%ld,%ld)\n", i,j);
@@ -921,6 +932,7 @@ void msm_prolongate(MSM* Msm, GRID* FineGrid, GRID* CoarseGrid)
 		}
 	}
 //printf("Max inner range slices: %ld\n", (Msm->prm.p+1)*(Msm->prm.p+1));
+printf("p = %hd: (%ld, %ld)\n", Msm->prm.p, mymin, mymax);
 
 	//	Free dynamically allocated memory
 	dynfree(OuterRange.Ranges);
