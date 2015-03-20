@@ -13,6 +13,8 @@ void msm_initialize(void* Method)
 	void*		Ptr = NULL;
 	MSM*		Msm = (MSM*) Method;
 
+	char		tmp[2];
+
 	assert(Msm != NULL);
 //	printf("Initializing MSM!\n");
 
@@ -39,8 +41,14 @@ void msm_initialize(void* Method)
 	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
-	Msm->opt.IsN = 1;
-	Msm->opt.IsNLogN = 0;
+printf("Is N?: ");
+scanf("%s", tmp);
+Msm->opt.IsN = (char) atoi(tmp);
+//	Msm->opt.IsN = 1;
+printf("Is NLogN?: ");
+scanf("%s", tmp);
+Msm->opt.IsNLogN = (char) atoi(tmp);
+//	Msm->opt.IsNLogN = 0;
 	Msm->opt.GridType = 0;
 
 	//	Initialize INTERPOLANT
@@ -152,6 +160,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		//	COMPUTE LONG RANGE COMPONENT, O(N)
 		if (Msm->opt.IsN)
 		{
+printf("MSM O(N) VERSION\n");
 			msm_anterpolate(Msm, Domain, 0, /*OUT*/ChargeGrid[0]);
 
 			for (l = 1; l < Msm->prm.L; l++)	//	l is fine grid level
@@ -173,6 +182,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
 		if (Msm->opt.IsNLogN)
 		{
+printf("MSM O(NLOGN) VERSION\n");
 //FIXME: Save off U and f in case O(N) method was also performed. U and f need to be re-initialized before proceeding here!
 			//	Intermediate Grid Level(s)
 			for (l = 0; l < Msm->prm.L-1; l++)

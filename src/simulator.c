@@ -86,6 +86,7 @@ void simulator_run(SIMULATOR* Simulator)
 				{
 					if (SimulationMatrix[k][i] == Simulator->Domains[j]->Radius)
 					{
+printf("FOUND A MATCH!\n");
 						//	We found another domain with the same size for the same method!
 						FoundMatch = 1;
 						break;
@@ -142,12 +143,77 @@ void simulator_run(SIMULATOR* Simulator)
 
 void simulator_examine_results(SIMULATOR* Simulator)
 {
-	printf("These are your results, jerk-face!\n");
+	double		abso = 0.0;
+	double		rela = 0.0;
+	long		i = 0;
+//	printf("These are your results, jerk-face!\n");
 
 	//	at most one naive method per domain (run if no file or file is more than a day old)
 	//	for each domain, compare the different methods to naive and each other
 	//		energy errors (abs / rel)
 	//		force errors (abs / rel)
+/*
+	Simulator->Simulations[0]->Domain->Particles->U;	//	Exact ENERGY value, scalar
+	Simulator->Simulations[0]->Domain->Particles->f;	//	Exact FORCE vector, Nx3 vector
+	Simulator->Simulations[1]->Domain->Particles->U;	//	MSM O(n) ENERGY value, scalar
+	Simulator->Simulations[1]->Domain->Particles->f;	//	MSM O(n) FORCE vector, Nx3 vector
+	Simulator->Simulations[2]->Domain->Particles->U;	//	MSM O(nlogn) ENERGY value, scalar
+	Simulator->Simulations[2]->Domain->Particles->f;	//	MSM O(nlogn) FORCE vector, Nx3 vector
+
+	printf("%e, %e, %e\n",	Simulator->Simulations[0]->Domain->Particles->U,
+							Simulator->Simulations[1]->Domain->Particles->U,
+							Simulator->Simulations[2]->Domain->Particles->U);
+*/
+	printf("0: %32.16f\n",	Simulator->Simulations[0]->Domain->Particles->U);
+	abso = fabs(Simulator->Simulations[1]->Domain->Particles->U - Simulator->Simulations[0]->Domain->Particles->U);
+	rela = abso / fabs(Simulator->Simulations[0]->Domain->Particles->U);
+	printf("ENERGY: abs O(n): %e, rel O(n): %e\n", abso, rela);
+	abso = 0.0;
+	for (i = 0; i < Simulator->Simulations[0]->Domain->Particles->N; i++)
+	{
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][0] - Simulator->Simulations[1]->Domain->Particles->f[i][0]));
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][1] - Simulator->Simulations[1]->Domain->Particles->f[i][1]));
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][2] - Simulator->Simulations[1]->Domain->Particles->f[i][2]));
+	}
+	printf("FORCE: MAX abs O(n): %e, rel O(n): %e\n", abso, -1.0);
+	printf("\n");
+
+	printf("1: %32.16f\n",	Simulator->Simulations[1]->Domain->Particles->U);
+	abso = fabs(Simulator->Simulations[2]->Domain->Particles->U - Simulator->Simulations[0]->Domain->Particles->U);
+	rela = abso / fabs(Simulator->Simulations[0]->Domain->Particles->U);
+	printf("ENERGY: abs O(nlogn): %e, rel O(n): %e\n", abso, rela);
+	abso = 0.0;
+	for (i = 0; i < Simulator->Simulations[0]->Domain->Particles->N; i++)
+	{
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][0] - Simulator->Simulations[2]->Domain->Particles->f[i][0]));
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][1] - Simulator->Simulations[2]->Domain->Particles->f[i][1]));
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][2] - Simulator->Simulations[2]->Domain->Particles->f[i][2]));
+	}
+	printf("FORCE: MAX abs O(nlong): %e, rel O(n): %e\n", abso, -1.0);
+	printf("\n");
+
+	printf("2: %32.16f\n",	Simulator->Simulations[2]->Domain->Particles->U);
+	abso = fabs(Simulator->Simulations[1]->Domain->Particles->U - Simulator->Simulations[2]->Domain->Particles->U);
+	rela = abso / fabs(Simulator->Simulations[0]->Domain->Particles->U);
+	printf("ENERGY: abs O(n) vs O(nlogn): %e, rel: %e\n", abso, rela);
+	abso = 0.0;
+	for (i = 0; i < Simulator->Simulations[0]->Domain->Particles->N; i++)
+	{
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[1]->Domain->Particles->f[i][0] - Simulator->Simulations[2]->Domain->Particles->f[i][0]));
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[1]->Domain->Particles->f[i][1] - Simulator->Simulations[2]->Domain->Particles->f[i][1]));
+		abso = MAX(abso,
+					fabs(Simulator->Simulations[1]->Domain->Particles->f[i][2] - Simulator->Simulations[2]->Domain->Particles->f[i][2]));
+	}
+	printf("FORCE: MAX abs O(n) vs O(nlogn): %e, rel: %e\n", abso, -1.0);
+	printf("\n");
 }
 
 void simulator_uninitialize(SIMULATOR* Simulator)
