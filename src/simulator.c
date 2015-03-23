@@ -145,7 +145,12 @@ void simulator_examine_results(SIMULATOR* Simulator)
 {
 	double		abso = 0.0;
 	double		rela = 0.0;
+
 	long		i = 0;
+	long		j = 0;
+	FILE		*fp = NULL;
+	char		FileName[256];
+
 //	printf("These are your results, jerk-face!\n");
 
 	//	at most one naive method per domain (run if no file or file is more than a day old)
@@ -164,6 +169,35 @@ void simulator_examine_results(SIMULATOR* Simulator)
 							Simulator->Simulations[1]->Domain->Particles->U,
 							Simulator->Simulations[2]->Domain->Particles->U);
 */
+	//	Write Energy scalar and Force vector(s) to file
+	for (i = 0; i < Simulator->NumSimulations; i++)
+	{
+		sprintf(FileName, "%s_Sim%03ld_Results.txt", Simulator->Simulations[i]->Domain->Name, i);
+		printf("Writing file: %s\n", FileName);
+
+		//	Open file to write results
+		if ((fp = fopen(FileName, "w")) != NULL)
+		{
+			printf("%ld\n", Simulator->Simulations[i]->Domain->Particles->N);
+			fprintf(fp, "%ld\n", Simulator->Simulations[i]->Domain->Particles->N);
+			printf("%.16f\n", Simulator->Simulations[i]->Domain->Particles->U);
+			fprintf(fp, "%.16f\n", Simulator->Simulations[i]->Domain->Particles->U);
+			for (j = 0; j < Simulator->Simulations[i]->Domain->Particles->N; j++)
+			{
+				printf("%.16f %.16f %.16f\n", Simulator->Simulations[i]->Domain->Particles->f[j][0],
+											  Simulator->Simulations[i]->Domain->Particles->f[j][1],
+											  Simulator->Simulations[i]->Domain->Particles->f[j][2]);
+				fprintf(fp, "%.16f %.16f %.16f\n", Simulator->Simulations[i]->Domain->Particles->f[j][0],
+												   Simulator->Simulations[i]->Domain->Particles->f[j][1],
+												   Simulator->Simulations[i]->Domain->Particles->f[j][2]);
+			}
+
+			//	Close file
+			fclose(fp);
+		}
+	}
+
+/*
 	printf("0: %32.16f\n",	Simulator->Simulations[0]->Domain->Particles->U);
 	abso = fabs(Simulator->Simulations[1]->Domain->Particles->U - Simulator->Simulations[0]->Domain->Particles->U);
 	rela = abso / fabs(Simulator->Simulations[0]->Domain->Particles->U);
@@ -214,6 +248,7 @@ void simulator_examine_results(SIMULATOR* Simulator)
 	}
 	printf("FORCE: MAX abs O(n) vs O(nlogn): %e, rel: %e\n", abso, -1.0);
 	printf("\n");
+*/
 }
 
 void simulator_uninitialize(SIMULATOR* Simulator)
