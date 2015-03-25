@@ -169,6 +169,7 @@ void simulator_examine_results(SIMULATOR* Simulator)
 							Simulator->Simulations[1]->Domain->Particles->U,
 							Simulator->Simulations[2]->Domain->Particles->U);
 */
+/*
 	//	Write Energy scalar and Force vector(s) to file
 	for (i = 0; i < Simulator->NumSimulations; i++)
 	{
@@ -196,8 +197,8 @@ void simulator_examine_results(SIMULATOR* Simulator)
 			fclose(fp);
 		}
 	}
+*/
 
-/*
 	printf("0: %32.16f\n",	Simulator->Simulations[0]->Domain->Particles->U);
 	abso = fabs(Simulator->Simulations[1]->Domain->Particles->U - Simulator->Simulations[0]->Domain->Particles->U);
 	rela = abso / fabs(Simulator->Simulations[0]->Domain->Particles->U);
@@ -218,7 +219,7 @@ void simulator_examine_results(SIMULATOR* Simulator)
 	printf("1: %32.16f\n",	Simulator->Simulations[1]->Domain->Particles->U);
 	abso = fabs(Simulator->Simulations[2]->Domain->Particles->U - Simulator->Simulations[0]->Domain->Particles->U);
 	rela = abso / fabs(Simulator->Simulations[0]->Domain->Particles->U);
-	printf("ENERGY: abs O(nlogn): %e, rel O(n): %e\n", abso, rela);
+	printf("ENERGY: abs O(nlogn): %e, rel O(nlogn): %e\n", abso, rela);
 	abso = 0.0;
 	for (i = 0; i < Simulator->Simulations[0]->Domain->Particles->N; i++)
 	{
@@ -229,7 +230,7 @@ void simulator_examine_results(SIMULATOR* Simulator)
 		abso = MAX(abso,
 					fabs(Simulator->Simulations[0]->Domain->Particles->f[i][2] - Simulator->Simulations[2]->Domain->Particles->f[i][2]));
 	}
-	printf("FORCE: MAX abs O(nlong): %e, rel O(n): %e\n", abso, -1.0);
+	printf("FORCE: MAX abs O(nlong): %e, rel O(nlogn): %e\n", abso, -1.0);
 	printf("\n");
 
 	printf("2: %32.16f\n",	Simulator->Simulations[2]->Domain->Particles->U);
@@ -248,7 +249,7 @@ void simulator_examine_results(SIMULATOR* Simulator)
 	}
 	printf("FORCE: MAX abs O(n) vs O(nlogn): %e, rel: %e\n", abso, -1.0);
 	printf("\n");
-*/
+
 }
 
 void simulator_uninitialize(SIMULATOR* Simulator)
