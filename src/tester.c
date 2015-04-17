@@ -919,7 +919,7 @@ void driverC1(void)
 //	print_nesting_coefficientsC1();
 	phi_nesting_testC1();
 }
-
+#endif
 //	**** EVEN_POWERS ****
 void gamma_test_all(void)
 {
@@ -930,6 +930,10 @@ void gamma_test_all(void)
 	double*		F = NULL;
 	double*		DF = NULL;
 	double*		c = NULL;
+
+	size_t		Size = 0;
+	void*		Init = NULL;
+	void*		Ptr = NULL;
 
 	/**************************************************************************/
 	// Get number of data points to record
@@ -952,25 +956,37 @@ void gamma_test_all(void)
 	assert(DF != NULL);
 	assert(c != NULL);
 
+	//	Initialize SOFTENER
+	if (1)
+	{	//	EVEN_POWERS softening (aka "Taylor")
+		Size = sizeof(EVEN_POWERS);
+		Init = &even_powers_initialize;
+	}
+	Ptr = (SOFTENER*) dynmem(Size);
+	softener_initialize(Ptr, Init, k);
+
 	/**************************************************************************/
 	// Test softener
-	gamma_init(k, c);
+//	gamma_init(k, c);
 	for (i = 0; i <= samples; i++)
 	{
 		X[i] = (2.0*(double)i/(double)samples);
-		F[i] = _gamma(c, k, X[i], &DF[i]);
+//		F[i] = _gamma(c, k, X[i], &DF[i]);
 /*
 		printf("%02d:\tgamma(%f) = %f\tgamma'(%f) = %f\n",
 				i, X[i], F[i], X[i], DF[i]);
 */
 	}
+
+	((SOFTENER*)Ptr)->soften(Ptr, samples+1, X, F, DF);
+
 	//	Show Gamma(x)
 	printf("Plotting gamma(x)  for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
 	plot2d(samples, X, F);
 	//	Show Gamma'(x)
 	printf("Plotting gamma'(x) for %2.1f <= x <= %2.1f...\t", X[0], X[samples]);
 	plot2d(samples, X, DF);
-
+#if 0
 	/**************************************************************************/
 	// Test Theta* - short range splitting function
 	for (i = 1; i <= samples; i++)
@@ -1022,7 +1038,7 @@ void gamma_test_all(void)
 	//	Show gamma'(x)
 	printf("Plotting gamma'(x) for %2.1f <= x <= %2.1f...\t", X[1], X[samples]);
 	plot2d(samples-1, &X[1], &DF[1]);
-
+#endif
 	/**************************************************************************/
 	// Free allocated memory
 	dynfree(c);
@@ -1030,7 +1046,7 @@ void gamma_test_all(void)
 	dynfree(F);
 	dynfree(DF);
 }
-
+#if 0
 void plot_splittings(int samples, int nlev, double a, double d,
 						double* X, double** F)
 {

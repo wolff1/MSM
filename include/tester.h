@@ -20,6 +20,9 @@ tester.h -
 #include "polynomial.h"
 #include "softener.h"
 #include "stencil.h"
+
+void gamma_test_all(void);
+
 /*
 //	**** POLYNOMIAL ****
 void test_mpoly(void);
