@@ -12,14 +12,15 @@ void test_mkl_MMM(void);
 void test_msm_preprocessing(void);
 void test_simulator(void);
 void test_parallel_division(void);
-
+/*
 #include "tester.h"
 int main(int argc, char* argv[])
 {
 	gamma_test_all();
 	return 0;
 }
-/*
+*/
+
 int main(int argc, char* argv[])
 {
 	int				choice = 1;
@@ -71,7 +72,7 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-*/
+
 /*
 int main(int argc, char* argv[])
 {
