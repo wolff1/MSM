@@ -6,14 +6,14 @@ msm.c -
 #include "msm.h"
 
 //	EXTERNAL Methods
-void msm_initialize(void* Method)
+void msm_initialize(void* Method, void* Parameters, void* Options)
 {
 	size_t		Size = 0;
 	void*		Init = NULL;
 	void*		Ptr = NULL;
 	MSM*		Msm = (MSM*) Method;
 
-	char		tmp[2];
+	//char		tmp[2];
 
 	assert(Msm != NULL);
 //	printf("Initializing MSM!\n");
@@ -28,11 +28,11 @@ void msm_initialize(void* Method)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-	Msm->prm.a = 12.5;
+	//Msm->prm.a = 12.5;
 	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
-	Msm->prm.p = 4;
-	Msm->prm.k = 4;
+	//Msm->prm.p = 4;
+	//Msm->prm.k = 4;
 	Msm->prm.mu = 10;
 	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
 	Msm->prm.L = 2;		//	# of grids
@@ -41,14 +41,14 @@ void msm_initialize(void* Method)
 	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
-printf("Is N?: ");
-scanf("%s", tmp);
-Msm->opt.IsN = (char) atoi(tmp);
-//	Msm->opt.IsN = 1;
-printf("Is NLogN?: ");
-scanf("%s", tmp);
-Msm->opt.IsNLogN = (char) atoi(tmp);
-//	Msm->opt.IsNLogN = 0;
+//printf("Is N?: ");
+//scanf("%s", tmp);
+//Msm->opt.IsN = (char) atoi(tmp);
+	Msm->opt.IsN = 1;
+//printf("Is NLogN?: ");
+//scanf("%s", tmp);
+//Msm->opt.IsNLogN = (char) atoi(tmp);
+	Msm->opt.IsNLogN = 0;
 	Msm->opt.GridType = 0;
 
 	//	Initialize INTERPOLANT

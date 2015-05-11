@@ -6,8 +6,8 @@ naive.c -
 #include "naive.h"
 
 //	EXTERNAL Methods
-void naive_initialize(void* Method)
-{
+void naive_initialize(void* Method, void* Parameters, void* Options)
+{	//	NOTE: Parameters and Options not used in NAIVE method
 	NAIVE*		Naive = (NAIVE*) Method;
 
 	assert(Naive != NULL);

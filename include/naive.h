@@ -19,7 +19,7 @@ typedef struct
 } NAIVE;
 
 //	EXTERNAL Methods
-void naive_initialize(void* Naive);
+void naive_initialize(void* Naive, void* Parameters, void* Options);
 void naive_copy(void* Dst, void* Src);
 void naive_preprocess(void* Naive, double DomainRadius);
 void naive_evaluate(void* Naive, SIMULATION_DOMAIN* Domain);

@@ -5,7 +5,7 @@ method.c - Routines for the generic METHOD class
 
 #include "method.h"
 
-void method_initialize(void* Method, void* Init(void*), short Id)
+void method_initialize(void* Method, void* Init(void*,void*,void*), short Id, void* Parameters, void* Options)
 {
 	assert(Method != NULL);
 
@@ -15,7 +15,7 @@ void method_initialize(void* Method, void* Init(void*), short Id)
 
 	//	Initialize Method by calling function pointer to its initialize routine
 	//		-> This routine MUST set the other function pointers appropriately!
-	(*Init)(Method);
+	(*Init)(Method, Parameters, Options);
 }
 
 void method_copy(METHOD* Dst, METHOD* Src)

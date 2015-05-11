@@ -107,7 +107,7 @@ printf("FOUND A MATCH!\n");
 						MethodSize = sizeof(NAIVE);
 					}
 					Method = (METHOD*) dynmem(MethodSize);
-					method_initialize((void*)Method, Init, NumMethods);
+					method_initialize((void*)Method, Init, NumMethods, NULL, NULL);	//	FIXME: 2 NULLs will not work!
 					Simulator->Methods[NumMethods] = Method;
 
 					//	None of the previous domains have the same size as the current one
@@ -139,6 +139,135 @@ printf("FOUND A MATCH!\n");
 
 	//	Then, run the simulations
 	simulator_run_simulations(Simulator);
+}
+
+void simulator_run_water(SIMULATOR* Simulator)
+{
+	short					i = 0;
+	size_t					MethodSize = 0;
+	void*					Init = NULL;
+	SIMULATION_DOMAIN*		SimulationDomain = NULL;
+	METHOD*					Method = NULL;
+	SIMULATION*				Simulation = NULL;
+	char					DomainFileName[128] = {0};
+	short					NumMethods = 0;
+	short					NumSims = 0;
+
+	short					pa = 4;
+	short					pb = 10;
+	short					plen = (pb-pa)/2 + 1;
+	short					p = 0;
+
+	short					axa = 5;
+	short					axb = 20;
+	short					axlen = axb-axa+1;
+	short					ax = 0;
+
+	double					a = 0.0;
+
+	//	Setup simulation domain (water sphere)
+	Simulator->NumDomains = 1;
+	Simulator->Domains = (SIMULATION_DOMAIN**) dynmem(Simulator->NumDomains*sizeof(SIMULATION_DOMAIN*));
+	for (i = 0; i < Simulator->NumDomains; i++)
+	{
+		//	Which domain? (consider filename to be unique)
+		//		Create and initialize domain?
+		printf("Enter the file name for domain #%hd: ", i);
+		scanf("%s", DomainFileName);
+
+		SimulationDomain = (SIMULATION_DOMAIN*) dynmem(sizeof(SIMULATION_DOMAIN));
+		simulation_domain_initialize(SimulationDomain, i, DomainFileName);
+		Simulator->Domains[i] = SimulationDomain;
+	}
+
+	//	Set up methods and simulations ("simulation" is application of method to simulation domain)
+	Simulator->NumMethods = plen*axlen + 1;
+	Simulator->NumSimulations = Simulator->NumDomains * Simulator->NumMethods;
+	Simulator->Methods = (METHOD**) dynmem(Simulator->NumSimulations*sizeof(METHOD*));
+	Simulator->Simulations = (SIMULATION**) dynmem(Simulator->NumSimulations*sizeof(SIMULATION*));
+	NumMethods = 0;
+	NumSims = 0;
+
+	//	Set up NAIVE simulation
+
+	//	Set up MSM simulation(s)
+
+/*
+	for (i = 0; i < Simulator->NumMethods; i++)
+	{
+		printf("Which method type (NAIVE=0,MSM=1) is method #%hd: ", i);
+		scanf("%hd", &SelectedMethod);
+//	FIXME - ADD SOMETHING FOR METHOD OPTIONS
+		for (j = 0; j < Simulator->NumDomains; j++)
+		{
+			//	Allocate a new Method because the one we need does not exist
+			switch (SelectedMethod)
+			{
+			case 1:		//	MSM
+				Init = &msm_initialize;
+				MethodSize = sizeof(MSM);
+
+				//	Initialize MSM parameters
+				Msm->prm.a = 12.5;
+				Msm->prm.h = 2.5;
+				Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
+				Msm->prm.p = 4;
+				Msm->prm.k = 4;
+				Msm->prm.mu = 10;
+				Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
+				Msm->prm.L = 2;		//	# of grids
+
+				//	Initialize MSM options
+				Msm->opt.ComputeExclusions = 1;
+				Msm->opt.ComputeLongRange = 1;
+				Msm->opt.ComputeShortRange = 1;
+				Msm->opt.IsN = 1;
+				Msm->opt.IsNLogN = 0;
+				Msm->opt.GridType = 0;
+
+				break;
+			default:	//	NAIVE
+				Init = &naive_initialize;
+				MethodSize = sizeof(NAIVE);
+			}
+			Method = (METHOD*) dynmem(MethodSize);
+			method_initialize((void*)Method, Init, NumMethods, Parameters, Options);
+			Simulator->Methods[NumMethods] = Method;
+
+			//	None of the previous domains have the same size as the current one
+			Simulator->Methods[NumMethods]->preprocess(Simulator->Methods[NumMethods], Simulator->Domains[j]->Radius);
+			NumMethods++;
+
+			//	Create simulation (these could happen in parallel with OpenMP)
+			Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
+			simulation_initialize(Simulation, Simulator->Domains[j], Simulator->Methods[NumMethods-1], NumSims, 1);	//FIXME <-- 1 is TimeSteps
+			Simulator->Simulations[NumSims] = Simulation;
+			NumSims++;
+		}
+	}
+
+	Simulator->NumSimulations = NumSims;
+	Simulator->NumMethods = NumMethods;
+
+	//	Then, run the simulations
+	simulator_run_simulations(Simulator);
+*/
+	for (p = pa; p <= pb; p+=2)
+	{
+		for (ax = axa; ax <= axb; ax++)
+		{
+			a = ax*1.0;
+
+			//	Build simulations
+			printf("p = %02hd, a = %f\n", p, a);
+		}
+		printf("\n");
+	}
+
+	//	Run simulations
+
+	//	Write output file
+
 }
 
 void simulator_examine_results(SIMULATOR* Simulator)

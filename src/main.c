@@ -12,6 +12,7 @@ void test_mkl_MMM(void);
 void test_msm_preprocessing(void);
 void test_simulator(void);
 void test_parallel_division(void);
+void test_simulator_water(void);
 /*
 #include "tester.h"
 int main(int argc, char* argv[])
@@ -31,6 +32,7 @@ int main(int argc, char* argv[])
 		printf("* 1 - Test MSM Preprocessing     *\n");
 		printf("* 2 - Simulator                  *\n");
 		printf("* 3 - Parallel division of procs *\n");
+		printf("* 4 - Simulation Water(s)        *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -50,6 +52,10 @@ int main(int argc, char* argv[])
 
 			case 3:
 				test_parallel_division();
+				break;
+
+			case 4:
+				test_simulator_water();
 				break;
 
 			case 0:	// Exit
@@ -256,7 +262,7 @@ void test_msm_preprocessing(void)
 
 	//	Initialize method
 	Ptr = (METHOD*) dynmem(Size);
-	method_initialize(Ptr, Init, 0);
+	method_initialize(Ptr, Init, 0, NULL, NULL);	//	FIXME: 2 NULLs will not work!
 	Method = (METHOD*) Ptr;
 
 	//	Run simulation
@@ -375,6 +381,18 @@ void test_parallel_division(void)
 	P{i}/((32*pi/3)*(alpha)^3)  = (P{i-1}-P{i})/(2*(p+1)^3) +   (P{i}-P{i+1})/((4*pi/3)*(alpha)^3)
 	P{i}/(D{i})  = (P{i-1}-P{i})/(R{i+1}+Pr{i}) +   (P{i}-P{i+1})/(D{i+1})
 */
+}
+
+void test_simulator_water(void)
+{
+	SIMULATOR*	MySimulator = (SIMULATOR*) dynmem(sizeof(SIMULATOR));
+
+	simulator_initialize(MySimulator);
+	simulator_run_water(MySimulator);
+//	simulator_examine_results(MySimulator);
+	simulator_uninitialize(MySimulator);
+
+	dynfree(MySimulator);
 }
 
 //void test_parallel_division(void)

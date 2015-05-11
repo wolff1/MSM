@@ -38,7 +38,7 @@ typedef struct
 } MSM;
 
 //	EXTERNAL Methods
-void msm_initialize(void* Msm);
+void msm_initialize(void* Msm, void* Parameters, void* Options);
 void msm_copy(void* Dst, void* Src);
 void msm_preprocess(void* Msm, double DomainRadius);
 void msm_evaluate(void* Msm, SIMULATION_DOMAIN* Domain);
