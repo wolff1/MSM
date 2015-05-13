@@ -152,6 +152,8 @@ void simulator_run_water(SIMULATOR* Simulator)
 	char					DomainFileName[128] = {0};
 	short					NumMethods = 0;
 	short					NumSims = 0;
+	MSM_PARAMETERS			Parameters;
+	MSM_OPTIONS				Options;
 
 	short					pa = 4;
 	short					pb = 10;
@@ -164,6 +166,8 @@ void simulator_run_water(SIMULATOR* Simulator)
 	short					ax = 0;
 
 	double					a = 0.0;
+	double					U = 0.0;
+	double					Up = 0.0;
 
 	//	Setup simulation domain (water sphere)
 	Simulator->NumDomains = 1;
@@ -189,85 +193,82 @@ void simulator_run_water(SIMULATOR* Simulator)
 	NumSims = 0;
 
 	//	Set up NAIVE simulation
+printf("\t\tSETTING UP NAIVE SIMULATION\n");
+	Method = (METHOD*) dynmem(sizeof(NAIVE));
+	method_initialize((void*)Method, (void*)&naive_initialize, NumMethods, NULL, NULL);
+	Simulator->Methods[NumMethods] = Method;
+
+	//	None of the previous domains have the same size as the current one
+	Simulator->Methods[NumMethods]->preprocess(Simulator->Methods[NumMethods], Simulator->Domains[0]->Radius);
+	NumMethods++;
+
+	//	Create simulation (these could happen in parallel with OpenMP)
+	Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
+	simulation_initialize(Simulation, Simulator->Domains[0], Simulator->Methods[NumMethods-1], NumSims, 1);	//FIXME <-- 1 is TimeSteps
+	Simulator->Simulations[NumSims] = Simulation;
+	NumSims++;
+
+	//	Initialize MSM parameters
+	Parameters.h = 2.5;
+	Parameters.mu = 25;
+	Parameters.D = 0.0;	//	Not known until preprocess/evaluate
+	Parameters.L = 2;		//	# of grids
+
+	//	Initialize MSM options
+	Options.ComputeExclusions = 1;
+	Options.ComputeLongRange = 1;
+	Options.ComputeShortRange = 1;
+	Options.IsN = 1;
+	Options.IsNLogN = 0;
+	Options.GridType = 0;
 
 	//	Set up MSM simulation(s)
-
-/*
-	for (i = 0; i < Simulator->NumMethods; i++)
-	{
-		printf("Which method type (NAIVE=0,MSM=1) is method #%hd: ", i);
-		scanf("%hd", &SelectedMethod);
-//	FIXME - ADD SOMETHING FOR METHOD OPTIONS
-		for (j = 0; j < Simulator->NumDomains; j++)
-		{
-			//	Allocate a new Method because the one we need does not exist
-			switch (SelectedMethod)
-			{
-			case 1:		//	MSM
-				Init = &msm_initialize;
-				MethodSize = sizeof(MSM);
-
-				//	Initialize MSM parameters
-				Msm->prm.a = 12.5;
-				Msm->prm.h = 2.5;
-				Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
-				Msm->prm.p = 4;
-				Msm->prm.k = 4;
-				Msm->prm.mu = 10;
-				Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
-				Msm->prm.L = 2;		//	# of grids
-
-				//	Initialize MSM options
-				Msm->opt.ComputeExclusions = 1;
-				Msm->opt.ComputeLongRange = 1;
-				Msm->opt.ComputeShortRange = 1;
-				Msm->opt.IsN = 1;
-				Msm->opt.IsNLogN = 0;
-				Msm->opt.GridType = 0;
-
-				break;
-			default:	//	NAIVE
-				Init = &naive_initialize;
-				MethodSize = sizeof(NAIVE);
-			}
-			Method = (METHOD*) dynmem(MethodSize);
-			method_initialize((void*)Method, Init, NumMethods, Parameters, Options);
-			Simulator->Methods[NumMethods] = Method;
-
-			//	None of the previous domains have the same size as the current one
-			Simulator->Methods[NumMethods]->preprocess(Simulator->Methods[NumMethods], Simulator->Domains[j]->Radius);
-			NumMethods++;
-
-			//	Create simulation (these could happen in parallel with OpenMP)
-			Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
-			simulation_initialize(Simulation, Simulator->Domains[j], Simulator->Methods[NumMethods-1], NumSims, 1);	//FIXME <-- 1 is TimeSteps
-			Simulator->Simulations[NumSims] = Simulation;
-			NumSims++;
-		}
-	}
-
-	Simulator->NumSimulations = NumSims;
-	Simulator->NumMethods = NumMethods;
-
-	//	Then, run the simulations
-	simulator_run_simulations(Simulator);
-*/
 	for (p = pa; p <= pb; p+=2)
 	{
 		for (ax = axa; ax <= axb; ax++)
 		{
-			a = ax*1.0;
+			//	Initialize MSM parameters
+			Parameters.a = ax*1.0;
+			Parameters.alpha = Parameters.a / Parameters.h;
+			Parameters.p = p;
+			Parameters.k = p;
+printf("\t\tSETTING UP MSM SIMULATION WITH p = %02hd AND a = %f\n", Parameters.p, Parameters.a);
 
-			//	Build simulations
-			printf("p = %02hd, a = %f\n", p, a);
+			Method = (METHOD*) dynmem(sizeof(MSM));
+			method_initialize((void*)Method, (void*)&msm_initialize, NumMethods, (void*)&Parameters, (void*)&Options);
+			Simulator->Methods[NumMethods] = Method;
+
+			//	None of the previous domains have the same size as the current one
+			Simulator->Methods[NumMethods]->preprocess(Simulator->Methods[NumMethods], Simulator->Domains[0]->Radius);
+			NumMethods++;
+
+			//	Create simulation (these could happen in parallel with OpenMP)
+			Simulation = (SIMULATION*) dynmem(sizeof(SIMULATION));
+			simulation_initialize(Simulation, Simulator->Domains[0], Simulator->Methods[NumMethods-1], NumSims, 1);	//FIXME <-- 1 is TimeSteps
+			Simulator->Simulations[NumSims] = Simulation;
+			NumSims++;
 		}
-		printf("\n");
+printf("\n");
 	}
 
 	//	Run simulations
+	Simulator->NumSimulations = NumSims;
+	Simulator->NumMethods = NumMethods;
+	simulator_run_simulations(Simulator);
 
 	//	Write output file
-
+	NumSims = 0;
+	U = Simulator->Simulations[NumSims++]->Domain->Particles->U;
+	printf("NAIVE:\t\t\t\t%f\n\n", U);
+	for (p = pa; p <= pb; p+=2)
+	{
+		for (ax = axa; ax <= axb; ax++)
+		{
+			Up = Simulator->Simulations[NumSims++]->Domain->Particles->U;
+			printf("MSM(p=%02hd,a=%f):\t\t%f\t%e\n", p, ax*1.0, Up, fabs((U-Up)/U));
+		}
+		printf("\n");
+	}
 }
 
 void simulator_examine_results(SIMULATOR* Simulator)

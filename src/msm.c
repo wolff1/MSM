@@ -28,6 +28,7 @@ void msm_initialize(void* Method, void* Parameters, void* Options)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
+/*
 	//Msm->prm.a = 12.5;
 	Msm->prm.h = 2.5;
 	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
@@ -36,8 +37,11 @@ void msm_initialize(void* Method, void* Parameters, void* Options)
 	Msm->prm.mu = 10;
 	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
 	Msm->prm.L = 2;		//	# of grids
+*/
+	memcpy(&(Msm->prm), Parameters, sizeof(MSM_PARAMETERS));
 
 	//	Initialize MSM options
+/*
 	Msm->opt.ComputeExclusions = 1;
 	Msm->opt.ComputeLongRange = 1;
 	Msm->opt.ComputeShortRange = 1;
@@ -50,6 +54,8 @@ void msm_initialize(void* Method, void* Parameters, void* Options)
 //Msm->opt.IsNLogN = (char) atoi(tmp);
 	Msm->opt.IsNLogN = 0;
 	Msm->opt.GridType = 0;
+*/
+	memcpy(&(Msm->opt), Options, sizeof(MSM_OPTIONS));
 
 	//	Initialize INTERPOLANT
 	Ptr = NULL;
@@ -160,7 +166,7 @@ void msm_evaluate(void* Method, SIMULATION_DOMAIN* Domain)
 		//	COMPUTE LONG RANGE COMPONENT, O(N)
 		if (Msm->opt.IsN)
 		{
-printf("MSM O(N) VERSION\n");
+//printf("MSM O(N) VERSION\n");
 			msm_anterpolate(Msm, Domain, 0, /*OUT*/ChargeGrid[0]);
 
 			for (l = 1; l < Msm->prm.L; l++)	//	l is fine grid level
@@ -182,7 +188,7 @@ printf("MSM O(N) VERSION\n");
 		//	COMPUTE LONG RANGE COMPONENT, O(N*log(N))
 		if (Msm->opt.IsNLogN)
 		{
-printf("MSM O(NLOGN) VERSION\n");
+//printf("MSM O(NLOGN) VERSION\n");
 //FIXME: Save off U and f in case O(N) method was also performed. U and f need to be re-initialized before proceeding here!
 			//	Intermediate Grid Level(s)
 			for (l = 0; l < Msm->prm.L-1; l++)
