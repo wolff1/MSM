@@ -258,14 +258,28 @@ printf("\n");
 
 	//	Write output file
 	NumSims = 0;
-	U = Simulator->Simulations[NumSims++]->Domain->Particles->U;
+	U = Simulator->Simulations[NumSims]->Domain->Particles->U;
+/*
+	max_force = 0.0;
+	for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
+	{
+		f = Simulator->Simulations[NumSims]->Domain->Particles->f[i];
+		m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
+		norm_f = sqrt(f[0]*f[0] + f[1]*f[1]+ f[2]*f[2])/m;
+		if (norm_f > max_force)
+			max_force = norm_f;
+	}
+*/
 	printf("NAIVE:\t\t\t\t%f\n\n", U);
+	NumSims++;
+
 	for (p = pa; p <= pb; p+=2)
 	{
 		for (ax = axa; ax <= axb; ax++)
 		{
-			Up = Simulator->Simulations[NumSims++]->Domain->Particles->U;
+			Up = Simulator->Simulations[NumSims]->Domain->Particles->U;
 			printf("MSM(p=%02hd,a=%f):\t\t%f\t%e\n", p, ax*1.0, Up, fabs((U-Up)/U));
+			NumSims++;
 		}
 		printf("\n");
 	}
