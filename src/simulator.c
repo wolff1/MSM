@@ -143,7 +143,7 @@ printf("FOUND A MATCH!\n");
 
 void simulator_run_water(SIMULATOR* Simulator)
 {
-	short					i = 0;
+	long					i = 0;
 	size_t					MethodSize = 0;
 	void*					Init = NULL;
 	SIMULATION_DOMAIN*		SimulationDomain = NULL;
@@ -168,6 +168,15 @@ void simulator_run_water(SIMULATOR* Simulator)
 	double					a = 0.0;
 	double					U = 0.0;
 	double					Up = 0.0;
+	double					*f = NULL;
+	double					fx = 0.0;
+	double					fy = 0.0;
+	double					fz = 0.0;
+	double					m = 0.0;
+	double					max_force = 0.0;
+	double					max_force_err = 0.0;
+	double					norm_f = 0.0;
+	double					norm_df = 0.0;
 
 	//	Setup simulation domain (water sphere)
 	Simulator->NumDomains = 1;
@@ -259,26 +268,42 @@ printf("\n");
 	//	Write output file
 	NumSims = 0;
 	U = Simulator->Simulations[NumSims]->Domain->Particles->U;
-/*
+
 	max_force = 0.0;
 	for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
 	{
 		f = Simulator->Simulations[NumSims]->Domain->Particles->f[i];
 		m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
-		norm_f = sqrt(f[0]*f[0] + f[1]*f[1]+ f[2]*f[2])/m;
+		norm_f = sqrt((f[0]*f[0] + f[1]*f[1] + f[2]*f[2])/m);
 		if (norm_f > max_force)
 			max_force = norm_f;
 	}
-*/
-	printf("NAIVE:\t\t\t\t%f\n\n", U);
+
+	printf("NAIVE:\t\t%+f\n\n", U);
 	NumSims++;
 
+	printf("MSM:\n");
 	for (p = pa; p <= pb; p+=2)
 	{
+		printf("p = %02hd\n", p);
 		for (ax = axa; ax <= axb; ax++)
 		{
+			printf("  a = %03.1f", ax*1.0);
 			Up = Simulator->Simulations[NumSims]->Domain->Particles->U;
-			printf("MSM(p=%02hd,a=%f):\t\t%f\t%e\n", p, ax*1.0, Up, fabs((U-Up)/U));
+
+			max_force_err = 0.0;
+			for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
+			{
+				f = Simulator->Simulations[0]->Domain->Particles->f[i];
+				fx = f[0] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][0];
+				fy = f[1] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][1];
+				fz = f[2] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][2];
+				m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
+				norm_df = sqrt((fx*fx + fy*fy + fz*fz)/m);
+				if (norm_df > max_force_err)
+					max_force_err = norm_df;
+			}
+			printf("\t%+f, %+e, %+e, %+e\n", Up, U-Up, fabs((U-Up)/U), max_force_err / max_force);
 			NumSims++;
 		}
 		printf("\n");
