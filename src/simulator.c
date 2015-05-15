@@ -178,6 +178,8 @@ void simulator_run_water(SIMULATOR* Simulator)
 	double					norm_f = 0.0;
 	double					norm_df = 0.0;
 
+	FILE*					fp = NULL;
+
 	//	Setup simulation domain (water sphere)
 	Simulator->NumDomains = 1;
 	Simulator->Domains = (SIMULATION_DOMAIN**) dynmem(Simulator->NumDomains*sizeof(SIMULATION_DOMAIN*));
@@ -265,48 +267,76 @@ printf("\n");
 	Simulator->NumMethods = NumMethods;
 	simulator_run_simulations(Simulator);
 
-	//	Write output file
-	NumSims = 0;
-	U = Simulator->Simulations[NumSims]->Domain->Particles->U;
-
-	max_force = 0.0;
-	for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
+//	Open and write output file
+	if ((fp = fopen("E:/Projects/git/msm/vs2010/results.txt", "w")) != NULL)
 	{
-		f = Simulator->Simulations[NumSims]->Domain->Particles->f[i];
-		m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
-		norm_f = sqrt((f[0]*f[0] + f[1]*f[1] + f[2]*f[2])/m);
-		if (norm_f > max_force)
-			max_force = norm_f;
-	}
+		NumSims = 0;
+		U = Simulator->Simulations[NumSims]->Domain->Particles->U;
 
-	printf("NAIVE:\t\t%+f\n\n", U);
-	NumSims++;
-
-	printf("MSM:\n");
-	for (p = pa; p <= pb; p+=2)
-	{
-		printf("p = %02hd\n", p);
-		for (ax = axa; ax <= axb; ax++)
+		max_force = 0.0;
+		for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
 		{
-			printf("  a = %03.1f", ax*1.0);
-			Up = Simulator->Simulations[NumSims]->Domain->Particles->U;
-
-			max_force_err = 0.0;
-			for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
-			{
-				f = Simulator->Simulations[0]->Domain->Particles->f[i];
-				fx = f[0] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][0];
-				fy = f[1] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][1];
-				fz = f[2] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][2];
-				m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
-				norm_df = sqrt((fx*fx + fy*fy + fz*fz)/m);
-				if (norm_df > max_force_err)
-					max_force_err = norm_df;
-			}
-			printf("\t%+f, %+e, %+e, %+e\n", Up, U-Up, fabs((U-Up)/U), max_force_err / max_force);
-			NumSims++;
+			f = Simulator->Simulations[NumSims]->Domain->Particles->f[i];
+			m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
+			norm_f = sqrt((f[0]*f[0] + f[1]*f[1] + f[2]*f[2])/m);
+			if (norm_f > max_force)
+				max_force = norm_f;
 		}
-		printf("\n");
+
+	//	printf("NAIVE:\t\t%+f\n\n", U);
+		NumSims++;
+
+	//	printf("MSM:\n");
+		for (p = pa; p <= pb; p+=2)
+		{
+	//		printf("p = %02hd\n", p);
+			fprintf(fp, "# p = %hd\n", p);
+			fprintf(fp, "#%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+				10, "Atoms",
+				10, "Approx",
+				10, "Split",
+				10, "Cut-off",
+				20, "Energy Err (abs)",
+				20, "Energy Err (rel)",
+				20, "Force Err (rel)",
+				15, "Time (Setup)",
+				15, "Time (Eval)");
+			for (ax = axa; ax <= axb; ax++)
+			{
+	//			printf("  a = %03.1f", ax*1.0);
+				Up = Simulator->Simulations[NumSims]->Domain->Particles->U;
+
+				max_force_err = 0.0;
+				for (i = 0; i < Simulator->Simulations[NumSims]->Domain->Particles->N; i++)
+				{
+					f = Simulator->Simulations[0]->Domain->Particles->f[i];
+					fx = f[0] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][0];
+					fy = f[1] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][1];
+					fz = f[2] - Simulator->Simulations[NumSims]->Domain->Particles->f[i][2];
+					m = Simulator->Simulations[NumSims]->Domain->Particles->m[i];
+					norm_df = sqrt((fx*fx + fy*fy + fz*fz)/m);
+					if (norm_df > max_force_err)
+						max_force_err = norm_df;
+				}
+	//			printf("\t%+f, %+e, %+e, %+e\n", Up, U-Up, fabs((U-Up)/U), max_force_err / max_force);
+				fprintf(fp, " %*ld%*s%*s%+*f%+*e%+*e%+*e%+*f%+*f\n",
+					10, Simulator->Simulations[NumSims]->Domain->Particles->N,
+					10, "",//FIXME
+					10, "",//FIXME
+					10, ax*1.0,
+					20, U-Up,
+					20, fabs((U-Up)/U),
+					20, max_force_err / max_force,
+					15, 0.0,
+					15, 0.0);
+				NumSims++;
+			}
+	//		printf("\n");
+			fprintf(fp, "\n");
+		}
+
+		//	Close the file
+		fclose(fp);
 	}
 }
 
