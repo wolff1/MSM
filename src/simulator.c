@@ -268,7 +268,8 @@ printf("\n");
 	simulator_run_simulations(Simulator);
 
 //	Open and write output file
-	if ((fp = fopen("E:/Projects/git/msm/vs2010/results.txt", "w")) != NULL)
+//	if ((fp = fopen("E:/Projects/git/msm/vs2010/results.txt", "w")) != NULL)
+	if ((fp = fopen("C:/Users/matt/git/msm/vs2010/results.txt", "w")) != NULL)
 	{
 		NumSims = 0;
 		U = Simulator->Simulations[NumSims]->Domain->Particles->U;
@@ -321,8 +322,8 @@ printf("\n");
 	//			printf("\t%+f, %+e, %+e, %+e\n", Up, U-Up, fabs((U-Up)/U), max_force_err / max_force);
 				fprintf(fp, " %*ld%*s%*s%+*f%+*e%+*e%+*e%+*f%+*f\n",
 					10, Simulator->Simulations[NumSims]->Domain->Particles->N,
-					10, "",//FIXME
-					10, "",//FIXME
+					10, "x ",//FIXME
+					10, "x ",//FIXME
 					10, ax*1.0,
 					20, U-Up,
 					20, fabs((U-Up)/U),
