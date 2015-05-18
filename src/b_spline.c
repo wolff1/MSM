@@ -486,7 +486,7 @@ void b_spline_compute_omega_prime(B_SPLINE* Bs)
 	// Solve bi-infinite linear system involving B^2(E) and C(E)
     b_spline_convert_delta2_to_shifts(p-2, B2, B2E);
     bibst_lss(-1, pow(2.0,-53), p-1, B2E, p-2, p-2, CE, mu+1, c);
-
+printf("\n");display_vector_d(c, mu+1);
 	// use solution, c, to find (\delta^2)^{p/2} \sum c_m E^m in E basis
 	pd[p_2] = 1.0;
 	b_spline_convert_delta2_to_shifts(p_2,pd,pE);
@@ -516,7 +516,7 @@ void b_spline_compute_omega_prime(B_SPLINE* Bs)
 
 	//	Set B-spline object to point to newly computed omega' values
 	Bs->omegap = omegap;
-printf("\n");display_vector_d(Bs->omegap, p_2+mu+1);
+//printf("\n");display_vector_d(Bs->omegap, p_2+mu+1);
 
 	// Free dynamically allocated memory
 	dynfree(B);
