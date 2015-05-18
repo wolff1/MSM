@@ -516,7 +516,7 @@ void b_spline_compute_omega_prime(B_SPLINE* Bs)
 
 	//	Set B-spline object to point to newly computed omega' values
 	Bs->omegap = omegap;
-//	display_vector_d(Bs->omegap, p_2+mu+1);
+printf("\n");display_vector_d(Bs->omegap, p_2+mu+1);
 
 	// Free dynamically allocated memory
 	dynfree(B);

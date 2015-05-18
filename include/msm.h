@@ -58,6 +58,8 @@ void msm_exclude(MSM* Msm, SIMULATION_DOMAIN* Domain);
 void msm_short_range_bin_to_bin(MSM* Msm, SIMULATION_DOMAIN* Domain, long* Next, long Particle1, long Particle2, long MaxIterationCount);
 void msm_short_range_compute_self(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long x, long y, long z);
 void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long* First, long* Next, long* ParticlesPerBin, long XBinCount, long YBinCount, long x, long y, long z, long l, long m, long n);
+void msm_parameters_input(MSM_PARAMETERS* Parameters);
+void msm_options_input(MSM_OPTIONS* Options);
 
 //	INTERNAL TESTING Method Prototypes
 void msm_short_range_naive(MSM* Msm, SIMULATION_DOMAIN* Domain);

@@ -28,34 +28,24 @@ void msm_initialize(void* Method, void* Parameters, void* Options)
 	Msm->cmn.uninitialize = &msm_uninitialize;
 
 	//	Initialize MSM parameters
-/*
-	//Msm->prm.a = 12.5;
-	Msm->prm.h = 2.5;
-	Msm->prm.alpha = Msm->prm.a / Msm->prm.h;
-	//Msm->prm.p = 4;
-	//Msm->prm.k = 4;
-	Msm->prm.mu = 10;
-	Msm->prm.D = 0.0;	//	Not known until preprocess/evaluate
-	Msm->prm.L = 2;		//	# of grids
-*/
-	memcpy(&(Msm->prm), Parameters, sizeof(MSM_PARAMETERS));
+	if (Parameters != NULL)
+	{
+		memcpy(&(Msm->prm), Parameters, sizeof(MSM_PARAMETERS));
+	}
+	else
+	{
+		msm_parameters_input(&(Msm->prm));
+	}
 
 	//	Initialize MSM options
-/*
-	Msm->opt.ComputeExclusions = 1;
-	Msm->opt.ComputeLongRange = 1;
-	Msm->opt.ComputeShortRange = 1;
-//printf("Is N?: ");
-//scanf("%s", tmp);
-//Msm->opt.IsN = (char) atoi(tmp);
-	Msm->opt.IsN = 1;
-//printf("Is NLogN?: ");
-//scanf("%s", tmp);
-//Msm->opt.IsNLogN = (char) atoi(tmp);
-	Msm->opt.IsNLogN = 0;
-	Msm->opt.GridType = 0;
-*/
-	memcpy(&(Msm->opt), Options, sizeof(MSM_OPTIONS));
+	if (Options != NULL)
+	{
+		memcpy(&(Msm->opt), Options, sizeof(MSM_OPTIONS));
+	}
+	else
+	{
+		msm_options_input(&(Msm->opt));
+	}
 
 	//	Initialize INTERPOLANT
 	Ptr = NULL;
@@ -1441,6 +1431,93 @@ void msm_short_range_compute_neighbor(MSM* Msm, SIMULATION_DOMAIN* Domain, long*
 	dynfree(R);
 	dynfree(I);
 	dynfree(J);
+}
+
+void msm_parameters_input(MSM_PARAMETERS* Parameters)
+{
+/*
+typedef struct
+{
+	double		a;			//	Cut-off distance
+	double		h;			//	Finest grid spacing
+	double		alpha;		//	a/h
+	short		p;			//	Gives order of interpolation accuracy
+	short		k;			//	Gives degree of continuity for softening function
+	short		mu;			//	Gives number of terms in series expansion for B-spline interpolant
+	double		D;			//	Size of the domain
+	short		L;			//	Number of *grids* used in the method
+} MSM_PARAMETERS;
+*/
+	printf("\nPlease enter the folowing MSM PARAMETERS:\n");
+
+	printf("a: ");
+	scanf("%lf", &Parameters->a);
+
+	printf("h: ");
+	scanf("%lf", &Parameters->h);
+
+	Parameters->alpha = Parameters->a / Parameters->h;
+
+	printf("p: ");
+	scanf("%hd", &Parameters->p);
+
+	printf("k: ");
+	scanf("%hd", &Parameters->k);
+
+	printf("mu: ");
+	scanf("%hd", &Parameters->mu);
+
+	Parameters->D = 0.0;
+
+	printf("L: ");
+	scanf("%hd", &Parameters->L);
+}
+
+void msm_options_input(MSM_OPTIONS* Options)
+{
+/*
+typedef struct
+{
+	char		ComputeShortRange;
+	char		ComputeLongRange;
+	char		ComputeExclusions;
+	char		IsN;
+	char		IsNLogN;
+	char		GridType;
+} MSM_OPTIONS;
+*/
+/*
+	Msm->opt.ComputeExclusions = 1;
+	Msm->opt.ComputeLongRange = 1;
+	Msm->opt.ComputeShortRange = 1;
+//printf("Is N?: ");
+//scanf("%s", tmp);
+//Msm->opt.IsN = (char) atoi(tmp);
+	Msm->opt.IsN = 1;
+//printf("Is NLogN?: ");
+//scanf("%s", tmp);
+//Msm->opt.IsNLogN = (char) atoi(tmp);
+	Msm->opt.IsNLogN = 0;
+	Msm->opt.GridType = 0;
+*/
+	printf("\nPlease enter the following MSM OPTIONS:\n");
+
+	printf("Short Range? (0 or 1): ");
+	scanf("%s", &Options->ComputeShortRange);
+
+	printf("Long Range? (0 or 1): ");
+	scanf("%s", &Options->ComputeLongRange);
+
+	printf("Exclusions? (0 or 1): ");
+	scanf("%s", &Options->ComputeExclusions);
+
+	printf("O(N)? (0 or 1): ");
+	scanf("%s", &Options->IsN);
+
+	printf("O(NlogN)? (0 or 1): ");
+	scanf("%s", &Options->IsNLogN);
+
+	Options->GridType = 0;
 }
 
 //	INTERNAL TEST Methods
