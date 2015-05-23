@@ -142,6 +142,89 @@ void bibst_lss(long max_itr, double tol,
 				short b_len, short b_nnz, double* b,
 				short x_len, double* x)
 {
+	lapack_int			i = 0;
+	lapack_int			j = 0;
+	char				uplo = 'L';
+	lapack_int			m = 4;					//	Experimentally determined multiplier to find minimum required length to still attain machine precision in solution
+	lapack_int			n = MAX(m*b_len,x_len);	//	Order of A [~ 4*len(b_len)]
+	lapack_int			kd = A_len-1;			//	# of super OR sub diagonals in A [= A_len - 1]
+	double**			ab = NULL;				//	(kd+1)*n matrix represented banded A
+	lapack_int			ldab = kd+1;			//	Leading dimension of ab (ldab >= kd + 1)
+	lapack_int			info = 0;				//	Return code from lapack routine
+	lapack_int			nrhs = 1;				//	# of right-hand sides
+	double*				rhs = NULL;				//	Right-hand side vector used in solve
+
+	//	Allocate memory for banded storage of A
+	ab = (double**) dynarr_d(ldab,2*n+1);
+
+	//	Create banded representation of A for MKL (only lower portion of A, from diagonal to furthest sub-diagonal)
+	for (i = 0; i < ldab; i++)
+	{
+		for (j = 0; j < 2*n+1; j++)
+		{
+			ab[i][j] = A[i];
+		}
+	}
+//display_dynarr_d(ab,ldab,n);
+
+	//	Compute Cholesky factors of symmetric, real, banded, positive-definite matrix A
+	if (!(info = LAPACKE_dpbtrf(LAPACK_ROW_MAJOR, uplo, 2*n+1, kd, ab[0], 2*n+1)))
+	{
+//display_dynarr_d(ab,ldab,n);
+
+		//	Allocate memory for rhs vector
+		rhs = (double*) dynvec(2*n+1, sizeof(double));
+
+		//	Fill in rhs vector with values from b vector
+//display_vector_d(b, b_len);
+
+		rhs[n] = b[0];
+		for (i = 1; i < MIN(b_nnz,n); i++)
+		{
+			rhs[n+i] = b[i];
+			rhs[n-i] = b[i];
+		}
+//display_vector_d(rhs, 2*n+1);
+
+		//	Use A and b to solve for x
+		if (!(info = LAPACKE_dpbtrs(LAPACK_ROW_MAJOR, uplo, 2*n+1, kd, nrhs, ab[0], 2*n+1, rhs, (lapack_int)1)))
+		{
+//display_vector_d(rhs, 2*n+1);
+
+			//	Success -- fill b into x (or something)
+			for (i = 0; i < x_len; i++)
+			{
+				x[i] = rhs[n+i];
+			}
+//display_vector_d(x, x_len);
+		}
+
+		//	Free dynamically allocated memory for rhs vector
+		dynfree(rhs);
+	}
+
+	//	Free dynamically allocated memory
+	dynfree(ab[0]);
+	dynfree(ab);
+}
+
+/*
+bibst -> bi-infinite, banded, symmetric, Toeplitz
+lss -> linear system solver
+
+A_len   -> bandwidth
+A       -> band (diagonal to edge of band)
+b_len   -> length of rhs vector b, gives # of equations to solve
+b_nnz   -> the number of non-zero elements in b
+b       -> rhs vector
+x_len   -> length of the solution vector x
+x       -> solution vector (Ax = b)
+*/
+void bibst_lss2(long max_itr, double tol,
+				short A_len, double* A,
+				short b_len, short b_nnz, double* b,
+				short x_len, double* x)
+{
     short           i = 0;
     short           j = 0;
     short           k = 0;
