@@ -1504,18 +1504,23 @@ typedef struct
 
 	printf("Short Range? (0 or 1): ");
 	scanf("%s", &Options->ComputeShortRange);
+	Options->ComputeShortRange = (char) atoi(&Options->ComputeShortRange);
 
 	printf("Long Range? (0 or 1): ");
 	scanf("%s", &Options->ComputeLongRange);
+	Options->ComputeLongRange = (char) atoi(&Options->ComputeLongRange);
 
 	printf("Exclusions? (0 or 1): ");
 	scanf("%s", &Options->ComputeExclusions);
+	Options->ComputeExclusions = (char) atoi(&Options->ComputeExclusions);
 
 	printf("O(N)? (0 or 1): ");
 	scanf("%s", &Options->IsN);
+	Options->IsN = (char) atoi(&Options->IsN);
 
 	printf("O(NlogN)? (0 or 1): ");
 	scanf("%s", &Options->IsNLogN);
+	Options->IsNLogN = (char) atoi(&Options->IsNLogN);
 
 	Options->GridType = 0;
 }
