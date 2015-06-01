@@ -76,6 +76,9 @@ void b_spline_compute_g2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS*
 
 	//	Pre-processing (Intermediate levels)
 	Size = (long) ceil(2.0*MsmParams->alpha);
+//printf("Size = %ld\t", Size);
+//Size = (long) ceil(1.5*Size);
+//printf("1.5*Size = %ld\n", Size);
 	Scale = MsmParams->h/MsmParams->a;
 
 	//	Compute Gamma sequence (defined by theta function) for intermediate level grid(s)
@@ -110,6 +113,9 @@ void b_spline_compute_tg2g(void* Interpolant, SOFTENER* Softener, MSM_PARAMETERS
 
 	//	Pre-processing (Top level)
 	Size = (long) 2*ceil(2.0*MsmParams->D/(pow(2.0,MsmParams->L)*MsmParams->h)) + MsmParams->p;	//	FIXME-Decouple from grid?
+//printf("Size = %ld\t", Size);
+//Size = (long) ceil(1.5*Size);
+//printf("1.5*Size = %ld\n", Size);
 	Scale = MsmParams->h/MsmParams->a;
 
 	//	Compute Gamma sequence (defined by gamma function) for top level grid

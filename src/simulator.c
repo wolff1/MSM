@@ -229,8 +229,9 @@ printf("\t\tSETTING UP NAIVE SIMULATION\n");
 	Options.ComputeExclusions = 1;
 	Options.ComputeLongRange = 1;
 	Options.ComputeShortRange = 1;
-	Options.IsN = 1;
-	Options.IsNLogN = 0;
+	Options.IsN = 0;
+	Options.IsNLogN = 1;
+printf("\nO(N log N) version!\n");
 	Options.GridType = 0;
 
 	//	Set up MSM simulation(s)
