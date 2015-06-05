@@ -182,6 +182,7 @@ void	rectangular_row_major_b_spline_get_grid_points_coarse(void* FineGrid, long 
 	long				jMax = 0;
 	long				kMax = 0;
 
+/*
 	//	FineGridIndex -> (i,j,k)
 	rectangular_row_major_b_spline_idx2ijk(FineGrid, FineGridIndex, &i, &j, &k);
 	iMin = (long)ceil(i/2.0)-1;
@@ -190,6 +191,50 @@ void	rectangular_row_major_b_spline_get_grid_points_coarse(void* FineGrid, long 
 	iMax = (long)floor(i/2.0)+1;
 	jMax = (long)floor(j/2.0)+1;
 	kMax = (long)floor(k/2.0)+1;
+*/
+	short				p = ((RECTANGULAR_ROW_MAJOR_B_SPLINE*) FineGrid)->Expansion;
+
+	//	FineGridIndex -> (i,j,k)
+	rectangular_row_major_b_spline_idx2ijk(FineGrid, FineGridIndex, &i, &j, &k);
+
+	if (i % 2)
+	{
+		iMin = (long) (ceil(i/2.0) + floor(p/4.0)) - p/2;
+		iMax = (long) (floor(i/2.0) - floor(p/4.0)) + p/2;
+	}
+	else
+	{
+		iMin = i/2 - (long) floor(p/4.0);
+		iMax = i/2 + (long) floor(p/4.0);
+	}
+	iMin = MAX(iMin, -p);
+	iMax = MIN(iMax, ((RECTANGULAR_ROW_MAJOR_B_SPLINE*)CoarseGrid)->Nx-1);
+
+	if (j % 2)
+	{
+		jMin = (long) (ceil(j/2.0) + floor(p/4.0)) - p/2;
+		jMax = (long) (floor(j/2.0) - floor(p/4.0)) + p/2;
+	}
+	else
+	{
+		jMin = j/2 - (long) floor(p/4.0);
+		jMax = j/2 + (long) floor(p/4.0);
+	}
+	jMin = MAX(jMin, -p);
+	jMax = MIN(jMax, ((RECTANGULAR_ROW_MAJOR_B_SPLINE*)CoarseGrid)->Ny-1);
+
+	if (k % 2)
+	{
+		kMin = (long) (ceil(k/2.0) + floor(p/4.0)) - p/2;
+		kMax = (long) (floor(k/2.0) - floor(p/4.0)) + p/2;
+	}
+	else
+	{
+		kMin = k/2 - (long) floor(p/4.0);
+		kMax = k/2 + (long) floor(p/4.0);
+	}
+	kMin = MAX(kMin, -p);
+	kMax = MIN(kMax, ((RECTANGULAR_ROW_MAJOR_B_SPLINE*)CoarseGrid)->Nz-1);
 //printf("Fine(%ld,%ld,%ld), Coarse(%ld,%ld,%ld) -> (%ld,%ld,%ld)\n", i,j,k, iMin,jMin,kMin, iMax,jMax,kMax);
 
 	Range->NumSlices = 0;

@@ -229,9 +229,8 @@ printf("\t\tSETTING UP NAIVE SIMULATION\n");
 	Options.ComputeExclusions = 1;
 	Options.ComputeLongRange = 1;
 	Options.ComputeShortRange = 1;
-	Options.IsN = 0;
-	Options.IsNLogN = 1;
-printf("\nO(N log N) version!\n");
+	Options.IsN = 1;
+	Options.IsNLogN = 0;
 	Options.GridType = 0;
 
 	//	Set up MSM simulation(s)
@@ -351,8 +350,6 @@ void simulator_examine_results(SIMULATOR* Simulator)
 	long		j = 0;
 	FILE		*fp = NULL;
 	char		FileName[256];
-
-//	printf("These are your results, jerk-face!\n");
 
 	//	at most one naive method per domain (run if no file or file is more than a day old)
 	//	for each domain, compare the different methods to naive and each other
