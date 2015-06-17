@@ -317,7 +317,7 @@ void phi_nesting_test(void)
 	char*		buf = NULL;
 	double*		g2fg = NULL;
 
-	/**************************************************************************/
+	//**************************************************************************
 	// Get number of data points to record
 	printf("Please enter the number of samples = ");
 	scanf("%d", &samples);
@@ -350,7 +350,7 @@ void phi_nesting_test(void)
 	bufmax = 64*(p+4);	// p+4 columns, each a max of 64 chars wide 
 	buf = (char*) dynvec(bufmax+1,sizeof(char));	// + 1 for NULL
 
-	/**** WRITE THE DATA FILE WHILE CALCULATING ALL THE REQUIRED VALUES*******/
+	//**** WRITE THE DATA FILE WHILE CALCULATING ALL THE REQUIRED VALUES*******
 	for (i = 0; i <= samples; i++)
 	{
 		//	Column 1 (Independent variable)
@@ -427,7 +427,7 @@ assert(fabs(f - fc) < tol);
 	bufmax = strlen(buf2_1) + (p+2)*(strlen(buf2_2)+10) + strlen(buf2_3) + 64;
 	buf = (char*) dynvec(bufmax+1,sizeof(char));
 
-	/*****WRITE THE COMMAND FILE TO DISPLAY THE RESULTS OF ABOVE *************/
+	//*****WRITE THE COMMAND FILE TO DISPLAY THE RESULTS OF ABOVE *************
 	fp = fopen(cmd_file, "w");
 	assert(fp != NULL);
 
@@ -474,7 +474,7 @@ assert(fabs(f - fc) < tol);
 		printf("Error removing COMMAND file <%s>.\n", cmd_file);
 	}
 
-	/**************************************************************************/
+	//**************************************************************************
 	// Free allocated memory
 	dynfree(data_file);
 	dynfree(cmd_file);
@@ -1306,19 +1306,20 @@ df += DF[l][i];
 		// Kernel: 1/X and Kernel' = -1/X^2
 		F[nlev][i] = 1.0/X[i];
 		DF[nlev][i] = -F[nlev][i]*F[nlev][i];
-if (i > 0)
-{
-    double Frel = fabs(F[nlev][i] - f)/fabs(F[nlev][i]);
-    double DFrel = fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]);
-	if (Frel >= tol)
-		printf("i = %d, X = %f, F = %f, f = %f, |.| = %e\n",
-				i, X[i], F[nlev][i], f, Frel);
-	if (DFrel >= tol)
-		printf("i = %d, X = %f, DF = %f, df = %f, |.| = %e\n",
-				i, X[i], DF[nlev][i], df, DFrel);
-	assert(Frel < tol);
-	assert(DFrel < tol);
-}
+
+		if (i > 0)
+		{
+			double Frel = fabs(F[nlev][i] - f)/fabs(F[nlev][i]);
+			double DFrel = fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]);
+			if (Frel >= tol)
+				printf("i = %d, X = %f, F = %f, f = %f, |.| = %e\n",
+						i, X[i], F[nlev][i], f, Frel);
+			if (DFrel >= tol)
+				printf("i = %d, X = %f, DF = %f, df = %f, |.| = %e\n",
+						i, X[i], DF[nlev][i], df, DFrel);
+			assert(Frel < tol);
+			assert(DFrel < tol);
+		}
 	}
 
 	// Plot splittings on single graph along with f(x) = 1/x
