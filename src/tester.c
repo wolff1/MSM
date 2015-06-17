@@ -263,6 +263,7 @@ void print_nesting_coefficients(void)
 	// Free dynamically allocated memory
 	dynfree(J);
 }
+#endif
 
 void phi_nesting_test(void)
 {
@@ -336,7 +337,7 @@ void phi_nesting_test(void)
 	assert(g2fg != NULL);
 
 	// Calculate the coefficients to display
-	compute_g2fg(p, g2fg);
+//	compute_g2fg(p, g2fg);
 
 	// Build file name(s)
 	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
@@ -362,20 +363,20 @@ f = 0.0;
 		//	Columns 2 to p+2 (fine grid interpolant values)
 		for (j = p/2; j >= 1; j--)
 		{
-			ff = g2fg[j]*phi(p, 2.0*x-j, NULL);
+//			ff = g2fg[j]*phi(p, 2.0*x-j, NULL);
 f += ff;
 			buflen += sprintf(&buf[buflen], " %.32f", ff);
 			assert(bufmax > buflen);
 		}
 
-		ff = g2fg[0]*phi(p, 2.0*x, NULL);
+//		ff = g2fg[0]*phi(p, 2.0*x, NULL);
 f += ff;
 		buflen += sprintf(&buf[buflen], " %.32f", ff);
 		assert(bufmax > buflen);
 
 		for (j = 1; j <= p/2; j++)
 		{
-			ff = g2fg[j]*phi(p, 2.0*x+j, NULL);
+//			ff = g2fg[j]*phi(p, 2.0*x+j, NULL);
 f += ff;
 			buflen += sprintf(&buf[buflen], " %.32f", ff);
 			assert(bufmax > buflen);
@@ -386,7 +387,7 @@ f += ff;
 		assert(bufmax > buflen);
 
 		// Column p+4 (course grid interpolant values)
-		fc = phi(p, x, NULL);
+//		fc = phi(p, x, NULL);
 		buflen += sprintf(&buf[buflen], " %.32f\n", fc);
 		assert(bufmax > buflen);
 		if (fc > maxf)
@@ -480,7 +481,7 @@ assert(fabs(f - fc) < tol);
 	dynfree(buf);
 	dynfree(g2fg);
 }
-
+#if 0
 //	**** B_SPLINE ****
 void test_blurring_operator(void)
 {
@@ -687,7 +688,7 @@ void print_nesting_coefficientsC1(void)
 	// Free dynamically allocated memory
 	dynfree(J);
 }
-
+#endif
 void phi_nesting_testC1(void)
 {
 	// Static memory variables
@@ -757,7 +758,7 @@ void phi_nesting_testC1(void)
 	assert(g2fg != NULL);
 
 	// Calculate the coefficients to display
-	compute_g2fgC1(p, g2fg);
+//	compute_g2fgC1(p, g2fg);
 
 	// Build file name(s)
 	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
@@ -784,20 +785,20 @@ f = 0.0;
 		//	Columns 2 to p+2 (fine grid interpolant values)
 		for (j = p-1; j > 0; j-=2)
 		{
-			ff = g2fg[j]*phiC1(p, 2.0*x-j, NULL);
+//			ff = g2fg[j]*phiC1(p, 2.0*x-j, NULL);
 f += ff;
 			buflen += sprintf(&buf[buflen], " %.32f", ff);
 			assert(bufmax > buflen);
 		}
 
-		ff = g2fg[0]*phiC1(p, 2.0*x, NULL);
+//		ff = g2fg[0]*phiC1(p, 2.0*x, NULL);
 f += ff;
 		buflen += sprintf(&buf[buflen], " %.32f", ff);
 		assert(bufmax > buflen);
 
 		for (j = 1; j < p; j+=2)
 		{
-			ff = g2fg[j]*phiC1(p, 2.0*x+j, NULL);
+//			ff = g2fg[j]*phiC1(p, 2.0*x+j, NULL);
 f += ff;
 			buflen += sprintf(&buf[buflen], " %.32f", ff);
 			assert(bufmax > buflen);
@@ -808,7 +809,7 @@ f += ff;
 		assert(bufmax > buflen);
 
 		// Column p+4 (course grid interpolant values)
-		fc = phiC1(p, x, NULL);
+//		fc = phiC1(p, x, NULL);
 		buflen += sprintf(&buf[buflen], " %.32f\n", fc);
 		assert(bufmax > buflen);
 		if (fc > maxf)
@@ -919,7 +920,7 @@ void driverC1(void)
 //	print_nesting_coefficientsC1();
 	phi_nesting_testC1();
 }
-#endif
+
 //	**** EVEN_POWERS ****
 void gamma_test_all(void)
 {
@@ -1206,7 +1207,7 @@ void plot_splittings(int samples, int nlev, double a, double d,
 	dynfree(buf);
 	dynfree(buf2);
 }
-
+#endif
 void splitting_test(void)
 {
 	// Static memory variables
@@ -1269,7 +1270,7 @@ void splitting_test(void)
 	assert(data_file != NULL);
 
 	// Initialize gamma coefficients
-	gamma_init(k, c);
+//	gamma_init(k, c);
 
 	// Evaluate different splitting functions over domain
 	for (i = 0; i <= samples; i++)
@@ -1280,7 +1281,7 @@ df = 0.0;	// sanity check
 
 		// Theta* - Short range part of splitting (finite)
 		al = one_over_a;
-		F[0][i] = al*theta_star(c, k, al*X[i], &DF[0][i]);
+//		F[0][i] = al*theta_star(c, k, al*X[i], &DF[0][i]);
 		DF[0][i] = al*al*DF[0][i];
 f += F[0][i];
 df += DF[0][i];
@@ -1288,7 +1289,7 @@ df += DF[0][i];
 		for (l = 1; l < nlev - 1; l++)
 		{
 			// Theta - Intermediate long range part(s) of splitting (finite)
-			F[l][i] = al*theta(c, k, al*X[i], &DF[l][i]);
+//			F[l][i] = al*theta(c, k, al*X[i], &DF[l][i]);
 			DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
 df += DF[l][i];
@@ -1296,7 +1297,7 @@ df += DF[l][i];
 			al = 0.5*al;
 		}
 		// Gamma - Top level long range part of splitting (infinit)
-		F[l][i] = _gamma(c, k, al*X[i], &DF[l][i]);
+//		F[l][i] = _gamma(c, k, al*X[i], &DF[l][i]);
 		F[l][i] = al*F[l][i];
 		DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
@@ -1321,8 +1322,8 @@ if (i > 0)
 	}
 
 	// Plot splittings on single graph along with f(x) = 1/x
-	plot_splittings(samples, nlev, a, d, X, F);
-//	plot_splittings(samples, nlev, k, a, d, X, DF);
+//	plot_splittings(samples, nlev, a, d, X, F);
+////	plot_splittings(samples, nlev, k, a, d, X, DF);
 
 	// Free dynamically allocated memory
 	dynfree(c);
@@ -1333,7 +1334,7 @@ if (i > 0)
 	dynfree(DF);
 	dynfree(data_file);
 }
-
+#if 0
 void test_thetas(void)
 {
 	int		i = 0;
@@ -1373,6 +1374,7 @@ void test_thetas(void)
 
 	dynfree(c);
 }
+#endif
 
 //	**** OTHER ****
 void test_sinc(void)
@@ -1424,9 +1426,9 @@ void test_sinc(void)
 	buf = (char*) dynvec(bufmax+1, sizeof(char));
 
 	//	Compute omega values
-	compute_omega(4, omega_max, omega3);
-	compute_omega(6, omega_max, omega5);
-	compute_omega(8, omega_max, omega7);
+//	compute_omega(4, omega_max, omega3);
+//	compute_omega(6, omega_max, omega5);
+//	compute_omega(8, omega_max, omega7);
 
 	// Build file name(s)
 	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
@@ -1447,7 +1449,7 @@ void test_sinc(void)
 		{
 			n = (short)floor(u) - p/2 + 1 + j;
 			assert(abs(n) < omega_max);
-			results[0][i] += omega3[abs(n)]*phi(p,u-(double)n,NULL);
+//			results[0][i] += omega3[abs(n)]*phi(p,u-(double)n,NULL);
 		}
 
 		//	Quintic
@@ -1456,7 +1458,7 @@ void test_sinc(void)
 		{
 			n = (short)floor(u) - p/2 + 1 + j;
 			assert(abs(n) < omega_max);
-			results[1][i] += omega5[abs(n)]*phi(p,u-(double)n,NULL);
+//			results[1][i] += omega5[abs(n)]*phi(p,u-(double)n,NULL);
 		}
 
 		//	Septic
@@ -1465,7 +1467,7 @@ void test_sinc(void)
 		{
 			n = (short)floor(u) - p/2 + 1 + j;
 			assert(abs(n) < omega_max);
-			results[2][i] += omega7[abs(n)]*phi(p,u-(double)n,NULL);
+//			results[2][i] += omega7[abs(n)]*phi(p,u-(double)n,NULL);
 		}
 
 		//	Sinc function
@@ -1553,7 +1555,7 @@ void test_sinc(void)
 	dynfree(cmd_file);
 	dynfree(buf);
 }
-
+#if 0
 void test_preprocessing(void)
 {
 	short			k = 0;
