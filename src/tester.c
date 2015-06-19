@@ -1224,11 +1224,13 @@ void splitting_test(void)
 	double		df = 0.0;
 	double		tol = pow(0.1,15);
 	// Dynamic memory variables
-	double*		c = NULL;	// Gamma
 	double*		X = NULL;
 	double**	F = NULL;
 	double**	DF = NULL;
-	char*		data_file = NULL;
+
+	SOFTENER*	Sft = NULL;
+	size_t		Size = 0;
+	void*		Init = NULL;
 
 	// Get number of data points to record
 	printf("Please enter the number of samples = ");
@@ -1260,17 +1262,15 @@ void splitting_test(void)
 	X = (double*) dynvec(samples+1, sizeof(double));
 	F = (double**) dynarr_d(nlev+1,samples+1);
 	DF = (double**) dynarr_d(nlev+1,samples+1);
-	c = (double*) dynvec(k+1,sizeof(double));
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN +
-						MAX(PHI_DATA_LEN,GAMMA_DATA_LEN) + 1, sizeof(char));
 	assert(X != NULL);
 	assert(F != NULL);
 	assert(DF != NULL);
-	assert(c != NULL);
-	assert(data_file != NULL);
 
-	// Initialize gamma coefficients
-//	gamma_init(k, c);
+	//	Initialize SOFTENER
+	Size = sizeof(EVEN_POWERS);
+	Sft = (SOFTENER*) dynmem(Size);
+	Init = &even_powers_initialize;
+	softener_initialize(Sft, Init, k);
 
 	// Evaluate different splitting functions over domain
 	for (i = 0; i <= samples; i++)
@@ -1281,7 +1281,7 @@ df = 0.0;	// sanity check
 
 		// Theta* - Short range part of splitting (finite)
 		al = one_over_a;
-//		F[0][i] = al*theta_star(c, k, al*X[i], &DF[0][i]);
+		F[0][i] = al*theta_star(c, k, al*X[i], &DF[0][i]);
 		DF[0][i] = al*al*DF[0][i];
 f += F[0][i];
 df += DF[0][i];
@@ -1289,15 +1289,15 @@ df += DF[0][i];
 		for (l = 1; l < nlev - 1; l++)
 		{
 			// Theta - Intermediate long range part(s) of splitting (finite)
-//			F[l][i] = al*theta(c, k, al*X[i], &DF[l][i]);
+			F[l][i] = al*theta(c, k, al*X[i], &DF[l][i]);
 			DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
 df += DF[l][i];
 
 			al = 0.5*al;
 		}
-		// Gamma - Top level long range part of splitting (infinit)
-//		F[l][i] = _gamma(c, k, al*X[i], &DF[l][i]);
+		// Gamma - Top level long range part of splitting (infinite)
+		F[l][i] = _gamma(c, k, al*X[i], &DF[l][i]);
 		F[l][i] = al*F[l][i];
 		DF[l][i] = al*al*DF[l][i];
 f += F[l][i];
@@ -1327,13 +1327,11 @@ df += DF[l][i];
 ////	plot_splittings(samples, nlev, k, a, d, X, DF);
 
 	// Free dynamically allocated memory
-	dynfree(c);
 	dynfree(X);
 	dynfree(F[0]);
 	dynfree(F);
 	dynfree(DF[0]);
 	dynfree(DF);
-	dynfree(data_file);
 }
 #if 0
 void test_thetas(void)
