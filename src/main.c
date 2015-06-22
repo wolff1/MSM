@@ -6,6 +6,7 @@ main.c - entry point for the tester
 
 #include "msm.h"
 #include "simulator.h"
+#include "tester.h"
 
 void test_mkl_MMM(void);
 
@@ -13,6 +14,7 @@ void test_msm_preprocessing(void);
 void test_simulator(void);
 void test_parallel_division(void);
 void test_simulator_water(void);
+
 /*
 #include "tester.h"
 int main(int argc, char* argv[])
@@ -33,6 +35,8 @@ int main(int argc, char* argv[])
 		printf("* 2 - Simulator                  *\n");
 		printf("* 3 - Parallel division of procs *\n");
 		printf("* 4 - Simulation Water(s)        *\n");
+		printf("*                                *\n");
+		printf("* 5 - Figure 1 (Splitting)       *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -56,6 +60,10 @@ int main(int argc, char* argv[])
 
 			case 4:
 				test_simulator_water();
+				break;
+
+			case 5:	// This will produce plot (use OSX) for smoothing
+				splitting_test();
 				break;
 
 			case 0:	// Exit

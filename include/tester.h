@@ -56,6 +56,9 @@ void test_softener(SOFTENER* s);
 void test_sinc(void);
 void test_preprocessing(void);
 */
+
+void splitting_test(void);
+
 #endif
 
 //	End of file
