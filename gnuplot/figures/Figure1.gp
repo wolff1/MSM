@@ -1,5 +1,5 @@
 # Figure 1 - Splitting test
-set term windows
+set term windows mono
 #set terminal postscript eps color
 #set size 0.75,0.75
 set xlabel "r"
@@ -8,7 +8,8 @@ set label 2 "(a)" at graph 0.39, graph -0.08
 set label 3 "(2a)" at graph 0.785, graph -0.08
 set title 'Kernel Splitting for 3-level MSM'
 #set grid
-set style data linespoints
+#set style data linespoints
+set style data lines
 set yrange [ 0.0 : 2.0 ]
 set key box
 plot "Figure1.dat" every :::0::0 using ($2):($3) title "g_0" lc rgb "black", \

@@ -58,6 +58,7 @@ void test_preprocessing(void);
 */
 
 void splitting_test(void);
+void test_sinc(void);
 
 #endif
 

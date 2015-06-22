@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
 		printf("* 4 - Simulation Water(s)        *\n");
 		printf("*                                *\n");
 		printf("* 5 - Figure 1 (Splitting)       *\n");
+		printf("* 6 - Figure 2 (Sinc)            *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -64,6 +65,10 @@ int main(int argc, char* argv[])
 
 			case 5:	// This will produce plot (use OSX) for smoothing
 				splitting_test();
+				break;
+
+			case 6:
+				test_sinc();
 				break;
 
 			case 0:	// Exit

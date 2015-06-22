@@ -1410,7 +1410,7 @@ void test_thetas(void)
 //	**** OTHER ****
 void test_sinc(void)
 {
-	short		i = 0;
+	long		i = 0;
 	short		j = 0;
 	short		n = 0;
 	short		p = 0;
@@ -1419,21 +1419,19 @@ void test_sinc(void)
 	double		u = 0.0;
 	short		samples = 100;
 	short		omega_max = 100;
-	double*		omega3 = NULL;
-	double*		omega5 = NULL;
-	double*		omega7 = NULL;
 	double**	results = NULL;
-	char*		cmd_file_name = "sinc_";
-	char*		cmd_file_extension = ".gp";
-	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN +
-									strlen(cmd_file_extension);
-	FILE*		fp = NULL;
-	char*		data_file = NULL;
-	char*		cmd_file = NULL;
-	char*		buf = NULL;
-	size_t		bufmax = 512;//6*32;
-	size_t		buflen = 0;
-	size_t		bytes = 0;
+
+	B_SPLINE*		Itp3 = NULL;
+	B_SPLINE*		Itp5 = NULL;
+	B_SPLINE*		Itp7 = NULL;
+	MSM_PARAMETERS	Prm;
+	size_t			Size = 0;
+	void*			Init = NULL;
+	double			X = 0.0;
+	double			F = 0.0;
+	double			DF = 0.0;
+	char*			FileName = "Figure2.dat";
+	FILE*			fp = NULL;
 
 	printf("Enter the number of samples: ");
 	scanf("%hd", &samples);
@@ -1448,26 +1446,32 @@ void test_sinc(void)
 	scanf("%lf", &umax);
 
 	//	Dynamically allocate memory
-	omega3 = (double*) dynvec(omega_max,sizeof(double));
-	omega5 = (double*) dynvec(omega_max,sizeof(double));
-	omega7 = (double*) dynvec(omega_max,sizeof(double));
 	results = (double**) dynarr_d(4,samples+1);
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN + GP_DATA_TMP_LEN + 1,sizeof(char));
-	cmd_file = (char*) dynvec(GP_CMD_DIR_LEN + cmd_file_name_len + 1,sizeof(char));
-	buf = (char*) dynvec(bufmax+1, sizeof(char));
 
-	//	Compute omega values
-//	compute_omega(4, omega_max, omega3);
-//	compute_omega(6, omega_max, omega5);
-//	compute_omega(8, omega_max, omega7);
+	//	Set up shared MSM parameters
+	Prm.a = 12.5;
+	Prm.h = 2.5;
+	Prm.alpha = Prm.a / Prm.h;
+	Prm.D = 0;
+	Prm.L = 2;
+	Prm.k = 4;
+	Prm.mu = omega_max;
 
-	// Build file name(s)
-	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
-	sprintf(cmd_file, "%s%s%s%s", GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
+	//	Compute omega values / Initialize B_SPLINE interpolant
+	Size = sizeof(B_SPLINE);
+	Init = &b_spline_initialize;
 
-	//	Create DATA file
-	fp = fopen(data_file, "w");
-	assert(fp != NULL);
+	Prm.p = 4;
+	Itp3 = (B_SPLINE*) dynmem(Size);
+	interpolant_initialize(Itp3, Init, &Prm);
+
+	Prm.p = 6;
+	Itp5 = (B_SPLINE*) dynmem(Size);
+	interpolant_initialize(Itp5, Init, &Prm);
+
+	Prm.p = 8;
+	Itp7 = (B_SPLINE*) dynmem(Size);
+	interpolant_initialize(Itp7, Init, &Prm);
 
 	//	Compute values of interpolants and sinc function
 	for (i = 0; i <= samples; i++)
@@ -1480,7 +1484,9 @@ void test_sinc(void)
 		{
 			n = (short)floor(u) - p/2 + 1 + j;
 			assert(abs(n) < omega_max);
-//			results[0][i] += omega3[abs(n)]*phi(p,u-(double)n,NULL);
+			X = u-(double)n;
+			Itp3->cmn.evaluate(Itp3, 1, &X, &F, &DF);
+			results[0][i] += Itp3->omega[abs(n)]*F;
 		}
 
 		//	Quintic
@@ -1489,7 +1495,9 @@ void test_sinc(void)
 		{
 			n = (short)floor(u) - p/2 + 1 + j;
 			assert(abs(n) < omega_max);
-//			results[1][i] += omega5[abs(n)]*phi(p,u-(double)n,NULL);
+			X = u-(double)n;
+			Itp5->cmn.evaluate(Itp5, 1, &X, &F, &DF);
+			results[1][i] += Itp5->omega[abs(n)]*F;
 		}
 
 		//	Septic
@@ -1498,7 +1506,9 @@ void test_sinc(void)
 		{
 			n = (short)floor(u) - p/2 + 1 + j;
 			assert(abs(n) < omega_max);
-//			results[2][i] += omega7[abs(n)]*phi(p,u-(double)n,NULL);
+			X = u-(double)n;
+			Itp7->cmn.evaluate(Itp7, 1, &X, &F, &DF);
+			results[2][i] += Itp7->omega[abs(n)]*F;
 		}
 
 		//	Sinc function
@@ -1510,81 +1520,62 @@ void test_sinc(void)
 		{
 			results[3][i] = 1.0;
 		}
+	}
 
-		//	Write data to buffer
-		buflen = sprintf(buf, "%.32f %.32f %.32f %.32f %.32f\n", u, results[0][i], results[1][i], results[2][i], results[3][i]);
-		// Write buffer to file
-		bytes = fwrite(buf, sizeof(char), buflen, fp);
-		if (bytes < buflen)
+	//	Uninitialize INTERPOLANT
+	(*Itp3->cmn.uninitialize)(Itp3);
+	(*Itp5->cmn.uninitialize)(Itp5);
+	(*Itp7->cmn.uninitialize)(Itp7);
+
+	if ((fp = fopen(FileName, "w")) != NULL)
+	{
+		fprintf(fp, "# Figure 2 (Sinc)\n");
+
+		//	Output Cubic values to file
+		fprintf(fp, "# Cubic values: \n");
+		for (i = 0; i <= samples; i++)
 		{
-			printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, data_file, buflen);
-			break;
+			u = umin + (umax-umin)*(double)i /samples;
+			fprintf(fp, "%ld\t%e\t%e\n", i, u, results[0][i]);
 		}
-		// Clear out buffer for next usage
-		memset(buf, 0, bufmax+1);
-	}
-	// Close DATA file (ensure buffer is flushed to disk)
-	if (fclose(fp))
-	{
-		printf("Error closing DATA file.\n");
-	}
+		fprintf(fp, "\n");
 
-	/*****WRITE THE COMMAND FILE TO DISPLAY THE RESULTS OF ABOVE *************/
-	fp = fopen(cmd_file, "w");
-	assert(fp != NULL);
+		//	Output Quintic values to file
+		fprintf(fp, "# Quintic values: \n");
+		for (i = 0; i <= samples; i++)
+		{
+			u = umin + (umax-umin)*(double)i /samples;
+			fprintf(fp, "%ld\t%e\t%e\n", i, u, results[1][i]);
+		}
+		fprintf(fp, "\n");
 
-	// Write buffer to file (buf set to size of 512 bytes)
-	buflen = sprintf(buf,	"set term %s\n"
-							"set xlabel 'u'\n"
-							"set ylabel 'f(u)'\n"
-							"set title 'Fundamental splines of varying degree and sinc function'\n"
-							"set style data lines\n"
-							"set key box\n"
-							"plot [][-0.4:1.2] 0.0 title \"\", "
-									"data_file using 1:2 title \"Cubic\", "
-										 "\"\" using 1:3 title \"Quintic\", "
-										 "\"\" using 1:4 title \"Septic\", "
-										 "\"\" using 1:5 title \"Sinc\"\n"
-							"pause -1\n"
-							"quit\n",
-							GP_TERM);
-	assert(buflen < bufmax);
-	bytes = fwrite(buf, sizeof(char), buflen, fp);
-	if (bytes < buflen)
-	{
-		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, cmd_file, buflen);
-	}
+		//	Output Septic values to file
+		fprintf(fp, "# Septic values: \n");
+		for (i = 0; i <= samples; i++)
+		{
+			u = umin + (umax-umin)*(double)i /samples;
+			fprintf(fp, "%ld\t%e\t%e\n", i, u, results[2][i]);
+		}
+		fprintf(fp, "\n");
 
-	// Close COMMAND file (ensure buffer is flushed to disk)
-	if (fclose(fp))
-	{
-		printf("Error closing COMMAND file.\n");
-	}
+		//	Output Sinc values to file
+		fprintf(fp, "# Sinc values: \n");
+		for (i = 0; i <= samples; i++)
+		{
+			u = umin + (umax-umin)*(double)i /samples;
+			fprintf(fp, "%ld\t%e\t%e\n", i, u, results[3][i]);
+		}
 
-	// Call gnuplot to plot DATA file using COMMAND file
-	plotf2d(cmd_file, data_file);
-
-	// Delete data file
-	if (remove(data_file))
-	{
-		printf("Error removing DATA file <%s>.\n", data_file);
-	}
-
-	// Delete command data file
-	if (remove(cmd_file))
-	{
-		printf("Error removing COMMAND file <%s>.\n", cmd_file);
+		fclose(fp);
+		printf("Successfully wrote %s.\n", FileName);
 	}
 
 	//	Free dynamically allocated memory
-	dynfree(omega3);
-	dynfree(omega5);
-	dynfree(omega7);
+	dynfree(Itp3);
+	dynfree(Itp5);
+	dynfree(Itp7);
 	dynfree(results[0]);
 	dynfree(results);
-	dynfree(data_file);
-	dynfree(cmd_file);
-	dynfree(buf);
 }
 #if 0
 void test_preprocessing(void)
