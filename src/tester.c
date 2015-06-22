@@ -1211,18 +1211,17 @@ void plot_splittings(int samples, int nlev, double a, double d,
 void splitting_test(void)
 {
 	// Static memory variables
-	int			i = 0;
-	int			samples = 0;
+	long		i = 0;
+	long		samples = 0;
 	short		k = 0;
 	double		a = 0.0;
 	double		one_over_a = 0.0;
 	double		al = 0.0;
-	int			nlev = 0;
-	int			l = 0;
+	long		nlev = 0;
+	long		l = 0;
 	double		d = 0.0;
-	double		f = 0.0;	//FIXME - Remove f, df, tol, and tol check below
+	double		f = 0.0;
 	double		df = 0.0;
-	double		tol = pow(0.1,15);
 	// Dynamic memory variables
 	double**	X = NULL;
 	double**	F = NULL;
@@ -1231,6 +1230,9 @@ void splitting_test(void)
 	SOFTENER*	Sft = NULL;
 	size_t		Size = 0;
 	void*		Init = NULL;
+
+	char*		FileName = "Figure1.dat";
+	FILE*		fp = NULL;
 
 	// Get number of data points to record
 	printf("Please enter the number of samples = ");
@@ -1259,7 +1261,6 @@ void splitting_test(void)
 	assert(d > 0.0);
 
 	// Dynamically allocate memory
-//	X = (double*) dynvec(samples+1, sizeof(double));
 	X = (double**) dynarr_d(nlev+1,samples+1);
 	F = (double**) dynarr_d(nlev+1,samples+1);
 	DF = (double**) dynarr_d(nlev+1,samples+1);
@@ -1272,87 +1273,47 @@ void splitting_test(void)
 	Sft = (SOFTENER*) dynmem(Size);
 	Init = &even_powers_initialize;
 	softener_initialize(Sft, Init, k);
-/*
-	// Evaluate different splitting functions over domain
-	for (i = 0; i <= samples; i++)
-	{
-f = 0.0;	// sanity check
-df = 0.0;	// sanity check
-		X[i] = (d*(double)i/(double)samples);
 
-		// Theta* - Short range part of splitting (finite)
-		al = one_over_a;
-		F[0][i] = al*theta_star(c, k, al*X[i], &DF[0][i]);
-		DF[0][i] = al*al*DF[0][i];
-f += F[0][i];
-df += DF[0][i];
-
-		for (l = 1; l < nlev - 1; l++)
-		{
-			// Theta - Intermediate long range part(s) of splitting (finite)
-			F[l][i] = al*theta(c, k, al*X[i], &DF[l][i]);
-			DF[l][i] = al*al*DF[l][i];
-f += F[l][i];
-df += DF[l][i];
-
-			al = 0.5*al;
-		}
-		// Gamma - Top level long range part of splitting (infinite)
-		F[l][i] = _gamma(c, k, al*X[i], &DF[l][i]);
-		F[l][i] = al*F[l][i];
-		DF[l][i] = al*al*DF[l][i];
-f += F[l][i];
-df += DF[l][i];
-
-		// Kernel: 1/X and Kernel' = -1/X^2
-		F[nlev][i] = 1.0/X[i];
-		DF[nlev][i] = -F[nlev][i]*F[nlev][i];
-
-		if (i > 0)
-		{
-			double Frel = fabs(F[nlev][i] - f)/fabs(F[nlev][i]);
-			double DFrel = fabs(DF[nlev][i] - df)/fabs(DF[nlev][i]);
-			if (Frel >= tol)	printf("i = %d, X = %f, F = %f, f = %f, |.| = %e\n", i, X[i], F[nlev][i], f, Frel);
-			if (DFrel >= tol)	printf("i = %d, X = %f, DF = %f, df = %f, |.| = %e\n", i, X[i], DF[nlev][i], df, DFrel);
-			assert(Frel < tol);
-			assert(DFrel < tol);
-		}
-	}
-*/
 	// Evaluate different splitting functions over domain
 	al = one_over_a;
 	for (i = 0; i <= samples; i++)
 	{
 		X[0][i] = al*(d*(double)i/(double)samples);
-//	Compute "exact"
+		X[1][i] = X[0][i];
+
+		//	Compute "exact"
 		F[nlev][i] = 1.0/X[0][i];
 		DF[nlev][i] = -F[nlev][i]*F[nlev][i];
 	}
+	F[nlev][0] = 10.0*F[nlev][1];	//	HACK - Avoid division by zero
+	DF[nlev][0] = 10.0*DF[nlev][1];	//	UNHACK
 
-//	Compute "theta-star"
+	//	Compute "theta-star"
+	X[0][0] = 0.5*X[0][1];			//	HACK - Avoid division by zero
 	(*Sft->soften)(Sft, samples+1, X[0], F[0], DF[0]);
 	for (i = 0; i <= samples; i++)
 	{
 		F[0][i] = (1.0/X[0][i] - al*F[0][i]);
 		DF[0][i] = (-1.0/(X[0][i]*X[0][i]) - al*al*DF[0][i]);
 	}
+	X[0][0] = 0.0;					//	UNHACK
 
 	for (l = 1; l < nlev - 1; l++)
 	{
-//	Compute "theta"
-		(*Sft->split)(Sft, samples+1, X[l-1], F[l], DF[l]);
+		//	Compute "theta"(s)
+		(*Sft->split)(Sft, samples+1, X[l], F[l], DF[l]);
 
 		for (i = 0; i <= samples; i++)
 		{
-			X[l][i] = 0.5*X[l-1][i];	//	Set up for next iteration
 			F[l][i] *= al;				//	Scale for this iteration
 			DF[l][i] *= (al*al);		//	Scale for this iteration
+			X[l+1][i] = 0.5*X[l][i];	//	Set up for next iteration
 		}
 		al *= 0.5;
 	}
 
-//	Compute "gamma"
-	(*Sft->soften)(Sft, samples+1, X[l-1], F[l], DF[l]);
+	//	Compute "gamma"
+	(*Sft->soften)(Sft, samples+1, X[l], F[l], DF[l]);
 	for (i = 0; i <= samples; i++)
 	{
 		F[l][i] *= al;			//	Scale for this iteration
@@ -1362,10 +1323,7 @@ df += DF[l][i];
 	//	Uninitialize SOFTENER
 	(*Sft->uninitialize)(Sft);
 
-	// Plot splittings on single graph along with f(x) = 1/x
-//	plot_splittings(samples, nlev, a, d, X, F);
-////	plot_splittings(samples, nlev, k, a, d, X, DF);
-
+/*
 	for (i = 0; i <= samples; i++)
 	{
 		f = 0.0;
@@ -1378,6 +1336,24 @@ df += DF[l][i];
 		//printf("%03ld\t%f\t%f\t%f\t%e\t%f\t%f\t%e\n", i, X[0][i], f, F[nlev][i], fabs(f-F[nlev][i]), df, DF[nlev][i], fabs(df-DF[nlev][i]));
 		//printf("%03ld\t%f\t%f\t%f\t%f\t%f\n", i, X[0][i], f, F[nlev][i], df, DF[nlev][i]);
 		printf("%03ld\t%f\t%e\t%e\n", i, X[0][i], fabs(f-F[nlev][i]), fabs(df-DF[nlev][i]));
+	}
+*/
+
+	if ((fp = fopen(FileName, "w")) != NULL)
+	{
+		fprintf(fp, "#i\tX[i]\tF[i]\tDF[i]\n", l);
+		for (l = 0; l <= nlev; l++)
+		{
+			fprintf(fp, "# Level %ld\n", l);
+			for (i = 0; i <= samples; i++)
+			{
+				fprintf(fp, "%ld\t%e\t%e\t%e\n", i, X[0][i], F[l][i], DF[l][i]);
+			}
+			fprintf(fp, "\n");
+		}
+
+		fclose(fp);
+		printf("Successfully wrote %s\n", FileName);
 	}
 
 	// Free dynamically allocated memory
