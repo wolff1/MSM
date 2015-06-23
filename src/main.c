@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
 		printf("*                                *\n");
 		printf("* 5 - Figure 1 (Splitting)       *\n");
 		printf("* 6 - Figure 2 (Sinc)            *\n");
+		printf("* 7 - Figure 4 (B-Spline Nesting)*\n");
+		printf("* 8 - Figure 5 (C1 Not Nesting)  *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -63,12 +65,18 @@ int main(int argc, char* argv[])
 				test_simulator_water();
 				break;
 
-			case 5:	// This will produce plot (use OSX) for smoothing
+			case 5:	// Figure 1
 				splitting_test();
 				break;
 
-			case 6:
+			case 6:	//	Figure 2
 				test_sinc();
+				break;
+
+			case 7:	//	Figure 4
+				break;
+
+			case 8:	//	Figure 5
 				break;
 
 			case 0:	// Exit
