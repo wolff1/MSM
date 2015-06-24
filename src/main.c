@@ -74,9 +74,11 @@ int main(int argc, char* argv[])
 				break;
 
 			case 7:	//	Figure 4
+				phi_nesting_test();
 				break;
 
 			case 8:	//	Figure 5
+				phi_nesting_testC1();
 				break;
 
 			case 0:	// Exit

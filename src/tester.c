@@ -268,54 +268,27 @@ void print_nesting_coefficients(void)
 void phi_nesting_test(void)
 {
 	// Static memory variables
-	int			i = 0;
-	int			j = 0;
+	long		i = 0;
+	long		j = 0;
 	int			samples = 0;
 	int			p = 0;
-	char*		cmd_file_name = "nesting_";
-	char*		cmd_file_extension = ".gp";
-	size_t		cmd_file_name_len = strlen(cmd_file_name) + GP_TERM_LEN +
-									strlen(cmd_file_extension);
-	size_t		bufmax = 0;
-	size_t		buflen = 0;
-	size_t		bytes = 0;
 	double		x = 0.0;
 	double		ff = 0.0;	// Function value on fine grid
 	double		fc = 0.0;	// Function value on course grid
 	double		f = 0.0;	// Sum of fine grid contributions
-	double		maxf = 0.0;
-	double		minf = 0.0;
 	double		tol = pow(0.1,15);
-    char*		buf2_1 =    "set term %s\n"
-							"set termoption dash\n"
-		                    "set xlabel 'u'\n"
-			                "set ylabel 'f(u)'\n"
-							// below two lines rotates by -90 degrees
-							//"set lmargin 10\n"
-							//"set label 1 'f(u)' at graph -0.1, graph 0.5\n"
-							"set title 'Nesting of Spline Function Spaces'\n"
-							"set grid\n"
-							//"set style line 1 lc rgb \"cyan\"\n"
-							//"set style line 2 lc rgb \"blue\"\n"
-							//"set style line 3 lc rgb \"red\"\n"
-							"set style data lines\n"
-							"set yrange [ %7.3f : %7.3f ]\n"
-							"set key box\n"
-							"plot ";
-    char*		buf2_2 =    "data_file using 1:%d with lines title "
-							"\"Phi(2u%+d)\",";
-    char*		buf2_3 =    "data_file using 1:%d with lines title "
-							"\"Sum of fine grids\","
-							"data_file using 1:%d with lines title "
-							"\"Phi(u)\"\n"
-							"pause -1\n"
-							"quit\n";
+
+	size_t			Size = 0;
+	void*			Init = NULL;
+	B_SPLINE*		Itp = NULL;
+	MSM_PARAMETERS	Prm;
+	double			X = 0.0;
+	double			F = 0.0;
+	double			DF = 0.0;
+	char*			FileName = "Figure4.dat";
+	FILE*			fp = NULL;
+
 	// Dynamically allocated memory variables
-	FILE*		fp = NULL;
-	char*		data_file = NULL;
-	char*		cmd_file = NULL;
-	char*		buf = NULL;
-	double*		g2fg = NULL;
 
 	//**************************************************************************
 	// Get number of data points to record
@@ -328,158 +301,85 @@ void phi_nesting_test(void)
 	scanf("%d", &p);
 	assert(p % 2 == 0);
 
-	// Create arrays for dependent and independent variables
-	data_file = (char*) dynvec(GP_DATA_DIR_LEN + GP_DATA_TMP_LEN + 1,sizeof(char));
-	cmd_file = (char*) dynvec(GP_CMD_DIR_LEN + cmd_file_name_len + 1,sizeof(char));
-	g2fg = (double*) dynvec(p/2+1,sizeof(double));
-	assert(data_file != NULL);
-	assert(cmd_file != NULL);
-	assert(g2fg != NULL);
+	//	Set up shared MSM parameters
+	Prm.a = 12.5;
+	Prm.h = 2.5;
+	Prm.alpha = Prm.a / Prm.h;
+	Prm.D = 0;
+	Prm.L = 2;
+	Prm.k = 4;
+	Prm.mu = 100;
 
-	// Calculate the coefficients to display
-//	compute_g2fg(p, g2fg);
+	//	Compute omega values / Initialize B_SPLINE interpolant
+	Size = sizeof(B_SPLINE);
+	Init = &b_spline_initialize;
 
-	// Build file name(s)
-	sprintf(data_file, "%s%s", GP_DATA_DIR, GP_DATA_TMP);
-	sprintf(cmd_file, "%s%s%s%s", GP_CMD_DIR, cmd_file_name, GP_TERM, cmd_file_extension);
-
-	//	Create DATA file
-	fp = fopen(data_file, "w");
-	assert(fp != NULL);
-
-	bufmax = 64*(p+4);	// p+4 columns, each a max of 64 chars wide 
-	buf = (char*) dynvec(bufmax+1,sizeof(char));	// + 1 for NULL
+	Prm.p = p;
+	Itp = (B_SPLINE*) dynmem(Size);
+	interpolant_initialize(Itp, Init, &Prm);
 
 	//**** WRITE THE DATA FILE WHILE CALCULATING ALL THE REQUIRED VALUES*******
-	for (i = 0; i <= samples; i++)
+	if ((fp = fopen(FileName, "w")) != NULL)
 	{
-		//	Column 1 (Independent variable)
-		x = (double)(-p/2.0) + ((double)i/(double)samples)*((double)p);
-
-		buflen = sprintf(buf, "%.32f", x);
-		assert(bufmax > buflen);
-f = 0.0;
-
-		//	Columns 2 to p+2 (fine grid interpolant values)
-		for (j = p/2; j >= 1; j--)
+		for (i = 0; i <= samples; i++)
 		{
-//			ff = g2fg[j]*phi(p, 2.0*x-j, NULL);
-f += ff;
-			buflen += sprintf(&buf[buflen], " %.32f", ff);
-			assert(bufmax > buflen);
+			//	Column 1 (Independent variable)
+			x = (double)(-p/2.0) + ((double)i/(double)samples)*((double)p);
+			fprintf(fp, "%03ld\t%e\t", i, x);
+	f = 0.0;
+			//	Columns 2 to p+2 (fine grid interpolant values)
+			for (j = p/2; j >= 1; j--)
+			{
+	//			ff = g2fg[j]*phi(p, 2.0*x-j, NULL);
+				X = 2.0*x-j;
+				(*Itp->cmn.evaluate)(Itp, 1, &X, &F, &DF);
+				ff = Itp->cmn.g2fg[j]*F;
+	f += ff;
+				fprintf(fp, "%e\t", ff);
+			}
+
+	//		ff = g2fg[0]*phi(p, 2.0*x, NULL);
+			X = 2.0*x;
+			(*Itp->cmn.evaluate)(Itp, 1, &X, &F, &DF);
+			ff = Itp->cmn.g2fg[0]*F;
+	f += ff;
+			fprintf(fp, "%e\t", ff);
+
+			for (j = 1; j <= p/2; j++)
+			{
+	//			ff = g2fg[j]*phi(p, 2.0*x+j, NULL);
+				X = 2.0*x+j;
+				(*Itp->cmn.evaluate)(Itp, 1, &X, &F, &DF);
+				ff = Itp->cmn.g2fg[j]*F;
+	f += ff;
+				fprintf(fp, "%e\t", ff);
+			}
+
+			// Column p+4 (course grid interpolant values)
+	//		fc = phi(p, x, NULL);
+			X = x;
+			(*Itp->cmn.evaluate)(Itp, 1, &X, &F, &DF);
+			fc = F;
+			fprintf(fp, "%e\t%e\n", f, fc);
+
+	if (fabs(f - fc) >= tol)
+	{
+		printf("|f-fc| = %e\n", fabs(f-fc));
+	}
+	assert(fabs(f - fc) < tol);
 		}
 
-//		ff = g2fg[0]*phi(p, 2.0*x, NULL);
-f += ff;
-		buflen += sprintf(&buf[buflen], " %.32f", ff);
-		assert(bufmax > buflen);
-
-		for (j = 1; j <= p/2; j++)
-		{
-//			ff = g2fg[j]*phi(p, 2.0*x+j, NULL);
-f += ff;
-			buflen += sprintf(&buf[buflen], " %.32f", ff);
-			assert(bufmax > buflen);
-		}
-
-		// Column p+3 (sum of fine grid interpolant values)
-		buflen += sprintf(&buf[buflen], " %.32f", f);
-		assert(bufmax > buflen);
-
-		// Column p+4 (course grid interpolant values)
-//		fc = phi(p, x, NULL);
-		buflen += sprintf(&buf[buflen], " %.32f\n", fc);
-		assert(bufmax > buflen);
-		if (fc > maxf)
-		{
-			maxf = fc;
-		}
-		if (fc < minf)
-		{
-			minf = fc;
-		}
-if (fabs(f - fc) >= tol)
-{
-	printf("|f-fc| = %e\n", fabs(f-fc));
-}
-assert(fabs(f - fc) < tol);
-
-		// Write buffer to file
-		bytes = fwrite(buf, sizeof(char), buflen, fp);
-		if (bytes < buflen)
-		{
-			printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, data_file, buflen);
-			break;
-		}
-
-		// Clear out buffer for next usage
-		memset(buf, 0, bufmax+1);
+		//	Close file
+		fclose(fp);
 	}
+	printf("Successfully wrote %s\n", FileName);
 
-	// Close DATA file (ensure buffer is flushed to disk)
-	if (fclose(fp))
-	{
-		printf("Error closing DATA file.\n");
-	}
-
-	// Free buffer and re-allocate it for next file
-	dynfree(buf);
-	bufmax = strlen(buf2_1) + (p+2)*(strlen(buf2_2)+10) + strlen(buf2_3) + 64;
-	buf = (char*) dynvec(bufmax+1,sizeof(char));
-
-	//*****WRITE THE COMMAND FILE TO DISPLAY THE RESULTS OF ABOVE *************
-	fp = fopen(cmd_file, "w");
-	assert(fp != NULL);
-
-	// Create COMMAND file buffer
-	buflen = sprintf(buf, buf2_1, GP_TERM, 1.25*minf, 1.25*maxf);
-	assert(bufmax > buflen);
-
-	// Plot a line for each fine grid b-spline (p+1 fine grids, 1 sum of fine grids)
-	for (i = 0; i < p+1; i++)
-	{
-		buflen += sprintf(&buf[buflen], buf2_2, i+2, i-p/2);
-		assert(bufmax > buflen);
-	}
-
-	// Plot line for 1/r (column nlev+2) and finish file
-	buflen += sprintf(&buf[buflen], buf2_3, p+3, p+4);
-	assert(bufmax > buflen);
-
-	// Write buffer to file
-	bytes = fwrite(buf, sizeof(char), buflen, fp);
-	if (bytes < buflen)
-	{
-		printf("<%lu> bytes written to temporary file <%s> instead of <%lu>\n", bytes, cmd_file, buflen);
-	}
-
-	// Close COMMAND file (ensure buffer is flushed to disk)
-	if (fclose(fp))
-	{
-		printf("Error closing COMMAND file.\n");
-	}
-
-	// Call gnuplot to plot DATA file using COMMAND file
-	plotf2d(cmd_file, data_file);
-
-	// Delete data file
-	if (remove(data_file))
-	{
-		printf("Error removing DATA file <%s>.\n", data_file);
-	}
-
-	// Delete command data file
-	if (remove(cmd_file))
-	{
-		printf("Error removing COMMAND file <%s>.\n", cmd_file);
-	}
+	//	Uninitialize INTERPOLANT
+	(*Itp->cmn.uninitialize)(Itp);
 
 	//**************************************************************************
 	// Free allocated memory
-	dynfree(data_file);
-	dynfree(cmd_file);
-	dynfree(buf);
-	dynfree(g2fg);
+	dynfree(Itp);
 }
 #if 0
 //	**** B_SPLINE ****
@@ -913,14 +813,14 @@ assert(fabs(f - fc) < tol);
 	dynfree(buf);
 	dynfree(g2fg);
 }
-
+/*
 void driverC1(void)
 {
 //	phi_test_allC1();
 //	print_nesting_coefficientsC1();
 	phi_nesting_testC1();
 }
-
+*/
 //	**** EVEN_POWERS ****
 void gamma_test_all(void)
 {

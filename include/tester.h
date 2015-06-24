@@ -57,8 +57,10 @@ void test_sinc(void);
 void test_preprocessing(void);
 */
 
-void splitting_test(void);
-void test_sinc(void);
+void splitting_test(void);		//	Figure 1
+void test_sinc(void);			//	Figure 2
+void phi_nesting_test(void);	//	Figure 4
+void phi_nesting_testC1(void);	//	Figure 5
 
 #endif
 
