@@ -135,8 +135,10 @@ void c1_spline_uninitialize(void* Interpolant)
 //	printf("\tUn-initializing C1_SPLINE!\n");
 
 	//	Free the dynamically allocated memory
-	stencil_free(C1->cmn.g2g);
-	stencil_free(C1->cmn.tg2g);
+	if (C1->cmn.g2g)
+		stencil_free(C1->cmn.g2g);
+	if (C1->cmn.tg2g)
+		stencil_free(C1->cmn.tg2g);
 	dynfree(C1->cmn.g2g);
 	dynfree(C1->cmn.tg2g);
 	dynfree(C1->cmn.g2p[0]);
