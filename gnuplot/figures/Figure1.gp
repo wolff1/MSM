@@ -2,7 +2,7 @@
 reset
 #set term windows mono
 #set term epslatex mono
-set term postscript eps enhanced mono
+set term postscript eps enhanced mono font ',21'
 set output "bwfig1.eps"
 set xlabel 'r'
 set ylabel 'g_l(r)'
