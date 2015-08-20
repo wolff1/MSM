@@ -129,15 +129,23 @@ void even_powers_uninitialize(void* Softener)
 void even_powers_compute_p2p(EVEN_POWERS* Ep)
 {
 	short		k = Ep->cmn.k;
+double**	M = NULL;	// Coefficient matrix
+FILE*		fp = NULL;
 	double**	A = NULL;	// Coefficient matrix
 	double*		b = NULL;	// rhs vector first, then solution vector
 	int			i = 0;
 	int			j = 0;
+int m = 0;
+int samples = 2000;
+double x = 0.0;
+double xx = 0.0;
+double val = 0.0;
 	lapack_int	rc = 0;
 	lapack_int*	piv = NULL;
 
 	// Allocate memory for A and b
 	A = dynarr_d(k+1, k+1);
+M = dynarr_d(k+1, k+1);
 	b = (double*) dynvec(k+1,sizeof(double));
 
 	// Build row zero of A and b
@@ -145,6 +153,7 @@ void even_powers_compute_p2p(EVEN_POWERS* Ep)
 	for (i = 0; i <= k; i++)
 	{
 		A[0][i] = 1.0;
+M[0][i] = A[0][i];
 	}
 
 	// Build rows 1 through k of A and b
@@ -156,6 +165,7 @@ void even_powers_compute_p2p(EVEN_POWERS* Ep)
 		{
 			// NOTE: 2j-i+1 is the power of the term of one less derivative
 			A[i][j] = (2*j-i+1)*A[i-1][j];
+M[i][j] = A[i][j];
 		}
 	}
 
@@ -170,7 +180,60 @@ void even_powers_compute_p2p(EVEN_POWERS* Ep)
 	//	b is now solution vector (i.e. the coefficients of the softening function)
 	Ep->cmn.p2p = b;
 
+//	FROM HERE
+display_dynarr_d(M, k+1, k+1);
+	if ((fp = fopen("GammaDerivatives.dat", "w")) != NULL)
+	{
+		for (m = 0; m <= samples; m++)
+		{
+			x = -1.0 + 2.0*(double)m / samples;
+			xx = x*x;
+fprintf(fp, "%04d %+e ", m, x);
+			for (i = 0; i <= k; i++)					//	i gives row of A which is i^{th} derivative
+			{
+/*
+				val = M[i][0]*b[k];
+				for (j = k; j > ceil(i/2.0); j--)		//	j gives coefficient(p2p) / r^{2j-i}
+				{
+					val = val*xx + M[i][j]*b[j];
+				}
+				val = val*xx + M[i][j]*b[j];
+*/
+				val = 0.0;
+				for (j = ceil(i/2.0); j <= k; j++)		//	j gives coefficient(p2p) / r^{2j-i}
+				{
+					val += M[i][j]*b[j]*(pow(x, 2*j-i));
+				}
+fprintf(fp, "%+e ", val);
+			}
+fprintf(fp, "\n");
+		}
+
+		//	close file
+		fclose(fp);
+	}
+
+/*
+	k = Ep->cmn.k;
+	c = Ep->cmn.p2p;
+
+	for (i = 0; i < Len; i++)
+	{
+		XX = X[i]*X[i];
+		// Use Horner's rule to evaluate polynomial
+		F[i] = c[k];			// Even powers
+		for (j = k-1; j >= 1; j--)
+		{
+			F[i] = F[i]*XX + c[j];
+		}
+		F[i] = F[i]*XX + c[0];
+	}
+*/
+//	TO HERE
+
 	// Free allocated memory
+dynfree(M[0]);
+dynfree(M);
 	dynfree(A[0]);
 	dynfree(A);
 }

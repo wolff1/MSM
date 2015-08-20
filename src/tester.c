@@ -1104,6 +1104,7 @@ void splitting_test(void)
 	}
 
 	//	Compute "gamma"
+	l = nlev - 1;
 	(*Sft->soften)(Sft, samples+1, X[l], F[l], DF[l]);
 	for (i = 0; i <= samples; i++)
 	{
