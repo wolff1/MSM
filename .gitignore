@@ -2,4 +2,5 @@
 *~
 *.DS_Store
 vs2010/*
+vs2015/*
 xcode/*
