@@ -2,14 +2,13 @@ function [ output_args ] = bounding_box_test(domain, q, d)
 %bounding_box_test - determine size of largest bounding box
 %                    such that no more than q:=sqrt(N) particles
 %                    can be "contained" within the box.
-    r = [0.0 0.0;
-         0.0 1.0;
-         1.0 0.0;
-         1.0 1.0;
-%         0.5 0.5
-        ];
-%     r = rand(q*q,d)*domain - domain/2.0;
-%     r
+%     r = [0.0 0.0;
+%          0.0 1.0;
+%          1.0 0.0;
+%          1.0 1.0;
+%          0.5 0.5
+%         ];
+    r = rand(q*q,d)*domain - domain/2.0;
     N = length(r);
     q = floor(sqrt(N));
     d = size(r,2);
@@ -18,7 +17,8 @@ function [ output_args ] = bounding_box_test(domain, q, d)
     HiCorner = max(r);
     amax = norm(HiCorner-LoCorner) + 1.0; % good idea / bad idea?
 
-    % Calculate distance between each pair of particles, O(N^2)
+    % Calculate distance between each pair of particles
+% O(N^2)
     D = zeros(N,N);
     for i = 1:N
         ri = r(i,1:d);
@@ -31,7 +31,8 @@ function [ output_args ] = bounding_box_test(domain, q, d)
 %    D
 
 % ATTEMPT #3
-    % Find q closest neighbors to particle i, O(N^(3/2) log(N^(1/2)))
+    % Find q closest neighbors to particle i
+% O(N^(3/2) log(N^(1/2)))
     QNN = zeros(N,q);
     QNNI = zeros(N,q);
     for i = 1:N
@@ -43,6 +44,7 @@ function [ output_args ] = bounding_box_test(domain, q, d)
 %    QNNI
 
     % The distance from r(i) to x(q) defines the value of a for each r(i)
+% O(N)
     a = amax;
     u = zeros(1,d);
     bin_origin = 0;
@@ -60,39 +62,39 @@ function [ output_args ] = bounding_box_test(domain, q, d)
             bin_origin = i;
         end
     end
-    a
-    u = u / norm(u);            % Source Vector
+%    a
+    fprintf('amax = %f, a=%f, N=%d, q=%d\n', amax-1.0, a, N, q);
+    u = u / norm(u);                % Source Vector
+    e = ones(1,d) / sqrt(d);        % Target Vector
 
     %   Build rotation matrix to rotate u to be aligned with e
     if d == 2
-        e = ones(1,d) / sqrt(d);    % Target Vector
         theta = -acosd(u*e');
         R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
     else
-        ex = zeros(1,d);            %   Target x-Vector
-        ey = zeros(1,d);            %   Target y-Vector
-        ez = zeros(1,d);            %   Target z-Vector
-        ex(1) = cosd(45);
-        ey(2) = cosd(45);
-        ez(3) = cosd(45);
-        thetax = -acosd(u*ex');
-        thetay = -acosd(u*ey');
-        thetaz = -acosd(u*ez');
+% FIXME - THIS NEEDS TO BE DOUBLE CHECKED!!!
+%         Rx = [1.0 0.0 0.0; 0.0 cosd(theta) -sind(theta); 0.0 sind(theta) cosd(theta)];
 
-        Rx = [1.0 0.0 0.0; 0.0 cosd(thetax) -sind(thetax); 0.0 sind(thetax) cosd(thetax)];
-        Ry = [cosd(thetay) 0.0 sind(thetay); 0.0 1.0 0.0; -sind(thetay) 0.0 cosd(thetay)];
-        Rz = [cosd(thetaz) -sind(thetaz) 0.0; sind(thetaz) cosd(thetaz) 0.0; 0.0 0.0 1.0];
-        R = Rx*Ry*Rz;
+        e(3) = 0.0;                 % [sqrt(d) sqrt(d) 0.0] -> xy-plane
+        theta = -acosd(u*e');
+        R = [cosd(theta) -sind(theta) 0.0; sind(theta) cosd(theta) 0.0; 0.0 0.0 1.0];
+
+        e(3) = e(1);
+        e(2) = 0.0;                 % [sqrt(d) 0.0 sqrt(d)] -> xz-plane
+        theta = -acosd(u*e');
+%O(d^3)
+        R = R*[cosd(theta) 0.0 sind(theta); 0.0 1.0 0.0; -sind(theta) 0.0 cosd(theta)];
     end
-    
-    r
+
+    % Rotate particles about the axes so that bin-ing can proceed
+% O(d^2N)
     for i = 1:N
         r(i,1:d) = R*(r(i,1:d)-r(bin_origin,1:d))';
     end
-    r
+%    r
 
-    % Assumed basis is [e_1 e_2 ... e_d] ( = I_d)
-    % New basis is such that "shift" is rotated until aligned with e_1
+    % With a and new basis, set up bins
+    %FIXME!
 
 %-----------------------------------------------------------------------
 % % ATTEMPT #1
