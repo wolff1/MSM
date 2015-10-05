@@ -97,6 +97,8 @@ function [ output_args ] = bounding_box_test(domain, q, d)
     bins = LoIdx + HiIdx + ones(1,d);
     bin = zeros(bins);
 
+    % Place particles into bins
+% O(N)
     if d == 2
         for i = 1:N
             bidx = floor(r(i,1:d)/a) + LoIdx + ones(1,d);
