@@ -6,7 +6,7 @@ function [ output_args ] = bounding_box_test(domain, q, d)
          0.0 1.0;
          1.0 0.0;
          1.0 1.0;
-         0.5 0.5
+%         0.5 0.5
         ];
 %     r = rand(q*q,d)*domain - domain/2.0;
 %     r
@@ -30,6 +30,71 @@ function [ output_args ] = bounding_box_test(domain, q, d)
     end
 %    D
 
+% ATTEMPT #3
+    % Find q closest neighbors to particle i, O(N^(3/2) log(N^(1/2)))
+    QNN = zeros(N,q);
+    QNNI = zeros(N,q);
+    for i = 1:N
+        [v,idx] = sort(D(i,:));
+        QNN(i,:) = v(2:q+1);
+        QNNI(i,:) = idx(2:q+1);
+    end
+%    QNN
+%    QNNI
+
+    % The distance from r(i) to x(q) defines the value of a for each r(i)
+    a = amax;
+    u = zeros(1,d);
+    bin_origin = 0;
+    for i = 1:N
+        % Get positions of q nearest neighbors to particle i
+        x = r(QNNI(i,:),1:d);
+%        r(i,1:d)
+
+        v = x(q,1:d)-r(i,1:d);
+        radius = sqrt(4.0/d)*norm(v);
+%         a = min(a, radius);
+        if radius < a
+            a = radius;
+            u = v;
+            bin_origin = i;
+        end
+    end
+    a
+    u = u / norm(u);            % Source Vector
+
+    %   Build rotation matrix to rotate u to be aligned with e
+    if d == 2
+        e = ones(1,d) / sqrt(d);    % Target Vector
+        theta = -acosd(u*e');
+        R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+    else
+        ex = zeros(1,d);            %   Target x-Vector
+        ey = zeros(1,d);            %   Target y-Vector
+        ez = zeros(1,d);            %   Target z-Vector
+        ex(1) = cosd(45);
+        ey(2) = cosd(45);
+        ez(3) = cosd(45);
+        thetax = -acosd(u*ex');
+        thetay = -acosd(u*ey');
+        thetaz = -acosd(u*ez');
+
+        Rx = [1.0 0.0 0.0; 0.0 cosd(thetax) -sind(thetax); 0.0 sind(thetax) cosd(thetax)];
+        Ry = [cosd(thetay) 0.0 sind(thetay); 0.0 1.0 0.0; -sind(thetay) 0.0 cosd(thetay)];
+        Rz = [cosd(thetaz) -sind(thetaz) 0.0; sind(thetaz) cosd(thetaz) 0.0; 0.0 0.0 1.0];
+        R = Rx*Ry*Rz;
+    end
+    
+    r
+    for i = 1:N
+        r(i,1:d) = R*(r(i,1:d)-r(bin_origin,1:d))';
+    end
+    r
+
+    % Assumed basis is [e_1 e_2 ... e_d] ( = I_d)
+    % New basis is such that "shift" is rotated until aligned with e_1
+
+%-----------------------------------------------------------------------
 % % ATTEMPT #1
 %     % Find q closest neighbors to particle i, O(N^(3/2) log(N^(1/2)))
 %     QNN = zeros(N,q+1);
@@ -131,39 +196,4 @@ function [ output_args ] = bounding_box_test(domain, q, d)
 %     end
 %     a = max(1.0, a);
 %     a
-
-% ATTEMPT #3
-    % Find q closest neighbors to particle i, O(N^(3/2) log(N^(1/2)))
-    QNN = zeros(N,q);
-    QNNI = zeros(N,q);
-    for i = 1:N
-        [v,idx] = sort(D(i,:));
-        QNN(i,:) = v(2:q+1);
-        QNNI(i,:) = idx(2:q+1);
-    end
-%    QNN
-%    QNNI
-
-    % The distance from r(i) to x(q) defines the value of a for each r(i)
-    a = amax;
-    shift = zeros(1,d);
-    for i = 1:N
-        % Get positions of q nearest neighbors to particle i
-        x = r(QNNI(i,:),1:d);
-        r(i,1:d)
-        x
-        
-        v = x(q,1:d)-r(i,1:d);
-        radius = sqrt(2.0)*norm(v);
-%         a = min(a, radius);
-        if radius < a
-            a = radius;
-            shift = v;
-        end
-    end
-    a
-    shift
-    
-    % shift such that basis is aligned with v rotated 45 degrees
-    
 end
