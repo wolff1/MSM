@@ -28,14 +28,13 @@ function [ output_args ] = bounding_box_test(domain, q, d)
         for j = i+1:N
             rj = r(j,1:d);
             D(i,j) = norm(ri-rj);
-            D(j,i) = norm(ri-rj);
+            D(j,i) = D(i,j);
         end
     end
-%    D
 
 % ATTEMPT #3
     % Find q closest neighbors to particle i
-% O(N^(3/2) log(N^(1/2)))
+% O(N^2 log(N))
     QNN = zeros(N,q);
     QNNI = zeros(N,q);
     for i = 1:N
@@ -43,8 +42,6 @@ function [ output_args ] = bounding_box_test(domain, q, d)
         QNN(i,:) = v(2:q+1);
         QNNI(i,:) = idx(2:q+1);
     end
-%    QNN
-%    QNNI
 
     % The distance from r(i) to x(q) defines the value of a for each r(i)
 % O(N)
@@ -54,18 +51,16 @@ function [ output_args ] = bounding_box_test(domain, q, d)
     for i = 1:N
         % Get positions of q nearest neighbors to particle i
         x = r(QNNI(i,:),1:d);
-%        r(i,1:d)
 
         v = x(q,1:d)-r(i,1:d);
         radius = sqrt(4.0/d)*norm(v);
-%         a = min(a, radius);
         if radius < a
             a = radius;
             u = v;
             bin_origin = i;
         end
     end
-%    a
+
     u = u / norm(u);                % Source Vector
     e = ones(1,d) / sqrt(d);        % Target Vector
 
@@ -93,38 +88,31 @@ function [ output_args ] = bounding_box_test(domain, q, d)
     for i = 1:N
         r(i,1:d) = R*(r(i,1:d)-r(bin_origin,1:d))';
     end
-%     r
 
     % With a and new basis, set up bins
     LoCorner = min(r);
     HiCorner = max(r);
-%     LoCorner
-%     HiCorner
     LoIdx = -floor(LoCorner/a);
     HiIdx = ceil(HiCorner/a);
-%     LoIdx
-%     HiIdx
     bins = LoIdx + HiIdx + ones(1,d);
-%     bins
     bin = zeros(bins);
 
     if d == 2
         for i = 1:N
             bidx = floor(r(i,1:d)/a) + LoIdx + ones(1,d);
-%             bidx
             bin(bidx(1),bidx(2)) = bin(bidx(1),bidx(2)) + 1;
         end
-        bin
-        fprintf('amax = %f, a=%f, N=%d, q=%d, max-in-bin=%d, N''=%d\n', amax-1.0, a, N, q, norm(reshape(bin,1,bins(1)*bins(2)),inf), sum(reshape(bin,1,bins(1)*bins(2))));
+        max_in_bins = norm(reshape(bin,1,bins(1)*bins(2)),inf);
+        sum_in_bins = sum(reshape(bin,1,bins(1)*bins(2)));
     else
         for i = 1:N
             bidx = floor(r(i,1:d)/a) + LoIdx + ones(1,d);
-%             bidx
             bin(bidx(1),bidx(2),bidx(3)) = bin(bidx(1),bidx(2),bidx(3)) + 1;
         end
-        bin
-        fprintf('amax = %f, a=%f, N=%d, q=%d, max-in-bin=%d, N''=%d\n', amax-1.0, a, N, q, norm(reshape(bin,1,bins(1)*bins(2)*bins(3)),inf), sum(reshape(bin,1,bins(1)*bins(2)*bins(3))));
+        max_in_bins = norm(reshape(bin,1,bins(1)*bins(2)*bins(3)),inf);
+        sum_in_bins = sum(reshape(bin,1,bins(1)*bins(2)*bins(3)));
     end
+    fprintf('amax = %f, a=%f, N=%d, q=%d, max-in-bin=%d, N''=%d, a pct = %f\n', amax-1.0, a, N, q, max_in_bins, sum_in_bins, a*100.0/(amax-1.0));
 
 %-----------------------------------------------------------------------
 % % ATTEMPT #1
