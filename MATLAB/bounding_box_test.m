@@ -2,13 +2,16 @@ function [ output_args ] = bounding_box_test(domain, q, d)
 %bounding_box_test - determine size of largest bounding box
 %                    such that no more than q:=sqrt(N) particles
 %                    can be "contained" within the box.
-%     r = [0.0 0.0;
-%          0.0 1.0;
-%          1.0 0.0;
-%          1.0 1.0;
-%          0.5 0.5
-%         ];
-    r = rand(q*q,d)*domain - domain/2.0;
+    if domain == 0
+        r = [0.0 0.0;
+             0.0 1.0;
+             1.0 0.0;
+             1.0 1.0;
+%              0.5 0.5
+            ];
+    else
+        r = rand(q*q,d)*domain - domain/2.0;
+    end
     N = length(r);
     q = floor(sqrt(N));
     d = size(r,2);
@@ -63,7 +66,6 @@ function [ output_args ] = bounding_box_test(domain, q, d)
         end
     end
 %    a
-    fprintf('amax = %f, a=%f, N=%d, q=%d\n', amax-1.0, a, N, q);
     u = u / norm(u);                % Source Vector
     e = ones(1,d) / sqrt(d);        % Target Vector
 
@@ -91,10 +93,38 @@ function [ output_args ] = bounding_box_test(domain, q, d)
     for i = 1:N
         r(i,1:d) = R*(r(i,1:d)-r(bin_origin,1:d))';
     end
-%    r
+%     r
 
     % With a and new basis, set up bins
-    %FIXME!
+    LoCorner = min(r);
+    HiCorner = max(r);
+%     LoCorner
+%     HiCorner
+    LoIdx = -floor(LoCorner/a);
+    HiIdx = ceil(HiCorner/a);
+%     LoIdx
+%     HiIdx
+    bins = LoIdx + HiIdx + ones(1,d);
+%     bins
+    bin = zeros(bins);
+
+    if d == 2
+        for i = 1:N
+            bidx = floor(r(i,1:d)/a) + LoIdx + ones(1,d);
+%             bidx
+            bin(bidx(1),bidx(2)) = bin(bidx(1),bidx(2)) + 1;
+        end
+        bin
+        fprintf('amax = %f, a=%f, N=%d, q=%d, max-in-bin=%d, N''=%d\n', amax-1.0, a, N, q, norm(reshape(bin,1,bins(1)*bins(2)),inf), sum(reshape(bin,1,bins(1)*bins(2))));
+    else
+        for i = 1:N
+            bidx = floor(r(i,1:d)/a) + LoIdx + ones(1,d);
+%             bidx
+            bin(bidx(1),bidx(2),bidx(3)) = bin(bidx(1),bidx(2),bidx(3)) + 1;
+        end
+        bin
+        fprintf('amax = %f, a=%f, N=%d, q=%d, max-in-bin=%d, N''=%d\n', amax-1.0, a, N, q, norm(reshape(bin,1,bins(1)*bins(2)*bins(3)),inf), sum(reshape(bin,1,bins(1)*bins(2)*bins(3))));
+    end
 
 %-----------------------------------------------------------------------
 % % ATTEMPT #1
