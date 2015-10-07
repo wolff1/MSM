@@ -25,13 +25,13 @@ function [result] = gamma_hi_deriv(acc, obj, x)
          end
       else
          % s=1: Taylor Method
-         g0
-         obj.taylor_hi_deriv
+%         g0
+%         obj.taylor_hi_deriv
          coef = g0 .* obj.taylor_hi_deriv;
-         obj.taylor_exp
+%         obj.taylor_exp
          idx = obj.taylor_exp >= 0;
-         coef(idx)
-         obj.taylor_exp(idx)
+%         coef(idx)
+%         obj.taylor_exp(idx)
          result = coef(idx)' * x.^obj.taylor_exp(idx);
 %          result = result / factorial(k+1);
 %          result
