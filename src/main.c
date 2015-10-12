@@ -14,6 +14,8 @@ void test_msm_preprocessing(void);
 void test_simulator(void);
 void test_parallel_division(void);
 void test_simulator_water(void);
+void single_splitting(void);
+double weighted_fn(void);
 
 /*
 #include "tester.h"
@@ -40,6 +42,8 @@ int main(int argc, char* argv[])
 		printf("* 6 - Figure 2 (Sinc)            *\n");
 		printf("* 7 - Figure 4 (B-Spline Nesting)*\n");
 		printf("* 8 - Figure 5 (C1 Not Nesting)  *\n");
+		printf("*                                *\n");
+		printf("* 9 - Single splitting (1D)      *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -79,6 +83,10 @@ int main(int argc, char* argv[])
 
 			case 8:	//	Figure 5
 				phi_nesting_testC1();
+				break;
+
+			case 9:	//	Single-splitting (1D)
+				single_splitting();
 				break;
 
 			case 0:	// Exit
@@ -416,6 +424,94 @@ void test_simulator_water(void)
 	simulator_uninitialize(MySimulator);
 
 	dynfree(MySimulator);
+}
+
+void single_splitting(void)
+{
+	long			i = 0;
+	long			M = 0;
+	double			err = 0.0;
+	double			num = 1.0;
+	double			den = 1.0;
+	double			x1 = 0.0;
+	double			x2 = 1.0;
+	double			f1 = 0.0;
+	double			f2 = 0.0;
+
+	MSM_PARAMETERS	mp;
+	B_SPLINE*		bs = NULL;
+	EVEN_POWERS*	ep = NULL;
+
+	//	Set up necessary parameters
+	mp.h = 2.5;
+	mp.a = 4.0*mp.h;
+	mp.mu = 10;
+	mp.p = 4;
+	mp.k = mp.p/2;	// k = p/2 - 1 should give EXACT
+	mp.L = 4;
+
+	//	Set up number of fine-grid points
+	M = pow(2,mp.L-1)*10;
+
+	//	Create B-Spline object
+	bs = (B_SPLINE*) dynmem(sizeof(B_SPLINE));
+	interpolant_initialize(bs, (void*)b_spline_initialize, &mp);
+
+	//	Create Gamma object
+	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
+	softener_initialize(ep, (void*)even_powers_initialize, mp.k);
+
+	//	Output:		expected error based on method parameters & analysis (from slide 6/13 of 10/01/2015 thesis presentation)
+	for (i = 1; i <= mp.p/2; i++)
+	{
+		err += 1.0/(double)i;
+		err += 2.0/(double)(i+mp.p/2.0);
+	}
+	err -= log(2.0*mp.p);
+	printf("gamma_%d = %f\n", mp.p, err);
+	err += 2.0*log(4.0/PI);
+	err += log(mp.p-1);
+	err *= 2.0/PI;
+	for (i = 2; i <= mp.p; i+=2)
+	{
+		num *= (double)i-1.0;
+		den *= (double)i;
+	}
+	err += (num/den);
+	err *= pow(mp.h/2.0, mp.p);
+	ep->cmn.derivative(ep,1,&x1,&f1,mp.p);
+	ep->cmn.derivative(ep,1,&x2,&f2,mp.p);
+	printf("gamma^{(%d)}(%f) = %f, gamma^{(%d)}(%f) = %f\n", mp.p, x1, f1, mp.p, x2, f2);
+	err *= MAX(abs(f1),abs(f2));
+	err /= pow(mp.a, mp.p+1);
+	printf("expected error is %e\n", err);
+
+	//	Level L:	compute gamma
+	//				create interpolant of gamma on grid L
+
+	//	Level L-1:	compute gamma - interp(L)
+	//				create interpolant of gamma - interp(L) on grid L-1
+
+	//	Level ell:	compute gamma - interp(ell+1)
+	//				create interpolant of gamma - interp(ell+1) on grid ell
+
+	//	Level 1:	compute gamma - interp(2)
+	//				create interpolant of gamma - interp(2) on grid 1
+
+	//	Output:		gamma, interp(L) + ... + interp(1), interp(L), interp(L-1), ..., interp(2), interp(1)
+
+	//	Destroy B-Spline object
+	bs->cmn.uninitialize(bs);
+	dynfree(bs);
+
+	//	Destroy Gamma object
+	ep->cmn.uninitialize(ep);
+	dynfree(ep);
+}
+
+double weighted_fn(void)
+{
+	return 0.0;
 }
 
 //void test_parallel_division(void)

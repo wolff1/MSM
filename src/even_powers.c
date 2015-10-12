@@ -19,6 +19,7 @@ void even_powers_initialize(void* Softener)
 	Ep->cmn.copy = &even_powers_copy;
 	Ep->cmn.soften = &even_powers_soften;
 	Ep->cmn.split = &even_powers_split;
+	Ep->cmn.derivative = &even_powers_derivative;
 	Ep->cmn.uninitialize = &even_powers_uninitialize;
 
 	// Initialize the EVEN_POWERS softener
@@ -33,6 +34,10 @@ void even_powers_copy(void* Dst, void* Src)
 	//	Copy softening function coefficients
 	((EVEN_POWERS*)Dst)->cmn.p2p = (double*) dynvec(((EVEN_POWERS*)Dst)->cmn.k+1, sizeof(double));
 	memcpy(((EVEN_POWERS*)Dst)->cmn.p2p, ((EVEN_POWERS*)Src)->cmn.p2p, (((EVEN_POWERS*)Dst)->cmn.k+1)*sizeof(double));
+
+	//	FIXME - COPY DERIVCOEFF
+	((EVEN_POWERS*)Dst)->cmn.DerivCoeff = (double**) dynarr_d(((EVEN_POWERS*)Dst)->cmn.k+1, ((EVEN_POWERS*)Dst)->cmn.k+1);
+	memcpy(((EVEN_POWERS*)Dst)->cmn.DerivCoeff, ((EVEN_POWERS*)Src)->cmn.DerivCoeff, (((EVEN_POWERS*)Dst)->cmn.k+1)*(((EVEN_POWERS*)Dst)->cmn.k+1)*sizeof(double));
 }
 
 void even_powers_soften(void* Softener, long Len, double* X, double* F, double* DF)
@@ -115,73 +120,38 @@ void even_powers_split(void* Softener, long Len, double* X, double* F, double* D
 	dynfree(DF_2);
 }
 
-void even_powers_uninitialize(void* Softener)
+void even_powers_derivative(void* Softener, long Len, double* X, double* F, short DerivativeNumber)
 {
-	EVEN_POWERS*		Ep = (EVEN_POWERS*) Softener;
-	assert(Ep != NULL);
-//	printf("\tUn-initializing EVEN_POWERS!\n");
+	EVEN_POWERS*	Ep = (EVEN_POWERS*) Softener;
 
-	//	Free dynamically allocated memory for softening function coefficients
-	dynfree(Ep->cmn.p2p);
-}
+	short			i = 0;
+	short			j = 0;
+	short			k = Ep->cmn.k;
 
-//	INTERNAL Methods
-void even_powers_compute_p2p(EVEN_POWERS* Ep)
-{
-	short		k = Ep->cmn.k;
-double**	M = NULL;	// Coefficient matrix
-FILE*		fp = NULL;
-	double**	A = NULL;	// Coefficient matrix
-	double*		b = NULL;	// rhs vector first, then solution vector
-	int			i = 0;
-	int			j = 0;
-int m = 0;
-int samples = 2000;
-double x = 0.0;
-double xx = 0.0;
-double val = 0.0;
-	lapack_int	rc = 0;
-	lapack_int*	piv = NULL;
+	double**		M = Ep->cmn.DerivCoeff;
+	double*			b = Ep->cmn.p2p;
 
-	// Allocate memory for A and b
-	A = dynarr_d(k+1, k+1);
-M = dynarr_d(k+1, k+1);
-	b = (double*) dynvec(k+1,sizeof(double));
+	//	Make sure we don't try to compute a higher derivative than what we have stored
+	DerivativeNumber = MIN(DerivativeNumber, k);
 
-	// Build row zero of A and b
-	b[0] = 1.0;
-	for (i = 0; i <= k; i++)
+	for (i = 0; i < Len; i++)
 	{
-		A[0][i] = 1.0;
-M[0][i] = A[0][i];
-	}
-
-	// Build rows 1 through k of A and b
-	for (i = 1; i <= k; i++)
-	{
-		b[i] = -i*b[i-1];
-		// cols (starting with diagonal or subdiagonal)
-		for (j = ceil(i/2.0); j <= k; j++)
+		//	Compute DerivativeNumber-th derivative of gamma at X[*]
+		F[i] = 0.0;
+		for (j = ceil(DerivativeNumber/2.0); j <= k; j++)		//	j gives coefficient(p2p) / r^{2j-i}
 		{
-			// NOTE: 2j-i+1 is the power of the term of one less derivative
-			A[i][j] = (2*j-i+1)*A[i-1][j];
-M[i][j] = A[i][j];
+			F[i] += M[DerivativeNumber][j]*b[j]*(pow(X[i], 2*j-DerivativeNumber));
 		}
 	}
 
-	// Solve system Ax = b
-	// NOTE: b is overwritten with x, A is overwritten with LU
-	piv = (lapack_int*) dynvec(k+1,sizeof(lapack_int));
-	rc = LAPACKE_dgesv(LAPACK_ROW_MAJOR, (lapack_int) k+1, (lapack_int) 1,
-						A[0], (lapack_int) k+1, piv, b, (lapack_int) 1);
-	dynfree(piv);
-	assert(rc == 0); // zero is SUCCESS
-
-	//	b is now solution vector (i.e. the coefficients of the softening function)
-	Ep->cmn.p2p = b;
-
-//	FROM HERE
-display_dynarr_d(M, k+1, k+1);
+#if 0
+	FILE*			fp = NULL;
+	int				m = 0;
+	int				samples = 2000;
+	double			x = 0.0;
+	double			xx = 0.0;
+	double			val = 0.0;
+//display_dynarr_d(M, k+1, k+1);
 	if ((fp = fopen("GammaDerivatives.dat", "w")) != NULL)
 	{
 		for (m = 0; m <= samples; m++)
@@ -213,27 +183,73 @@ fprintf(fp, "\n");
 		fclose(fp);
 	}
 
-/*
-	k = Ep->cmn.k;
-	c = Ep->cmn.p2p;
+#endif
+}
 
-	for (i = 0; i < Len; i++)
+void even_powers_uninitialize(void* Softener)
+{
+	EVEN_POWERS*		Ep = (EVEN_POWERS*) Softener;
+	assert(Ep != NULL);
+//	printf("\tUn-initializing EVEN_POWERS!\n");
+
+	//	Free dynamically allocated memory for softening function coefficients
+	dynfree(Ep->cmn.p2p);
+	dynfree(Ep->cmn.DerivCoeff[0]);
+	dynfree(Ep->cmn.DerivCoeff);
+}
+
+//	INTERNAL Methods
+void even_powers_compute_p2p(EVEN_POWERS* Ep)
+{
+	double**	A = NULL;	// Coefficient matrix
+	double*		b = NULL;	// rhs vector first, then solution vector
+	double**	M = NULL;	// Coefficient matrix (same as A, but A gets overwritten in LAPACK call)
+	short		k = Ep->cmn.k;
+	int			i = 0;
+	int			j = 0;
+
+	lapack_int	rc = 0;
+	lapack_int*	piv = NULL;
+
+	// Allocate memory for A and b
+	A = dynarr_d(k+1, k+1);
+	M = dynarr_d(k+1, k+1);
+	b = (double*) dynvec(k+1,sizeof(double));
+
+	// Build row zero of A and b
+	b[0] = 1.0;
+	for (i = 0; i <= k; i++)
 	{
-		XX = X[i]*X[i];
-		// Use Horner's rule to evaluate polynomial
-		F[i] = c[k];			// Even powers
-		for (j = k-1; j >= 1; j--)
-		{
-			F[i] = F[i]*XX + c[j];
-		}
-		F[i] = F[i]*XX + c[0];
+		A[0][i] = 1.0;
+		M[0][i] = A[0][i];
 	}
-*/
-//	TO HERE
+
+	// Build rows 1 through k of A and b
+	for (i = 1; i <= k; i++)
+	{
+		b[i] = -i*b[i-1];
+		// cols (starting with diagonal or subdiagonal)
+		for (j = ceil(i/2.0); j <= k; j++)
+		{
+			// NOTE: 2j-i+1 is the power of the term of one less derivative
+			A[i][j] = (2*j-i+1)*A[i-1][j];
+			M[i][j] = A[i][j];
+		}
+	}
+
+	// Solve system Ax = b
+	// NOTE: b is overwritten with x, A is overwritten with LU
+	piv = (lapack_int*) dynvec(k+1,sizeof(lapack_int));
+	rc = LAPACKE_dgesv(LAPACK_ROW_MAJOR, (lapack_int) k+1, (lapack_int) 1,
+						A[0], (lapack_int) k+1, piv, b, (lapack_int) 1);
+	dynfree(piv);
+	assert(rc == 0); // zero is SUCCESS
+
+	//	b is now solution vector (i.e. the coefficients of the softening function)
+	Ep->cmn.p2p = b;
+	Ep->cmn.DerivCoeff = M;
 
 	// Free allocated memory
-dynfree(M[0]);
-dynfree(M);
 	dynfree(A[0]);
 	dynfree(A);
 }

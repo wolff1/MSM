@@ -20,6 +20,7 @@ void even_powers_initialize(void* Softener);
 void even_powers_copy(void* Dst, void* Src);
 void even_powers_soften(void* Softener, long Len, double* X, double* F, double* DF);
 void even_powers_split(void* Softener, long Len, double* X, double* F, double* DF);
+void even_powers_derivative(void* Softener, long Len, double* X, double* F, short DerivativeNumber);
 void even_powers_uninitialize(void* Softener);
 
 //	INTERNAL Methods

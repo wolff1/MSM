@@ -33,6 +33,7 @@ void softener_copy(void* Dst, void* Src)
 	((SOFTENER*)Dst)->copy = ((SOFTENER*)Src)->copy;
 	((SOFTENER*)Dst)->soften = ((SOFTENER*)Src)->soften;
 	((SOFTENER*)Dst)->split = ((SOFTENER*)Src)->split;
+	((SOFTENER*)Dst)->derivative = ((SOFTENER*)Src)->derivative;
 	((SOFTENER*)Dst)->uninitialize = ((SOFTENER*)Src)->uninitialize;
 
 	//	Call sub-class copy method

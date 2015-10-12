@@ -15,11 +15,13 @@ typedef struct
 	short		k;
 	double*		p2p;
 	size_t		Size;
+	double**	DerivCoeff;
 
 	//	Methods
 	void		(*copy)(void*,void*);
 	void		(*soften)(void*, long, double*, double*, double*);
 	void		(*split)(void*, long, double*, double*, double*);
+	void		(*derivative)(void*, long, double*, double*, short);
 	void		(*uninitialize)(void*);
 } SOFTENER;
 

@@ -21,7 +21,7 @@ function [ output_args ] = FindGridSpacing(tau, D, N)
 
         fprintf('p = %d, 2gamma_n(p) - gamma_n(p/2) = %f, gamma_n'' = %f\n', p, 2.0*gamma_n(p)-gamma_n(p/2), gamma_n_p(p));
         p = p + 2;
-        break;
+%         break;
     end
 
 end
