@@ -429,6 +429,8 @@ void test_simulator_water(void)
 void single_splitting(void)
 {
 	long			i = 0;
+	long			j = 0;
+	long			samples = 10;
 	long			M = 0;
 	double			err = 0.0;
 	double			num = 1.0;
@@ -437,6 +439,8 @@ void single_splitting(void)
 	double			x2 = 1.0;
 	double			f1 = 0.0;
 	double			f2 = 0.0;
+	double*			X = NULL;
+	double*			F = NULL;
 
 	MSM_PARAMETERS	mp;
 	B_SPLINE*		bs = NULL;
@@ -447,11 +451,9 @@ void single_splitting(void)
 	mp.a = 4.0*mp.h;
 	mp.mu = 10;
 	mp.p = 4;
-	mp.k = mp.p/2;	// k = p/2 - 1 should give EXACT
+	mp.k = mp.p;	// k = p/2 - 1 should give EXACT
 	mp.L = 4;
-
-	//	Set up number of fine-grid points
-	M = pow(2,mp.L-1)*10;
+	mp.D = 10;
 
 	//	Create B-Spline object
 	bs = (B_SPLINE*) dynmem(sizeof(B_SPLINE));
@@ -477,6 +479,7 @@ void single_splitting(void)
 		num *= (double)i-1.0;
 		den *= (double)i;
 	}
+	printf("factorial thing: %f\n", num/den);
 	err += (num/den);
 	err *= pow(mp.h/2.0, mp.p);
 	ep->cmn.derivative(ep,1,&x1,&f1,mp.p);
@@ -485,6 +488,33 @@ void single_splitting(void)
 	err *= MAX(abs(f1),abs(f2));
 	err /= pow(mp.a, mp.p+1);
 	printf("expected error is %e\n", err);
+
+	//	Output "high" derivative of gamma over domain
+	X = (double*) dynvec(samples+1, sizeof(double));
+	F = (double*) dynvec(samples+1, sizeof(double));
+	for (i = 0; i <= samples; i++)
+	{
+		X[i] = 1.0 + ((double)i/(double)samples)*mp.D;
+	}
+
+	for (i = 0; i <= mp.k; i++)
+	{
+printf("# %ld-th derivative\n", i);
+		//	Compute i-th derivatie for all "samples" over domain
+		ep->cmn.derivative(ep, samples+1, X, F, i);
+
+		//	write derivative(s) to file
+		for (j = 0; j <= samples; j++)
+		{
+printf("%04ld\t%e\t%e\n", j, X[j], F[j]);
+		}
+printf("\n");
+	}
+	dynfree(X);
+	dynfree(F);
+
+	//	Set up number of fine-grid points
+	M = pow(2,mp.L-1)*10;
 
 	//	Level L:	compute gamma
 	//				create interpolant of gamma on grid L

@@ -120,6 +120,16 @@ void even_powers_split(void* Softener, long Len, double* X, double* F, double* D
 	dynfree(DF_2);
 }
 
+long factorial(long n) {
+	long val = 1.0;
+	long i = 0;
+	for (i = 2; i <= n; i++)
+	{
+		val *= i;
+	}
+	return val;
+}
+
 void even_powers_derivative(void* Softener, long Len, double* X, double* F, short DerivativeNumber)
 {
 	EVEN_POWERS*	Ep = (EVEN_POWERS*) Softener;
@@ -134,13 +144,24 @@ void even_powers_derivative(void* Softener, long Len, double* X, double* F, shor
 	//	Make sure we don't try to compute a higher derivative than what we have stored
 	DerivativeNumber = MIN(DerivativeNumber, k);
 
-	for (i = 0; i < Len; i++)
+	if (X[i] < 1.0)
 	{
-		//	Compute DerivativeNumber-th derivative of gamma at X[*]
-		F[i] = 0.0;
-		for (j = ceil(DerivativeNumber/2.0); j <= k; j++)		//	j gives coefficient(p2p) / r^{2j-i}
+		for (i = 0; i < Len; i++)
 		{
-			F[i] += M[DerivativeNumber][j]*b[j]*(pow(X[i], 2*j-DerivativeNumber));
+			//	Compute DerivativeNumber-th derivative of gamma at X[i]
+			F[i] = 0.0;
+			for (j = ceil(DerivativeNumber/2.0); j <= k; j++)		//	j gives coefficient(p2p) / r^{2j-i}
+			{
+				F[i] += M[DerivativeNumber][j]*b[j]*(pow(X[i], 2*j-DerivativeNumber));
+			}
+		}
+	}
+	else
+	{
+		for (i = 0; i < Len; i++)
+		{
+			//	Compute DerivativeNumber-th derivative of gamma at X[i]
+			F[i] = pow(-1.0,DerivativeNumber) * factorial(DerivativeNumber) * pow(X[i], -DerivativeNumber-1);
 		}
 	}
 
