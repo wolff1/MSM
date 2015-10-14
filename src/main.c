@@ -441,19 +441,26 @@ void single_splitting(void)
 	double			f2 = 0.0;
 	double*			X = NULL;
 	double*			F = NULL;
+	FILE*			fp = NULL;
+	char			filename[256];
+	time_t			rawtime;
+	struct tm*		now;
 
 	MSM_PARAMETERS	mp;
 	B_SPLINE*		bs = NULL;
 	EVEN_POWERS*	ep = NULL;
 
 	//	Set up necessary parameters
-	mp.h = 2.5;
-	mp.a = 4.0*mp.h;
-	mp.mu = 10;
-	mp.p = 4;
-	mp.k = mp.p;	// k = p/2 - 1 should give EXACT
-	mp.L = 4;
-	mp.D = 10;
+	//mp.h = 2.5;
+	//mp.a = 4.0*mp.h;
+	//mp.mu = 10;
+	//mp.p = 4;
+	//mp.k = mp.p;	// k = p/2 - 1 should give EXACT
+	//mp.L = 4;
+	//mp.D = 10;
+	msm_parameters_input(&mp);
+	printf("Samples (Default: %ld): ", samples);
+	scanf("%ld", &samples);
 
 	//	Create B-Spline object
 	bs = (B_SPLINE*) dynmem(sizeof(B_SPLINE));
@@ -470,7 +477,7 @@ void single_splitting(void)
 		err += 2.0/(double)(i+mp.p/2.0);
 	}
 	err -= log(2.0*mp.p);
-	printf("gamma_%d = %f\n", mp.p, err);
+//printf("gamma_%d = %f\n", mp.p, err);
 	err += 2.0*log(4.0/PI);
 	err += log(mp.p-1);
 	err *= 2.0/PI;
@@ -479,56 +486,98 @@ void single_splitting(void)
 		num *= (double)i-1.0;
 		den *= (double)i;
 	}
-	printf("factorial thing: %f\n", num/den);
+//printf("factorial thing: %f\n", num/den);
 	err += (num/den);
 	err *= pow(mp.h/2.0, mp.p);
 	ep->cmn.derivative(ep,1,&x1,&f1,mp.p);
 	ep->cmn.derivative(ep,1,&x2,&f2,mp.p);
-	printf("gamma^{(%d)}(%f) = %f, gamma^{(%d)}(%f) = %f\n", mp.p, x1, f1, mp.p, x2, f2);
+//printf("gamma^{(%d)}(%f) = %f, gamma^{(%d)}(%f) = %f\n", mp.p, x1, f1, mp.p, x2, f2);
 	err *= MAX(abs(f1),abs(f2));
 	err /= pow(mp.a, mp.p+1);
-	printf("expected error is %e\n", err);
+printf("expected error is %e\n", err);
 
-	//	Output "high" derivative of gamma over domain
 	X = (double*) dynvec(samples+1, sizeof(double));
 	F = (double*) dynvec(samples+1, sizeof(double));
-	for (i = 0; i <= samples; i++)
-	{
-		X[i] = 1.0 + ((double)i/(double)samples)*mp.D;
-	}
 
-	for (i = 0; i <= mp.k; i++)
+	//	Get current time and format 
+	time(&rawtime);
+	now = localtime(&rawtime);
+/*
+	//	Open file for writing and then write stuff
+	strftime(filename, sizeof(filename), "../../../data/dgamma_%Y-%m-%d_%H-%M-%S.dat", now);
+	if ((fp = fopen(filename, "w")) != NULL)
 	{
-printf("# %ld-th derivative\n", i);
-		//	Compute i-th derivatie for all "samples" over domain
-		ep->cmn.derivative(ep, samples+1, X, F, i);
+		fprintf(fp, "# This is: %s, derivatives of gamma\n", filename);
+		fprintf(fp, "# Parameters: \n");
+		fprintf(fp, "#\ta = %lf\n", mp.a);
+		fprintf(fp, "#\th = %lf\n", mp.h);
+		fprintf(fp, "#\tp = %hd\n", mp.p);
+		fprintf(fp, "#\tk = %hd\n", mp.k);
+		fprintf(fp, "#\tmu = %hd\n", mp.mu);
+		fprintf(fp, "#\tD = %lf\n", mp.D);
+		fprintf(fp, "#\tL = %hd\n\n", mp.L);
 
-		//	write derivative(s) to file
-		for (j = 0; j <= samples; j++)
+		//	Output "high" derivative of gamma over domain
+		for (i = 0; i <= samples; i++)
 		{
-printf("%04ld\t%e\t%e\n", j, X[j], F[j]);
+			X[i] = 1.0 + ((double)i/(double)samples)*mp.D;
 		}
-printf("\n");
-	}
-	dynfree(X);
-	dynfree(F);
 
+		for (i = 0; i <= mp.k; i++)
+		{
+			fprintf(fp, "# %ld-th derivative\n", i);
+
+			//	Compute i-th derivatie for all "samples" over domain
+			ep->cmn.derivative(ep, samples+1, X, F, i);
+
+			//	write derivative(s) to file
+			for (j = 0; j <= samples; j++)
+			{
+				fprintf(fp, "%04ld\t%e\t%e\n", j, X[j], F[j]);
+			}
+			fprintf(fp, "\n");
+		}
+
+		//	Close file
+		fclose(fp);
+		printf("*** COMPLETED GAMMA DERIVATIVES TEST. Results in file: %s ***\n", filename);
+	}
+*/
 	//	Set up number of fine-grid points
-	M = pow(2,mp.L-1)*10;
+	if (pow(2,mp.L-1)*10.0 > mp.D)
+	{
+		printf("*** Updating D from %lf to ", mp.D);
+		mp.D = mp.h*pow(2,mp.L-1)*1.0;
+		printf("%lf to ensure coarse grid is big enough. ***\n", mp.D);
+	}
+	M = floor(mp.D / mp.h) + 1;	// # of grid points necessary for domain (but NOT "expansion")
+
+	for (i = mp.L; i > 0; i--)
+	{
+		printf("|Grid %ld| = %ld\n", i, (M-1)/(long)pow(2.0, i-1) + mp.p - 2 + 1);
+	}
 
 	//	Level L:	compute gamma
 	//				create interpolant of gamma on grid L
+	//				compute values of interpolant over domain
 
 	//	Level L-1:	compute gamma - interp(L)
 	//				create interpolant of gamma - interp(L) on grid L-1
+	//				compute values of interpolant over domain
 
 	//	Level ell:	compute gamma - interp(ell+1)
 	//				create interpolant of gamma - interp(ell+1) on grid ell
+	//				compute values of interpolant over domain
 
 	//	Level 1:	compute gamma - interp(2)
 	//				create interpolant of gamma - interp(2) on grid 1
+	//				compute values of interpolant over domain
 
 	//	Output:		gamma, interp(L) + ... + interp(1), interp(L), interp(L-1), ..., interp(2), interp(1)
+
+	//	Destory X and F vectors
+	dynfree(X);
+	dynfree(F);
 
 	//	Destroy B-Spline object
 	bs->cmn.uninitialize(bs);

@@ -1467,7 +1467,9 @@ typedef struct
 	printf("mu: ");
 	scanf("%hd", &Parameters->mu);
 
-	Parameters->D = 0.0;
+//	Parameters->D = 0.0;
+	printf("D: ");
+	scanf("%lf", &Parameters->D);
 
 	printf("L: ");
 	scanf("%hd", &Parameters->L);
