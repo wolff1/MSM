@@ -445,6 +445,7 @@ void single_splitting(void)
 	char			filename[256];
 	time_t			rawtime;
 	struct tm*		now;
+	double			min_D = 0.0;
 
 	MSM_PARAMETERS	mp;
 	B_SPLINE*		bs = NULL;
@@ -543,19 +544,25 @@ printf("expected error is %e\n", err);
 		printf("*** COMPLETED GAMMA DERIVATIVES TEST. Results in file: %s ***\n", filename);
 	}
 */
+	min_D = mp.h*pow(2,mp.L-1)*1.0;
 	//	Set up number of fine-grid points
-	if (pow(2,mp.L-1)*10.0 > mp.D)
+	if (min_D > mp.D)
 	{
 		printf("*** Updating D from %lf to ", mp.D);
-		mp.D = mp.h*pow(2,mp.L-1)*1.0;
+		mp.D = min_D;
 		printf("%lf to ensure coarse grid is big enough. ***\n", mp.D);
 	}
 	M = floor(mp.D / mp.h) + 1;	// # of grid points necessary for domain (but NOT "expansion")
 
 	for (i = mp.L; i > 0; i--)
 	{
-		printf("|Grid %ld| = %ld\n", i, (M-1)/(long)pow(2.0, i-1) + mp.p - 2 + 1);
+		printf("|Grid %ld| = %ld\n", i, (M-1)/(long)pow(2.0, i-1) + mp.p + 1);
 	}
+
+//	display_vector_d(bs->omega, bs->cmn.p/2 + bs->mu + 1);
+	dynfree(bs->omega);
+	b_spline_compute_omega(bs, 100);
+//	display_vector_d(bs->omega, 100);
 
 	//	Level L:	compute gamma
 	//				create interpolant of gamma on grid L

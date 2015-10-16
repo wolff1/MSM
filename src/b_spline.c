@@ -33,7 +33,7 @@ void b_spline_initialize(void* Interpolant, MSM_PARAMETERS* MsmParams)
 	//	Set up the B_SPLINE interpolant
 	b_spline_compute_g2p(Bs);
 	b_spline_compute_g2fg(Bs);
-	b_spline_compute_omega(Bs);
+	b_spline_compute_omega(Bs,-1);
 	b_spline_compute_omega_prime(Bs);
 //	b_spline_compute_g2g(Bs);		//	Happens in preprocess
 //	b_spline_compute_tg2g(Bs);		//	Happens in preprocess
@@ -377,12 +377,12 @@ void b_spline_compute_g2fg(B_SPLINE* Bs)
 //	display_vector_d(Bs->cmn.g2fg, Bs->cmn.p/2+1);
 }
 
-void b_spline_compute_omega(B_SPLINE* Bs)
+void b_spline_compute_omega(B_SPLINE* Bs, short n)
 {
 	short		i = 0;
 	short		p = 0;
 	short		p_2 = 0;
-	short		n = 10;
+//	short		n = 10;
 	double*		X = NULL;
 	double*		B = NULL;
 	double*		DB = NULL;
@@ -393,7 +393,10 @@ void b_spline_compute_omega(B_SPLINE* Bs)
 
 	p = Bs->cmn.p;
 	p_2 = p/2;
-	n = p_2 + Bs->mu + 1;
+	if (n < 0)
+	{
+		n = p_2 + Bs->mu + 1;
+	}
 
 	// Dynamically allocate memory
 	X = (double*) dynvec(p_2, sizeof(double));

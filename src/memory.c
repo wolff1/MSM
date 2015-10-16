@@ -119,7 +119,8 @@ void display_vector_d(double* x, unsigned long rows)
 
 	for (i = 0; i < rows; i++)
 	{
-		printf("%f\n", x[i]);
+		//printf("%f\n", x[i]);
+		printf("%04lu\t%+e\n", i, x[i]);
 	}
 	printf("\n");
 }
