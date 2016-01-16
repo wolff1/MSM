@@ -610,7 +610,8 @@ void test_quasi_interp_1d(void)
 {
 	short			p = 0;
 	short			p_2 = 0;
-	short			i = 0;
+	long			i = 0;
+	long			j = 0;
 	short			mu = 1;
 	double*			B = NULL;
     double*			BE = NULL;
@@ -626,6 +627,13 @@ void test_quasi_interp_1d(void)
 	double*			p_full = NULL;
 	double*			high_terms = NULL;
 
+	double*			poly = NULL;
+	time_t			t;
+	long			samples = 10;
+	double*			X = NULL;
+	double*			F = NULL;
+	double*			I = NULL;
+
 //	GET NECESSARY PARAMETERS
 	printf("p = ");
 	scanf("%hd", &p);
@@ -638,47 +646,37 @@ void test_quasi_interp_1d(void)
 	p_2 = p/2;
 	B = (double*) dynvec(p_2, sizeof(double));
 	b_spline_compute_blurring_operator(p_2-1, B);
-//display_vector_d(B, p_2);
 
 	//	Build A'
 	Ap = (double*) dynvec(p_2, sizeof(double));
 	b_spline_compute_operator_inverse(p_2-1, B, p_2-1, Ap);
-//display_vector_d(Ap, p_2);
 
 	//	Compute C
 	Ctmp = (double*) dynvec(p-1, sizeof(double));
 	mpoly(p_2-1, B, p_2-1, Ap, Ctmp);
-//display_vector_d(Ctmp, p-1);
 	//	keep only (delta^2)^{p/2} and higher
 	C = (double*) dynvec(p_2-1, sizeof(double));
 	for (i = p_2; i < p; i++)
 	{
 		C[i-p_2] = -Ctmp[i]; // -Ctmp?
 	}
-//display_vector_d(C, p_2-1);
 	//	convert delta^2 to shifts
 	CE = (double*) dynvec(p_2-1, sizeof(double));
 	b_spline_convert_delta2_to_shifts(p_2-2, C, CE);
-//display_vector_d(CE, p_2-1);
 	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));	//	what is correct size/degree?
 	b_spline_convert_delta2_to_shifts(p_2-1, Ap, omegap);
-//display_vector_d(omegap, p_2+mu+1);
 
 	//	Solve for E in shift operators
     BE = (double*) dynvec(p_2, sizeof(double));
     b_spline_convert_delta2_to_shifts(p_2-1, B, BE);
-//display_vector_d(BE, p_2);
     c = (double*) dynvec(mu+1, sizeof(double));
     bibst_lss(-1, pow(2.0,-53), p_2, BE, p_2-1, p_2-1, CE, mu+1, c);
-//display_vector_d(c, mu+1);
 
 	//	Convert (delta^2)^{p/2} to shifts
 	pd = (double*) dynvec(p_2+1,sizeof(double));
 	pE = (double*) dynvec(p_2+1,sizeof(double));
 	pd[p_2] = 1.0;
 	b_spline_convert_delta2_to_shifts(p_2,pd,pE);
-//display_vector_d(pd, p_2+1);
-//display_vector_d(pE, p_2+1);
 
 	//	Form symmetric pE and c operators
 	c_full = (double*) dynvec(2*mu+1,sizeof(double));
@@ -700,20 +698,12 @@ void test_quasi_interp_1d(void)
 	//	Apply operators to one another
 	high_terms = (double*) dynvec(p+2*mu+1,sizeof(double));
 	mpoly(2*mu, c_full, p, p_full, high_terms);
-//display_vector_d(high_terms, p+2*mu+1);
 
 	//	Compute A = A'(E) + E(E)
 	for (i = 0; i <= p_2+mu; i++)
 	{
 		omegap[i] += high_terms[p_2+mu+i];
 	}
-//display_vector_d(omegap, p_2+mu+1);
-
-//	COMPUTE DISCRETE FUNCTION VALUES
-
-//	APPLY INTERPOLATION OPERATOR
-
-//	CHECK ACCURACY
 
 	// Free dynamically allocated memory
 	dynfree(B);
@@ -728,6 +718,64 @@ void test_quasi_interp_1d(void)
 	dynfree(c_full);
 	dynfree(p_full);
 	dynfree(high_terms);
+
+//	COMPUTE DISCRETE FUNCTION VALUES
+	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
+	srand((unsigned) time(&t));
+
+	poly = (double*) dynvec(p, sizeof(double));
+	for (i = 0; i < p; i++)
+	{
+		poly[i] = (double) rand() / (double) rand();
+	}
+//display_vector_d(poly, p);
+
+	//	Create sequence of values, fx, for x in [min, max]
+	X = (double*) dynvec(samples+1, sizeof(double));
+	F = (double*) dynvec(samples+1, sizeof(double));
+
+	F[0] = (double) rand();
+	F[1] = (double) rand();
+//display_vector_d(F, 2);
+
+	for (i = 0; i <= samples; i++)
+	{
+		X[i] = MIN(F[0],F[1]) + (MAX(F[0],F[1])-MIN(F[0],F[1]))*(double)i/(double)samples;
+	}
+//display_vector_d(X, samples+1);
+
+	for (i = 0; i <= samples; i++)
+	{
+		F[i] = poly[p-1];
+		for (j = p-2; j >= 0; j--)
+		{
+			F[i] = F[i]*X[i] + poly[j];
+		}
+	}
+//display_vector_d(F, samples+1);
+
+//	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
+	I = (double*) dynvec(samples+1+p_2+mu+1, sizeof(double));
+	i = 0;
+	for (j = 0; j <= samples; j++)
+	{
+	}
+
+	for (i = 1; i < p_2+mu+1; i++)
+	{
+		//	i represents shift: E^i
+		for (j = 0; j <= samples; j++)
+		{
+		}
+	}
+
+//	INTERPOLATE AND CHECK ACCURACY
+
+	//	Free dynamically allocated memory
+	dynfree(poly);
+	dynfree(X);
+	dynfree(F);
+	dynfree(I);
 
 	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
 }
