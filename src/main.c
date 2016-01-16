@@ -611,15 +611,26 @@ void test_quasi_interp_1d(void)
 	short			p = 0;
 	short			p_2 = 0;
 	short			i = 0;
+	short			mu = 1;
 	double*			B = NULL;
+    double*			BE = NULL;
 	double*			Ap = NULL; // A' ~= B^{-1}
 	double*			Ctmp = NULL;
 	double*			C = NULL;
 	double*			CE = NULL;
+	double*			omegap = NULL;
+    double*			c = NULL;
+	double*			pd = NULL;
+	double*			pE = NULL;
+	double*			c_full = NULL;
+	double*			p_full = NULL;
+	double*			high_terms = NULL;
 
 //	GET NECESSARY PARAMETERS
 	printf("p = ");
 	scanf("%hd", &p);
+	printf("mu = ");
+	scanf("%hd", &mu);
 
 //	BUILD INTERPOLATION OPERATOR 1D
 
@@ -642,17 +653,61 @@ void test_quasi_interp_1d(void)
 	C = (double*) dynvec(p_2-1, sizeof(double));
 	for (i = p_2; i < p; i++)
 	{
-		C[i-p_2] = Ctmp[i]; // -Ctmp?
+		C[i-p_2] = -Ctmp[i]; // -Ctmp?
 	}
 //display_vector_d(C, p_2-1);
-	//	convert C(delta^2) to C(E)
+	//	convert delta^2 to shifts
 	CE = (double*) dynvec(p_2-1, sizeof(double));
 	b_spline_convert_delta2_to_shifts(p_2-2, C, CE);
 //display_vector_d(CE, p_2-1);
+	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));	//	what is correct size/degree?
+	b_spline_convert_delta2_to_shifts(p_2-1, Ap, omegap);
+//display_vector_d(omegap, p_2+mu+1);
 
-	//	Solve for E
+	//	Solve for E in shift operators
+    BE = (double*) dynvec(p_2, sizeof(double));
+    b_spline_convert_delta2_to_shifts(p_2-1, B, BE);
+//display_vector_d(BE, p_2);
+    c = (double*) dynvec(mu+1, sizeof(double));
+    bibst_lss(-1, pow(2.0,-53), p_2, BE, p_2-1, p_2-1, CE, mu+1, c);
+//display_vector_d(c, mu+1);
 
-	//	Compute A
+	//	Convert (delta^2)^{p/2} to shifts
+	pd = (double*) dynvec(p_2+1,sizeof(double));
+	pE = (double*) dynvec(p_2+1,sizeof(double));
+	pd[p_2] = 1.0;
+	b_spline_convert_delta2_to_shifts(p_2,pd,pE);
+//display_vector_d(pd, p_2+1);
+//display_vector_d(pE, p_2+1);
+
+	//	Form symmetric pE and c operators
+	c_full = (double*) dynvec(2*mu+1,sizeof(double));
+	c_full[mu] = c[0];
+	for (i = 1; i <= mu; i++)
+	{
+		c_full[mu+i] = c[i];
+		c_full[mu-i] = c[i];
+	}
+
+	p_full = (double*) dynvec(p+1,sizeof(double));
+	p_full[p_2] = pE[0];
+	for (i = 1; i <= p_2; i++)
+	{
+		p_full[p_2+i] = pE[i];
+		p_full[p_2-i] = pE[i];
+	}
+
+	//	Apply operators to one another
+	high_terms = (double*) dynvec(p+2*mu+1,sizeof(double));
+	mpoly(2*mu, c_full, p, p_full, high_terms);
+//display_vector_d(high_terms, p+2*mu+1);
+
+	//	Compute A = A'(E) + E(E)
+	for (i = 0; i <= p_2+mu; i++)
+	{
+		omegap[i] += high_terms[p_2+mu+i];
+	}
+//display_vector_d(omegap, p_2+mu+1);
 
 //	COMPUTE DISCRETE FUNCTION VALUES
 
@@ -662,10 +717,19 @@ void test_quasi_interp_1d(void)
 
 	// Free dynamically allocated memory
 	dynfree(B);
+    dynfree(BE);
 	dynfree(Ap);
 	dynfree(Ctmp);
 	dynfree(C);
 	dynfree(CE);
+    dynfree(c);
+	dynfree(pd);
+	dynfree(pE);
+	dynfree(c_full);
+	dynfree(p_full);
+	dynfree(high_terms);
+
+	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
 }
 
 //void test_parallel_division(void)
