@@ -610,9 +610,12 @@ void test_quasi_interp_1d(void)
 {
 	short			p = 0;
 	short			p_2 = 0;
+	short			i = 0;
 	double*			B = NULL;
 	double*			Ap = NULL; // A' ~= B^{-1}
 	double*			Ctmp = NULL;
+	double*			C = NULL;
+	double*			CE = NULL;
 
 //	GET NECESSARY PARAMETERS
 	printf("p = ");
@@ -624,17 +627,28 @@ void test_quasi_interp_1d(void)
 	p_2 = p/2;
 	B = (double*) dynvec(p_2, sizeof(double));
 	b_spline_compute_blurring_operator(p_2-1, B);
-display_vector_d(B, p_2);
+//display_vector_d(B, p_2);
 
 	//	Build A'
 	Ap = (double*) dynvec(p_2, sizeof(double));
 	b_spline_compute_operator_inverse(p_2-1, B, p_2-1, Ap);
-display_vector_d(Ap, p_2);
+//display_vector_d(Ap, p_2);
 
 	//	Compute C
 	Ctmp = (double*) dynvec(p-1, sizeof(double));
 	mpoly(p_2-1, B, p_2-1, Ap, Ctmp);
-display_vector_d(Ctmp, p-1);
+//display_vector_d(Ctmp, p-1);
+	//	keep only (delta^2)^{p/2} and higher
+	C = (double*) dynvec(p_2-1, sizeof(double));
+	for (i = p_2; i < p; i++)
+	{
+		C[i-p_2] = Ctmp[i]; // -Ctmp?
+	}
+//display_vector_d(C, p_2-1);
+	//	convert C(delta^2) to C(E)
+	CE = (double*) dynvec(p_2-1, sizeof(double));
+	b_spline_convert_delta2_to_shifts(p_2-2, C, CE);
+//display_vector_d(CE, p_2-1);
 
 	//	Solve for E
 
@@ -650,6 +664,8 @@ display_vector_d(Ctmp, p-1);
 	dynfree(B);
 	dynfree(Ap);
 	dynfree(Ctmp);
+	dynfree(C);
+	dynfree(CE);
 }
 
 //void test_parallel_division(void)
