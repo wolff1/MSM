@@ -16,6 +16,7 @@ void test_parallel_division(void);
 void test_simulator_water(void);
 void single_splitting(void);
 double weighted_fn(void);
+void test_quasi_interp_1d(void);
 
 /*
 #include "tester.h"
@@ -44,6 +45,7 @@ int main(int argc, char* argv[])
 		printf("* 8 - Figure 5 (C1 Not Nesting)  *\n");
 		printf("*                                *\n");
 		printf("* 9 - Single splitting (1D)      *\n");
+		printf("*10 - Quasi-Interp (1D)          *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -87,6 +89,10 @@ int main(int argc, char* argv[])
 
 			case 9:	//	Single-splitting (1D)
 				single_splitting();
+				break;
+
+			case 10://	quasi-interpolation (1d)
+				test_quasi_interp_1d();
 				break;
 
 			case 0:	// Exit
@@ -598,6 +604,52 @@ printf("expected error is %e\n", err);
 double weighted_fn(void)
 {
 	return 0.0;
+}
+
+void test_quasi_interp_1d(void)
+{
+	short			p = 0;
+	short			p_2 = 0;
+	double*			B = NULL;
+	double*			Ap = NULL; // A' ~= B^{-1}
+	double*			Ctmp = NULL;
+
+//	GET NECESSARY PARAMETERS
+	printf("p = ");
+	scanf("%hd", &p);
+
+//	BUILD INTERPOLATION OPERATOR 1D
+
+	//	Build B
+	p_2 = p/2;
+	B = (double*) dynvec(p_2, sizeof(double));
+	b_spline_compute_blurring_operator(p_2-1, B);
+display_vector_d(B, p_2);
+
+	//	Build A'
+	Ap = (double*) dynvec(p_2, sizeof(double));
+	b_spline_compute_operator_inverse(p_2-1, B, p_2-1, Ap);
+display_vector_d(Ap, p_2);
+
+	//	Compute C
+	Ctmp = (double*) dynvec(p-1, sizeof(double));
+	mpoly(p_2-1, B, p_2-1, Ap, Ctmp);
+display_vector_d(Ctmp, p-1);
+
+	//	Solve for E
+
+	//	Compute A
+
+//	COMPUTE DISCRETE FUNCTION VALUES
+
+//	APPLY INTERPOLATION OPERATOR
+
+//	CHECK ACCURACY
+
+	// Free dynamically allocated memory
+	dynfree(B);
+	dynfree(Ap);
+	dynfree(Ctmp);
 }
 
 //void test_parallel_division(void)
