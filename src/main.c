@@ -632,7 +632,17 @@ void test_quasi_interp_1d(void)
 	long			samples = 10;
 	double*			X = NULL;
 	double*			F = NULL;
+	double*			DF = NULL;
 	double*			I = NULL;
+	long			zero = 0;
+
+	MSM_PARAMETERS	mp;
+	B_SPLINE*		bs = NULL;
+	double			xmin = 0.0;
+	double*			BSX = NULL;
+	double*			BSF = NULL;
+	double*			DBSF = NULL;
+	double*			F_BAR = NULL;
 
 //	GET NECESSARY PARAMETERS
 	printf("p = ");
@@ -730,9 +740,13 @@ void test_quasi_interp_1d(void)
 	}
 //display_vector_d(poly, p);
 
+//	printf("Samples (Default: %ld): ", samples);
+//	scanf("%ld", &samples);
+
 	//	Create sequence of values, fx, for x in [min, max]
 	X = (double*) dynvec(samples+1, sizeof(double));
 	F = (double*) dynvec(samples+1, sizeof(double));
+	DF = (double*) dynvec(samples+1, sizeof(double));
 
 	F[0] = (double) rand();
 	F[1] = (double) rand();
@@ -755,27 +769,86 @@ void test_quasi_interp_1d(void)
 //display_vector_d(F, samples+1);
 
 //	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
-	I = (double*) dynvec(samples+1+p_2+mu+1, sizeof(double));
+	zero = p_2 + mu;
+	I = (double*) dynvec(samples+1+2*(p_2+mu), sizeof(double));
 	i = 0;
 	for (j = 0; j <= samples; j++)
 	{
+		I[zero+i+j] += omegap[i]*F[j];
 	}
+//display_vector_d(F, samples+1);
+//display_vector_d(I, samples+1+2*(p_2+mu));
 
 	for (i = 1; i < p_2+mu+1; i++)
 	{
 		//	i represents shift: E^i
 		for (j = 0; j <= samples; j++)
 		{
+			I[zero-i+j] += omegap[i]*F[j];
+			I[zero+i+j] += omegap[i]*F[j];
 		}
 	}
+//display_vector_d(I, samples+1+2*(p_2+mu));
 
 //	INTERPOLATE AND CHECK ACCURACY
+//	msm_parameters_input(&mp);
+	mp.a = 1.0;
+	mp.alpha = 1.0;
+	mp.h = (X[samples] - X[0]) / samples;
+	mp.D = samples * mp.h;
+	mp.L = 1;
+	mp.mu = mu;
+	mp.p = p;
+	mp.k = mp.p;
+
+	//	Create B-Spline object
+	bs = (B_SPLINE*) dynmem(sizeof(B_SPLINE));
+	interpolant_initialize(bs, (void*)b_spline_initialize, &mp);
+
+	BSX = (double*) dynvec(p, sizeof(double));
+	BSF = (double*) dynvec(p, sizeof(double));
+	DBSF = (double*) dynvec(p, sizeof(double));
+	F_BAR = (double*) dynvec(samples+1, sizeof(double));
+
+	//	f_bar(x) = \sum f_hat(m) * Phi (x/h - m)
+	for (i = 0; i <= samples; i++)
+	{
+		//	Set up input for BS evaluation
+		xmin = floor((X[i]-X[0])/mp.h) - p_2 + 1;
+		for (j = 0; j < p; j++)
+		{
+			//	x/h-m
+			BSX[j] = (X[i]-X[0])/mp.h - (xmin + (double) j);
+		}
+
+		//	Evaluate BS at BSX
+		b_spline_evaluate(bs, p, BSX, BSF, DBSF);
+
+		//	Use BSF and I to interpolate value for X[i]
+		F_BAR[i] = 0.0;
+		for (j = 0; j < p; j++)
+		{
+			F_BAR[i] += I[zero+(long)xmin+j]*BSF[j];
+		}
+	}
+display_vector_d(F, samples+1);
+display_vector_d(F_BAR, samples+1);
 
 	//	Free dynamically allocated memory
 	dynfree(poly);
 	dynfree(X);
 	dynfree(F);
+	dynfree(DF);
 	dynfree(I);
+
+	//	Destroy B-Spline object
+	bs->cmn.uninitialize(bs);
+	dynfree(bs);
+
+	dynfree(BSX);
+	dynfree(BSF);
+	dynfree(DBSF);
+	dynfree(F_BAR);
 
 	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
 }
