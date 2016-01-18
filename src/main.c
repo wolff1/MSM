@@ -742,8 +742,8 @@ void test_quasi_interp_1d(void)
 	}
 //display_vector_d(poly, p);
 
-//	printf("Samples (Default: %ld): ", samples);
-//	scanf("%ld", &samples);
+	printf("Samples (Default: %ld): ", samples);
+	scanf("%ld", &samples);
 
 	//	Create sequence of values, fx, for x in [min, max]
 	X = (double*) dynvec(samples+1, sizeof(double));
@@ -781,7 +781,7 @@ void test_quasi_interp_1d(void)
 //display_vector_d(F, samples+1);
 //display_vector_d(I, samples+1+2*(p_2+mu));
 
-	for (i = 1; i < p_2+mu+1; i++)
+	for (i = 1; i <= p_2+mu; i++)
 	{
 		//	i represents shift: E^i
 		for (j = 0; j <= samples; j++)
