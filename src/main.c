@@ -643,6 +643,8 @@ void test_quasi_interp_1d(void)
 	double*			BSF = NULL;
 	double*			DBSF = NULL;
 	double*			F_BAR = NULL;
+	double*			DIFF = NULL;
+	double*			RDIFF = NULL;
 
 //	GET NECESSARY PARAMETERS
 	printf("p = ");
@@ -809,6 +811,8 @@ void test_quasi_interp_1d(void)
 	BSF = (double*) dynvec(p, sizeof(double));
 	DBSF = (double*) dynvec(p, sizeof(double));
 	F_BAR = (double*) dynvec(samples+1, sizeof(double));
+	DIFF = (double*) dynvec(samples+1, sizeof(double));
+	RDIFF = (double*) dynvec(samples+1, sizeof(double));
 
 	//	f_bar(x) = \sum f_hat(m) * Phi (x/h - m)
 	for (i = 0; i <= samples; i++)
@@ -830,9 +834,13 @@ void test_quasi_interp_1d(void)
 		{
 			F_BAR[i] += I[zero+(long)xmin+j]*BSF[j];
 		}
+
+		//	Calculate difference
+		DIFF[i] = fabs(F[i] - F_BAR[i]);
+		RDIFF[i] = DIFF[i] / fabs(F[i]);
 	}
-display_vector_d(F, samples+1);
-display_vector_d(F_BAR, samples+1);
+display_vector_d(DIFF, samples+1);
+display_vector_d(RDIFF, samples+1);
 
 	//	Free dynamically allocated memory
 	dynfree(poly);
@@ -849,6 +857,8 @@ display_vector_d(F_BAR, samples+1);
 	dynfree(BSF);
 	dynfree(DBSF);
 	dynfree(F_BAR);
+	dynfree(DIFF);
+	dynfree(RDIFF);
 
 	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
 }
