@@ -632,7 +632,6 @@ void test_quasi_interp_1d(void)
 	long			samples = 10;
 	double*			X = NULL;
 	double*			F = NULL;
-	double*			DF = NULL;
 	double*			I = NULL;
 	long			zero = 0;
 
@@ -742,6 +741,20 @@ void test_quasi_interp_1d(void)
 	//	sneaky: add (p+mu-1) samples to both edges of domain
 	samples += 2*(p+mu-1);
 
+	//	Create sequence of values, fx, for x in [min, max]
+	X = (double*) dynvec(samples+1, sizeof(double));
+	F = (double*) dynvec(samples+1, sizeof(double));
+
+	F[0] = (double) rand();
+	F[1] = (double) rand();
+
+	printf("Domain: [%lf, %lf]\n\n", MIN(F[0],F[1]), MAX(F[0],F[1]));
+
+	for (i = 0; i <= samples; i++)
+	{
+		X[i] = MIN(F[0],F[1]) + (MAX(F[0],F[1])-MIN(F[0],F[1]))*(double)i/(double)samples;
+	}
+
 	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
 	srand((unsigned) time(&t));
 
@@ -753,21 +766,6 @@ void test_quasi_interp_1d(void)
 		printf("%lf*x^%ld %s ", poly[i], i, (i < p-1 ? "+" : "\n"));
 	}
 	printf("\n");
-
-	//	Create sequence of values, fx, for x in [min, max]
-	X = (double*) dynvec(samples+1, sizeof(double));
-	F = (double*) dynvec(samples+1, sizeof(double));
-	DF = (double*) dynvec(samples+1, sizeof(double));
-
-	F[0] = (double) rand();
-	F[1] = (double) rand();
-
-	printf("Domain: [%lf, %lf]\n\n", MIN(F[0],F[1]), MAX(F[0],F[1]));
-
-	for (i = 0; i <= samples; i++)
-	{
-		X[i] = MIN(F[0],F[1]) + (MAX(F[0],F[1])-MIN(F[0],F[1]))*(double)i/(double)samples;
-	}
 
 	for (i = 0; i <= samples; i++)
 	{
@@ -862,7 +860,6 @@ void test_quasi_interp_1d(void)
 	dynfree(poly);
 	dynfree(X);
 	dynfree(F);
-	dynfree(DF);
 	dynfree(I);
 
 	//	Destroy B-Spline object
