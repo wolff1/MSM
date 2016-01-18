@@ -646,6 +646,10 @@ void test_quasi_interp_1d(void)
 	double*			DIFF = NULL;
 	double*			RDIFF = NULL;
 
+	double			l1 = 0.0;
+	double			l2 = 0.0;
+	double			loo = 0.0;
+
 //	GET NECESSARY PARAMETERS
 	printf("p = ");
 	scanf("%hd", &p);
@@ -670,7 +674,8 @@ void test_quasi_interp_1d(void)
 	C = (double*) dynvec(p_2-1, sizeof(double));
 	for (i = p_2; i < p; i++)
 	{
-		C[i-p_2] = -Ctmp[i]; // -Ctmp?
+		//C[i-p_2] = -Ctmp[i]; // -Ctmp?
+		C[i-p_2] = Ctmp[i];
 	}
 	//	convert delta^2 to shifts
 	CE = (double*) dynvec(p_2-1, sizeof(double));
@@ -732,18 +737,22 @@ void test_quasi_interp_1d(void)
 	dynfree(high_terms);
 
 //	COMPUTE DISCRETE FUNCTION VALUES
+	printf("Samples (Default: %ld): ", samples);
+	scanf("%ld", &samples);
+	//	sneaky: add (p+mu-1) samples to both edges of domain
+	samples += 2*(p+mu-1);
+
 	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
 	srand((unsigned) time(&t));
 
 	poly = (double*) dynvec(p, sizeof(double));
+	printf("Polynomial is: \np(x) = ");
 	for (i = 0; i < p; i++)
 	{
 		poly[i] = (double) rand() / (double) rand();
+		printf("%lf*x^%ld %s ", poly[i], i, (i < p-1 ? "+" : "\n"));
 	}
-//display_vector_d(poly, p);
-
-	printf("Samples (Default: %ld): ", samples);
-	scanf("%ld", &samples);
+	printf("\n");
 
 	//	Create sequence of values, fx, for x in [min, max]
 	X = (double*) dynvec(samples+1, sizeof(double));
@@ -752,13 +761,13 @@ void test_quasi_interp_1d(void)
 
 	F[0] = (double) rand();
 	F[1] = (double) rand();
-//display_vector_d(F, 2);
+
+	printf("Domain: [%lf, %lf]\n\n", MIN(F[0],F[1]), MAX(F[0],F[1]));
 
 	for (i = 0; i <= samples; i++)
 	{
 		X[i] = MIN(F[0],F[1]) + (MAX(F[0],F[1])-MIN(F[0],F[1]))*(double)i/(double)samples;
 	}
-//display_vector_d(X, samples+1);
 
 	for (i = 0; i <= samples; i++)
 	{
@@ -768,7 +777,6 @@ void test_quasi_interp_1d(void)
 			F[i] = F[i]*X[i] + poly[j];
 		}
 	}
-//display_vector_d(F, samples+1);
 
 //	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
 	zero = p_2 + mu;
@@ -778,8 +786,6 @@ void test_quasi_interp_1d(void)
 	{
 		I[zero+i+j] += omegap[i]*F[j];
 	}
-//display_vector_d(F, samples+1);
-//display_vector_d(I, samples+1+2*(p_2+mu));
 
 	for (i = 1; i <= p_2+mu; i++)
 	{
@@ -790,7 +796,6 @@ void test_quasi_interp_1d(void)
 			I[zero+i+j] += omegap[i]*F[j];
 		}
 	}
-//display_vector_d(I, samples+1+2*(p_2+mu));
 
 //	INTERPOLATE AND CHECK ACCURACY
 //	msm_parameters_input(&mp);
@@ -839,8 +844,19 @@ void test_quasi_interp_1d(void)
 		DIFF[i] = fabs(F[i] - F_BAR[i]);
 		RDIFF[i] = DIFF[i] / fabs(F[i]);
 	}
-display_vector_d(DIFF, samples+1);
-display_vector_d(RDIFF, samples+1);
+//display_vector_d(&RDIFF[p+mu-1], samples+1-2*(p+mu-1));
+
+	//	Display norm(s) of error
+	j = 0;
+	for (i = p+mu-1; i < samples+1-(p+mu-1); i++)
+	{
+		j++;
+		l1 += fabs(RDIFF[i]);
+		l2 += fabs(RDIFF[i])*fabs(RDIFF[i]);
+		loo = MAX(loo, RDIFF[i]);
+	}
+	l2 = sqrt(l2);
+	printf("j=%ld, L1=%e, L2=%e, Loo=%e\n", j, l1, l2, loo);
 
 	//	Free dynamically allocated memory
 	dynfree(poly);
