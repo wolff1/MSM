@@ -707,10 +707,13 @@ void setup_interpolation_grid(short p, short mu, long nodes, double* G, double* 
 	double	t2 = 0.0;
 
 	//	This could be a prompt for user input
-	t1 = (double) rand();
-	t2 = (double) rand();
-	(*Gmin) = MIN(t1, t2);
-	(*Gmax) = MAX(t1, t2);
+	if (((*Gmin) == 0.0) && ((*Gmax) == 0.0))
+	{
+		t1 = (double) rand();
+		t2 = (double) rand();
+		(*Gmin) = MIN(t1, t2);
+		(*Gmax) = MAX(t1, t2);
+	}
 
 	printf("Domain: [%lf, %lf]\n\n", (*Gmin), (*Gmax));
 
@@ -739,22 +742,32 @@ double eval_poly(short p, double* poly, double x)
 	return fx;
 }
 
-void compute_ordinates_on_interpolation_grid(short p, long Len, double* G, double* F, double* poly)
+void compute_ordinates_on_interpolation_grid(short p, long Len, double* G, double* F, double* poly, EVEN_POWERS* ep)
 {
 	long			i = 0;
 	long			j = 0;
+	double*			DF = NULL;
 
-	printf("Polynomial is: \np(x) = ");
-	for (i = 0; i < p; i++)
+	if (ep == NULL)
 	{
-		poly[i] = (double) rand() / (double) rand();
-		printf("%lf*x^%ld %s ", poly[i], i, (i < p-1 ? "+" : "\n"));
+		printf("Polynomial is: \np(x) = ");
+		for (i = 0; i < p; i++)
+		{
+			poly[i] = (double) rand() / (double) rand();
+			printf("%lf*x^%ld %s ", poly[i], i, (i < p-1 ? "+" : "\n"));
+		}
+		printf("\n");
+
+		for (i = 0; i < Len; i++)
+		{
+			F[i] = eval_poly(p, poly, G[i]);
+		}
 	}
-	printf("\n");
-
-	for (i = 0; i < Len; i++)
+	else
 	{
-		F[i] = eval_poly(p, poly, G[i]);
+		DF = (double*) dynvec(Len, sizeof(double));
+		ep->cmn.soften(ep, Len, G, F, DF);
+		dynfree(DF);
 	}
 }
 
@@ -860,9 +873,12 @@ void test_quasi_interp_1d(void)
 	double*			F = NULL;
 	double*			I = NULL;
 
+	EVEN_POWERS*	ep = NULL;
+
 	double*			X_BAR = NULL;
-	double*			F_HAT = NULL;
 	double*			F_BAR = NULL;
+	double*			F_HAT = NULL;
+	double*			DF_HAT = NULL;
 	double*			DIFF = NULL;
 	double*			RDIFF = NULL;
 
@@ -881,8 +897,6 @@ void test_quasi_interp_1d(void)
 
 	printf("Interpolation Nodes (Default: %ld): ", nodes);
 	scanf("%ld", &nodes);
-	//	sneaky: add (p+mu-1) nodes to both edges of domain
-//	nodes += 2*(p+mu-1);
 
 //	BUILD INTERPOLATION OPERATOR 1D
 	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
@@ -891,12 +905,19 @@ void test_quasi_interp_1d(void)
 //	COMPUTE DISCRETE FUNCTION VALUES
 	//	Create sequence of values, fx, for x in [min, max]
 	G = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+	Gmin = 0.0;
+	Gmax = 10.0;
 	setup_interpolation_grid(p, mu, nodes, G, &Gmin, &Gmax);
 
 	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
 	F = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+
+	//	Create Gamma object and/or polynomial object
+//	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
+//	softener_initialize(ep, (void*)even_powers_initialize, p);
 	poly = (double*) dynvec(p, sizeof(double));
-	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, poly);
+
+	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, poly, ep);
 
 //	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
 	I = (double*) dynvec(nodes+1+2*(p_2-1), sizeof(double));
@@ -920,10 +941,18 @@ void test_quasi_interp_1d(void)
 
 	interpolate_over_domain(p, G[1]-G[0], Gmin, I, samples, X_BAR, F_BAR);
 
-	//	Compute target function
-	for (i = 0; i <= samples; i++)
+	DF_HAT = (double*) dynvec(samples+1, sizeof(double));
+	if (ep == NULL)
 	{
-		F_HAT[i] = eval_poly(p, poly, X_BAR[i]);
+		//	Compute target function
+		for (i = 0; i <= samples; i++)
+		{
+			F_HAT[i] = eval_poly(p, poly, X_BAR[i]);
+		}
+	}
+	else
+	{
+		ep->cmn.soften(ep, samples+1, X_BAR, F_HAT, DF_HAT);
 	}
 
 	//	Compute error(s)
@@ -954,8 +983,13 @@ void test_quasi_interp_1d(void)
 	dynfree(X_BAR);
 	dynfree(F_BAR);
 	dynfree(F_HAT);
+	dynfree(DF_HAT);
 	dynfree(DIFF);
 	dynfree(RDIFF);
+
+	//	Destroy Gamma object
+//	ep->cmn.uninitialize(ep);
+//	dynfree(ep);
 
 	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
 }
