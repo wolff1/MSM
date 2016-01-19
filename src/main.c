@@ -606,59 +606,24 @@ double weighted_fn(void)
 	return 0.0;
 }
 
-void test_quasi_interp_1d(void)
+void b_spline_compute_omega_prime_1d(short p, short mu, double* omegap)
 {
-	short			p = 0;
-	short			p_2 = 0;
 	long			i = 0;
-	long			j = 0;
-	short			mu = 1;
 	double*			B = NULL;
     double*			BE = NULL;
 	double*			Ap = NULL; // A' ~= B^{-1}
 	double*			Ctmp = NULL;
 	double*			C = NULL;
 	double*			CE = NULL;
-	double*			omegap = NULL;
     double*			c = NULL;
 	double*			pd = NULL;
 	double*			pE = NULL;
 	double*			c_full = NULL;
 	double*			p_full = NULL;
 	double*			high_terms = NULL;
-
-	double*			poly = NULL;
-	time_t			t;
-	long			samples = 10;
-	double*			X = NULL;
-	double*			F = NULL;
-	double*			I = NULL;
-	long			zero = 0;
-
-	MSM_PARAMETERS	mp;
-	B_SPLINE*		bs = NULL;
-	double			xmin = 0.0;
-	double*			BSX = NULL;
-	double*			BSF = NULL;
-	double*			DBSF = NULL;
-	double*			F_BAR = NULL;
-	double*			DIFF = NULL;
-	double*			RDIFF = NULL;
-
-	double			l1 = 0.0;
-	double			l2 = 0.0;
-	double			loo = 0.0;
-
-//	GET NECESSARY PARAMETERS
-	printf("p = ");
-	scanf("%hd", &p);
-	printf("mu = ");
-	scanf("%hd", &mu);
-
-//	BUILD INTERPOLATION OPERATOR 1D
+	short			p_2 = p/2;
 
 	//	Build B
-	p_2 = p/2;
 	B = (double*) dynvec(p_2, sizeof(double));
 	b_spline_compute_blurring_operator(p_2-1, B);
 
@@ -679,7 +644,6 @@ void test_quasi_interp_1d(void)
 	//	convert delta^2 to shifts
 	CE = (double*) dynvec(p_2-1, sizeof(double));
 	b_spline_convert_delta2_to_shifts(p_2-2, C, CE);
-	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));	//	what is correct size/degree?
 	b_spline_convert_delta2_to_shifts(p_2-1, Ap, omegap);
 
 	//	Solve for E in shift operators
@@ -734,31 +698,52 @@ void test_quasi_interp_1d(void)
 	dynfree(c_full);
 	dynfree(p_full);
 	dynfree(high_terms);
+}
 
-//	COMPUTE DISCRETE FUNCTION VALUES
-	printf("Samples (Default: %ld): ", samples);
-	scanf("%ld", &samples);
-	//	sneaky: add (p+mu-1) samples to both edges of domain
-	samples += 2*(p+mu-1);
+void setup_interpolation_grid(short p, short mu, long nodes, double* G, double* Gmin, double* Gmax)
+{
+	long	i = 0;
+	double	t1 = 0.0;
+	double	t2 = 0.0;
 
-	//	Create sequence of values, fx, for x in [min, max]
-	X = (double*) dynvec(samples+1, sizeof(double));
-	F = (double*) dynvec(samples+1, sizeof(double));
+	//	This could be a prompt for user input
+	t1 = (double) rand();
+	t2 = (double) rand();
+	(*Gmin) = MIN(t1, t2);
+	(*Gmax) = MAX(t1, t2);
 
-	F[0] = (double) rand();
-	F[1] = (double) rand();
+	printf("Domain: [%lf, %lf]\n\n", (*Gmin), (*Gmax));
 
-	printf("Domain: [%lf, %lf]\n\n", MIN(F[0],F[1]), MAX(F[0],F[1]));
+	//	Size of G is nodes+1+2*(p+mu-1)
+	//	nodes+1 between Gmin and Gmax
+	//	The rest are before Gmin and after Gmax
 
-	for (i = 0; i <= samples; i++)
+	for (i = -(p+mu-1); i <= nodes+p+mu-1; i++)
 	{
-		X[i] = MIN(F[0],F[1]) + (MAX(F[0],F[1])-MIN(F[0],F[1]))*(double)i/(double)samples;
+		G[p+mu-1+i] = (*Gmin) + ((*Gmax)-(*Gmin))*(double)i/(double)nodes;
+	}
+}
+
+double eval_poly(short p, double* poly, double x)
+{
+	double	fx = 0.0;
+	long	j = 0;
+
+	//	Horner's Rule:
+	fx = poly[p-1];
+	for (j = p-2; j >= 0; j--)
+	{
+		fx = fx*x + poly[j];
 	}
 
-	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
-	srand((unsigned) time(&t));
+	return fx;
+}
 
-	poly = (double*) dynvec(p, sizeof(double));
+void compute_ordinates_on_interpolation_grid(short p, long Len, double* G, double* F, double* poly)
+{
+	long			i = 0;
+	long			j = 0;
+
 	printf("Polynomial is: \np(x) = ");
 	for (i = 0; i < p; i++)
 	{
@@ -767,42 +752,52 @@ void test_quasi_interp_1d(void)
 	}
 	printf("\n");
 
-	for (i = 0; i <= samples; i++)
+	for (i = 0; i < Len; i++)
 	{
-		F[i] = poly[p-1];
-		for (j = p-2; j >= 0; j--)
-		{
-			F[i] = F[i]*X[i] + poly[j];
-		}
+		F[i] = eval_poly(p, poly, G[i]);
 	}
+}
 
-//	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
-	zero = p_2 + mu;
-	I = (double*) dynvec(samples+1+2*(p_2+mu), sizeof(double));
-	i = 0;
-	for (j = 0; j <= samples; j++)
+void compute_interpolant(short p, short mu, long nodes, double* omegap, double* F, double* I)
+{
+	long			i = 0;
+	long			j = 0;
+	short			p_2 = p/2;
+
+	for (j = 0; j <= nodes+2*(p_2-1); j++)
 	{
-		I[zero+i+j] += omegap[i]*F[j];
+		I[j] += omegap[i]*F[p_2+mu+j];
 	}
 
 	for (i = 1; i <= p_2+mu; i++)
 	{
 		//	i represents shift: E^i
-		for (j = 0; j <= samples; j++)
+		for (j = 0; j <= nodes+2*(p_2-1); j++)
 		{
-			I[zero-i+j] += omegap[i]*F[j];
-			I[zero+i+j] += omegap[i]*F[j];
+			I[j] += omegap[i]*(F[p_2+mu+j+i] + F[p_2+mu+j-i]);
 		}
 	}
+}
 
-//	INTERPOLATE AND CHECK ACCURACY
+void interpolate_over_domain(short p, double h, double Gmin, double* I, long samples, double* X_BAR, double* F_BAR)
+{
+	long			i = 0;
+	long			j = 0;
+	short			p_2 = p/2;
+	MSM_PARAMETERS	mp;
+	B_SPLINE*		bs = NULL;
+	double			xmin = 0.0;
+	double*			BSX = NULL;
+	double*			BSF = NULL;
+	double*			DBSF = NULL;
+
 //	msm_parameters_input(&mp);
 	mp.a = 1.0;
 	mp.alpha = 1.0;
-	mp.h = (X[samples] - X[0]) / samples;
-	mp.D = samples * mp.h;
+	mp.h = h;
+	mp.D = X_BAR[samples] - X_BAR[0];
 	mp.L = 1;
-	mp.mu = mu;
+	mp.mu = 10;
 	mp.p = p;
 	mp.k = mp.p;
 
@@ -813,40 +808,134 @@ void test_quasi_interp_1d(void)
 	BSX = (double*) dynvec(p, sizeof(double));
 	BSF = (double*) dynvec(p, sizeof(double));
 	DBSF = (double*) dynvec(p, sizeof(double));
-	F_BAR = (double*) dynvec(samples+1, sizeof(double));
-	DIFF = (double*) dynvec(samples+1, sizeof(double));
-	RDIFF = (double*) dynvec(samples+1, sizeof(double));
 
 	//	f_bar(x) = \sum f_hat(m) * Phi (x/h - m)
 	for (i = 0; i <= samples; i++)
 	{
 		//	Set up input for BS evaluation
-		xmin = floor((X[i]-X[0])/mp.h) - p_2 + 1;
+		xmin = floor((X_BAR[i]-Gmin)/mp.h) - p_2 + 1;
 		for (j = 0; j < p; j++)
 		{
 			//	x/h-m
-			BSX[j] = (X[i]-X[0])/mp.h - (xmin + (double) j);
+			BSX[j] = (X_BAR[i]-Gmin)/mp.h - (xmin + (double) j);
 		}
 
 		//	Evaluate BS at BSX
 		b_spline_evaluate(bs, p, BSX, BSF, DBSF);
 
-		//	Use BSF and I to interpolate value for X[i]
+		//	Use BSF and I to interpolate value for G[i]
 		F_BAR[i] = 0.0;
 		for (j = 0; j < p; j++)
 		{
-			F_BAR[i] += I[zero+(long)xmin+j]*BSF[j];
+			F_BAR[i] += I[p_2-1+(long)xmin+j]*BSF[j];
 		}
-
-		//	Calculate difference
-		DIFF[i] = fabs(F[i] - F_BAR[i]);
-		RDIFF[i] = DIFF[i] / fabs(F[i]);
 	}
-//display_vector_d(&RDIFF[p+mu-1], samples+1-2*(p+mu-1));
+
+	//	Destroy B-Spline object
+	bs->cmn.uninitialize(bs);
+	dynfree(bs);
+
+	dynfree(BSX);
+	dynfree(BSF);
+	dynfree(DBSF);
+}
+
+void test_quasi_interp_1d(void)
+{
+	short			p = 0;
+	short			p_2 = 0;
+	long			i = 0;
+	long			j = 0;
+	short			mu = 1;
+
+	double*			omegap = NULL;
+	double			Gmin = 0.0;
+	double			Gmax = 0.0;
+
+	time_t			t;
+	long			nodes = 10;
+	long			samples = 10;
+	double*			poly = NULL;
+	double*			G = NULL;
+	double*			F = NULL;
+	double*			I = NULL;
+
+	double*			X_BAR = NULL;
+	double*			F_HAT = NULL;
+	double*			F_BAR = NULL;
+	double*			DIFF = NULL;
+	double*			RDIFF = NULL;
+
+	double			l1 = 0.0;
+	double			l2 = 0.0;
+	double			loo = 0.0;
+
+//	GET NECESSARY PARAMETERS
+	srand((unsigned) time(&t));
+	printf("p = ");
+	scanf("%hd", &p);
+	p_2 = p/2;
+
+	printf("mu = ");
+	scanf("%hd", &mu);
+
+	printf("Interpolation Nodes (Default: %ld): ", nodes);
+	scanf("%ld", &nodes);
+	//	sneaky: add (p+mu-1) nodes to both edges of domain
+//	nodes += 2*(p+mu-1);
+
+//	BUILD INTERPOLATION OPERATOR 1D
+	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
+	b_spline_compute_omega_prime_1d(p, mu, omegap);
+
+//	COMPUTE DISCRETE FUNCTION VALUES
+	//	Create sequence of values, fx, for x in [min, max]
+	G = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+	setup_interpolation_grid(p, mu, nodes, G, &Gmin, &Gmax);
+
+	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
+	F = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+	poly = (double*) dynvec(p, sizeof(double));
+	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, poly);
+
+//	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
+	I = (double*) dynvec(nodes+1+2*(p_2-1), sizeof(double));
+	compute_interpolant(p, mu, nodes, omegap, F, I);
+
+//	INTERPOLATE AND CHECK ACCURACY
+	printf("# of Samples (Default: %ld): ", samples);
+	scanf("%ld", &samples);
+
+	X_BAR = (double*) dynvec(samples+1, sizeof(double));
+	F_BAR = (double*) dynvec(samples+1, sizeof(double));
+	F_HAT = (double*) dynvec(samples+1, sizeof(double));
+	DIFF = (double*) dynvec(samples+1, sizeof(double));
+	RDIFF = (double*) dynvec(samples+1, sizeof(double));
+
+	//	Set up X_BAR
+	for (i = 0; i <= samples; i++)
+	{
+		X_BAR[i] = Gmin + (Gmax-Gmin)*i/samples;
+	}
+
+	interpolate_over_domain(p, G[1]-G[0], Gmin, I, samples, X_BAR, F_BAR);
+
+	//	Compute target function
+	for (i = 0; i <= samples; i++)
+	{
+		F_HAT[i] = eval_poly(p, poly, X_BAR[i]);
+	}
+
+	//	Compute error(s)
+	for (i = 0; i <= samples; i++)
+	{
+		DIFF[i] = fabs(F_HAT[i] - F_BAR[i]);
+		RDIFF[i] = DIFF[i] / fabs(F_HAT[i]);
+	}
 
 	//	Display norm(s) of error
 	j = 0;
-	for (i = p+mu-1; i < samples+1-(p+mu-1); i++)
+	for (i = 0; i <= samples; i++)
 	{
 		j++;
 		l1 += fabs(RDIFF[i]);
@@ -858,18 +947,13 @@ void test_quasi_interp_1d(void)
 
 	//	Free dynamically allocated memory
 	dynfree(poly);
-	dynfree(X);
+	dynfree(G);
 	dynfree(F);
 	dynfree(I);
 
-	//	Destroy B-Spline object
-	bs->cmn.uninitialize(bs);
-	dynfree(bs);
-
-	dynfree(BSX);
-	dynfree(BSF);
-	dynfree(DBSF);
+	dynfree(X_BAR);
 	dynfree(F_BAR);
+	dynfree(F_HAT);
 	dynfree(DIFF);
 	dynfree(RDIFF);
 
