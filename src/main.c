@@ -886,6 +886,9 @@ void test_quasi_interp_1d(void)
 	double			l2 = 0.0;
 	double			loo = 0.0;
 
+	FILE*			fp = NULL;
+	char			fn[64];
+
 //	GET NECESSARY PARAMETERS
 	srand((unsigned) time(&t));
 	printf("p = ");
@@ -913,8 +916,8 @@ void test_quasi_interp_1d(void)
 	F = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
 
 	//	Create Gamma object and/or polynomial object
-//	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
-//	softener_initialize(ep, (void*)even_powers_initialize, p);
+	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
+	softener_initialize(ep, (void*)even_powers_initialize, p/2-1);	// polynomial part of spline with degree < p-1 yields better accuracy
 	poly = (double*) dynvec(p, sizeof(double));
 
 	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, poly, ep);
@@ -974,6 +977,22 @@ void test_quasi_interp_1d(void)
 	l2 = sqrt(l2);
 	printf("j=%ld, L1=%e, L2=%e, Loo=%e\n", j, l1, l2, loo);
 
+	//	Write output file to plot via gnuplot
+	strftime(fn, 64*sizeof(char), "1DInterp_%Y_%m_%d_%H_%M_%S.dat", localtime(&t));
+	if ((fp = fopen(fn, "w")) != NULL)
+	{
+		//	Write samples to file
+		for (i = 0; i <= samples; i++)
+		{
+			//	Output: i, X_BAR, F_HAT, F_BAR, DIFF, RDIFF
+			fprintf(fp, "%ld\t%lf\t%lf\t%lf\t%lf\t%lf\n", i, X_BAR[i], F_HAT[i], F_BAR[i], DIFF[i], RDIFF[i]);
+		}
+
+		//	Close file
+		fclose(fp);
+		printf("Output file written!\n");
+	}
+
 	//	Free dynamically allocated memory
 	dynfree(poly);
 	dynfree(G);
@@ -988,8 +1007,8 @@ void test_quasi_interp_1d(void)
 	dynfree(RDIFF);
 
 	//	Destroy Gamma object
-//	ep->cmn.uninitialize(ep);
-//	dynfree(ep);
+	ep->cmn.uninitialize(ep);
+	dynfree(ep);
 
 	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
 }
