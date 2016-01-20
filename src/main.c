@@ -908,8 +908,10 @@ void test_quasi_interp_1d(void)
 //	COMPUTE DISCRETE FUNCTION VALUES
 	//	Create sequence of values, fx, for x in [min, max]
 	G = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
-	Gmin = 0.0;
-	Gmax = 10.0;
+	printf("Gmin = ");
+	scanf("%lf", &Gmin);
+	printf("Gmax = ");
+	scanf("%lf", &Gmax);
 	setup_interpolation_grid(p, mu, nodes, G, &Gmin, &Gmax);
 
 	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
