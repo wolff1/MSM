@@ -987,7 +987,7 @@ void test_quasi_interp_1d(void)
 		for (i = 0; i <= samples; i++)
 		{
 			//	Output: i, X_BAR, F_HAT, F_BAR, DIFF, RDIFF
-			fprintf(fp, "%ld\t%lf\t%lf\t%lf\t%lf\t%lf\n", i, X_BAR[i], F_HAT[i], F_BAR[i], DIFF[i], RDIFF[i]);
+			fprintf(fp, "%ld\t%e\t%e\t%e\t%e\t%e\n", i, X_BAR[i], F_HAT[i], F_BAR[i], DIFF[i], RDIFF[i]);
 		}
 
 		//	Close file

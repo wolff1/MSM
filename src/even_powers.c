@@ -48,6 +48,7 @@ void even_powers_soften(void* Softener, long Len, double* X, double* F, double* 
 	long			j = 0;
 	short			k = 0;
 	EVEN_POWERS*	Ep = (EVEN_POWERS*) Softener;
+	double			absXi = 0.0;
 
 	assert(Ep != NULL);
 	if (Len > 0)
@@ -62,10 +63,11 @@ void even_powers_soften(void* Softener, long Len, double* X, double* F, double* 
 
 	for (i = 0; i < Len; i++)
 	{
+		absXi = fabs(X[i]);
 		// gamma is a spline which becomes f(x) = 1/x for x >= 1.0
-		if (X[i] < 1.0)
+		if (absXi < 1.0)
 		{
-			XX = X[i]*X[i];
+			XX = absXi*absXi;
 			// Use Horner's rule to evaluate polynomial
 			F[i] = c[k];			// Even powers
 			DF[i] = c[k]*(2*k);	// Odd powers
@@ -75,11 +77,11 @@ void even_powers_soften(void* Softener, long Len, double* X, double* F, double* 
 				DF[i] = DF[i]*XX + c[j]*(2*j);
 			}
 			F[i] = F[i]*XX + c[0];
-			DF[i] = DF[i]*X[i];
+			DF[i] = DF[i]*absXi;
 		}
 		else
 		{
-			F[i] = 1.0/X[i];
+			F[i] = 1.0/absXi;
 			DF[i] = -F[i]*F[i];	//	-f*f = -1.0/(x*x);
 		}
 	}
