@@ -17,6 +17,7 @@ void test_simulator_water(void);
 void single_splitting(void);
 double weighted_fn(void);
 void test_quasi_interp_1d(void);
+void test_ss_qi_1d(void);
 
 /*
 #include "tester.h"
@@ -46,6 +47,7 @@ int main(int argc, char* argv[])
 		printf("*                                *\n");
 		printf("* 9 - Single splitting (1D)      *\n");
 		printf("*10 - Quasi-Interp (1D)          *\n");
+		printf("*11 - SS, QI (1D)                *\n");
 		printf("**********************************\n");
 		printf("* 0 - Exit                       *\n");
 		printf("**********************************\n");
@@ -94,6 +96,9 @@ int main(int argc, char* argv[])
 			case 10://	quasi-interpolation (1d)
 				test_quasi_interp_1d();
 				break;
+
+			case 11://	single-split, quasi-interp (1d)
+				test_ss_qi_1d();
 
 			case 0:	// Exit
 				break;
@@ -742,32 +747,29 @@ double eval_poly(short p, double* poly, double x)
 	return fx;
 }
 
-void compute_ordinates_on_interpolation_grid(short p, long Len, double* G, double* F, double* poly, EVEN_POWERS* ep)
+void compute_ordinates_on_interpolation_grid(short p, long Len, double* G, double* F, EVEN_POWERS* ep)
+{
+	double*		DF = NULL;
+	DF = (double*) dynvec(Len, sizeof(double));
+	ep->cmn.soften(ep, Len, G, F, DF);
+	dynfree(DF);
+}
+
+void compute_ordinates_on_interpolation_grid_poly(short p, long Len, double* G, double* F, double* poly)
 {
 	long			i = 0;
-	long			j = 0;
-	double*			DF = NULL;
 
-	if (ep == NULL)
+	printf("Polynomial is: \np(x) = ");
+	for (i = 0; i < p; i++)
 	{
-		printf("Polynomial is: \np(x) = ");
-		for (i = 0; i < p; i++)
-		{
-			poly[i] = (double) rand() / (double) rand();
-			printf("%lf*x^%ld %s ", poly[i], i, (i < p-1 ? "+" : "\n"));
-		}
-		printf("\n");
-
-		for (i = 0; i < Len; i++)
-		{
-			F[i] = eval_poly(p, poly, G[i]);
-		}
+		poly[i] = (double) rand() / (double) rand();
+		printf("%lf*x^%ld %s ", poly[i], i, (i < p-1 ? "+" : "\n"));
 	}
-	else
+	printf("\n");
+
+	for (i = 0; i < Len; i++)
 	{
-		DF = (double*) dynvec(Len, sizeof(double));
-		ep->cmn.soften(ep, Len, G, F, DF);
-		dynfree(DF);
+		F[i] = eval_poly(p, poly, G[i]);
 	}
 }
 
@@ -922,7 +924,10 @@ void test_quasi_interp_1d(void)
 	softener_initialize(ep, (void*)even_powers_initialize, p/2-1);	// polynomial part of spline with degree < p-1 yields better accuracy
 	poly = (double*) dynvec(p, sizeof(double));
 
-	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, poly, ep);
+	if (ep != NULL)
+		compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, ep);
+	else
+		compute_ordinates_on_interpolation_grid_poly(p, nodes+1+2*(p+mu-1), G, F, poly);
 
 //	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
 	I = (double*) dynvec(nodes+1+2*(p_2-1), sizeof(double));
@@ -997,6 +1002,160 @@ void test_quasi_interp_1d(void)
 
 	//	Free dynamically allocated memory
 	dynfree(poly);
+	dynfree(G);
+	dynfree(F);
+	dynfree(I);
+
+	dynfree(X_BAR);
+	dynfree(F_BAR);
+	dynfree(F_HAT);
+	dynfree(DF_HAT);
+	dynfree(DIFF);
+	dynfree(RDIFF);
+
+	//	Destroy Gamma object
+	ep->cmn.uninitialize(ep);
+	dynfree(ep);
+
+	dynfree(omegap);	//	REMOVE THIS FOR REAL CODE!
+}
+
+void test_ss_qi_1d(void)
+{
+	short			p = 0;
+	short			p_2 = 0;
+	long			i = 0;
+	long			j = 0;
+	short			mu = 1;
+	double			tau = 1e-4;
+
+	double*			omegap = NULL;
+	double			Gmin = 0.0;
+	double			Gmax = 0.0;
+
+	time_t			t;
+	long			nodes = 10;
+	long			samples = 10;
+	double*			G = NULL;
+	double*			F = NULL;
+	double*			I = NULL;
+
+	EVEN_POWERS*	ep = NULL;
+
+	double*			X_BAR = NULL;
+	double*			F_BAR = NULL;
+	double*			F_HAT = NULL;
+	double*			DF_HAT = NULL;
+	double*			DIFF = NULL;
+	double*			RDIFF = NULL;
+
+	double			l1 = 0.0;
+	double			l2 = 0.0;
+	double			loo = 0.0;
+
+	FILE*			fp = NULL;
+	char			fn[64];
+
+//	GET NECESSARY PARAMETERS
+	srand((unsigned) time(&t));
+	printf("p = ");
+	scanf("%hd", &p);
+	p_2 = p/2;
+
+	printf("mu = ");
+	scanf("%hd", &mu);
+
+	printf("Domain min (Gmin) = ");
+	scanf("%lf", &Gmin);
+	printf("Domain max (Gmax) = ");
+	scanf("%lf", &Gmax);
+
+	printf("Coarse grid interpolation nodes: ");
+	scanf("%ld", &nodes);
+
+	printf("# of Samples: ");
+	scanf("%ld", &samples);
+
+	printf("Rel error tolerance (default = %e): ", tau);
+	scanf("%lf", &tau);
+
+//	BUILD INTERPOLATION OPERATOR 1D
+	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
+	b_spline_compute_omega_prime_1d(p, mu, omegap);
+
+//	COMPUTE DISCRETE FUNCTION VALUES
+	//	Create sequence of values, fx, for x in [min, max]
+	G = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+	setup_interpolation_grid(p, mu, nodes, G, &Gmin, &Gmax);
+
+	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
+	F = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+
+	//	Create Gamma object and/or polynomial object
+	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
+	softener_initialize(ep, (void*)even_powers_initialize, p/2-1);	// polynomial part of spline with degree < p-1 yields better accuracy
+
+	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, ep);
+
+//	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
+	I = (double*) dynvec(nodes+1+2*(p_2-1), sizeof(double));
+	compute_interpolant(p, mu, nodes, omegap, F, I);
+
+//	INTERPOLATE AND CHECK ACCURACY
+	X_BAR = (double*) dynvec(samples+1, sizeof(double));
+	F_BAR = (double*) dynvec(samples+1, sizeof(double));
+	F_HAT = (double*) dynvec(samples+1, sizeof(double));
+	DIFF = (double*) dynvec(samples+1, sizeof(double));
+	RDIFF = (double*) dynvec(samples+1, sizeof(double));
+
+	//	Set up X_BAR
+	for (i = 0; i <= samples; i++)
+	{
+		X_BAR[i] = Gmin + (Gmax-Gmin)*i/samples;
+	}
+
+	interpolate_over_domain(p, G[1]-G[0], Gmin, I, samples, X_BAR, F_BAR);
+
+	DF_HAT = (double*) dynvec(samples+1, sizeof(double));
+	//	Compute target function
+	ep->cmn.soften(ep, samples+1, X_BAR, F_HAT, DF_HAT);
+
+	//	Compute error(s)
+	for (i = 0; i <= samples; i++)
+	{
+		DIFF[i] = fabs(F_HAT[i] - F_BAR[i]);
+		RDIFF[i] = DIFF[i] / fabs(F_HAT[i]);
+	}
+
+	//	Display norm(s) of error
+	j = 0;
+	for (i = 0; i <= samples; i++)
+	{
+		j++;
+		l1 += fabs(RDIFF[i]);
+		l2 += fabs(RDIFF[i])*fabs(RDIFF[i]);
+		loo = MAX(loo, RDIFF[i]);
+	}
+	l2 = sqrt(l2);
+	printf("j=%ld, L1=%e, L2=%e, Loo=%e\n", j, l1, l2, loo);
+
+	//	Write output file to plot via gnuplot
+	strftime(fn, 64*sizeof(char), "1DInterp_%Y_%m_%d_%H_%M_%S.dat", localtime(&t));
+	if ((fp = fopen(fn, "w")) != NULL)
+	{
+		//	Write samples to file
+		for (i = 0; i <= samples; i++)
+		{
+			//	Output: i, X_BAR, F_HAT, F_BAR, DIFF, RDIFF
+			fprintf(fp, "%ld\t%e\t%e\t%e\t%e\t%e\n", i, X_BAR[i], F_HAT[i], F_BAR[i], DIFF[i], RDIFF[i]);
+		}
+
+		//	Close file
+		fclose(fp);
+		printf("Output file written!\n");
+	}
+
+	//	Free dynamically allocated memory
 	dynfree(G);
 	dynfree(F);
 	dynfree(I);
