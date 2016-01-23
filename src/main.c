@@ -1083,6 +1083,34 @@ void test_ss_qi_1d(void)
 	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
 	b_spline_compute_omega_prime_1d(p, mu, omegap);
 
+/*
+	ell = L
+	I[ell+1] := 0
+	E := 0
+	relerr = tau + 1.0
+
+	do
+		I[ell+1] = I[ell+2] + A(E[ell+1])
+
+		for grid-points, s, on level ell:
+			E[ell](s) = gamma(s) - I[ell+1](s)
+			abserr[ell](s) = |E[ell](s)|
+			relerr[ell](s) = abserr[ell](s) / |gamma(s)|
+		ell--
+	while ((max(relerr[ell]) >= tau) and (ell > 0)
+	I[ell+1] = I[ell+2] + A(E[ell+1])
+
+	//	Sanity check on "continuous" function (i.e. samples >> nodes)
+	for (level = L; level >= ell; level--)
+		for continuous samples,s:
+			approx[level](s) = I[level](s)
+
+	//	true_approx[L](s) = approx[L](s)
+	//	true_approx[L-1](s) = approx[L](s) + approx[L-1](s)
+	//	true_approx[ell](s) = approx[L](s) + approx[L-1](s) + ... + approx[ell](s)
+*/
+
+/*
 //	COMPUTE DISCRETE FUNCTION VALUES
 	//	Create sequence of values, fx, for x in [min, max]
 	G = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
@@ -1154,7 +1182,7 @@ void test_ss_qi_1d(void)
 		fclose(fp);
 		printf("Output file written!\n");
 	}
-
+*/
 	//	Free dynamically allocated memory
 	dynfree(G);
 	dynfree(F);
