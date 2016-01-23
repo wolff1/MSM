@@ -1022,33 +1022,35 @@ void test_quasi_interp_1d(void)
 
 void test_ss_qi_1d(void)
 {
-	short			p = 0;
-	short			p_2 = 0;
 	long			i = 0;
 	long			j = 0;
+	long			nodes = 0;
+	long			samples = 0;
+	time_t			t;
+
+	short			p = 0;
+	short			p_2 = 0;
 	short			mu = 1;
 	double			tau = 1e-4;
-
 	double*			omegap = NULL;
+	EVEN_POWERS*	ep = NULL;
+	short			L = 0;
+	short			ell = 0;
+
 	double			Gmin = 0.0;
 	double			Gmax = 0.0;
 
-	time_t			t;
-	long			nodes = 10;
-	long			samples = 10;
-	double*			G = NULL;
-	double*			F = NULL;
-	double*			I = NULL;
-
-	EVEN_POWERS*	ep = NULL;
-
+	double**		G = NULL;
+	double**		E = NULL;
+	double**		I = NULL;
+/*
 	double*			X_BAR = NULL;
 	double*			F_BAR = NULL;
 	double*			F_HAT = NULL;
 	double*			DF_HAT = NULL;
 	double*			DIFF = NULL;
 	double*			RDIFF = NULL;
-
+*/
 	double			l1 = 0.0;
 	double			l2 = 0.0;
 	double			loo = 0.0;
@@ -1070,7 +1072,10 @@ void test_ss_qi_1d(void)
 	printf("Domain max (Gmax) = ");
 	scanf("%lf", &Gmax);
 
-	printf("Coarse grid interpolation nodes: ");
+	printf("Max # of grid levels: ");
+	scanf("%hd", &L);
+
+	printf("Coarse grid interpolation nodes (even): ");
 	scanf("%ld", &nodes);
 
 	printf("# of Samples: ");
@@ -1083,10 +1088,14 @@ void test_ss_qi_1d(void)
 	omegap = (double*) dynvec(p_2+mu+1, sizeof(double));
 	b_spline_compute_omega_prime_1d(p, mu, omegap);
 
+	//	Create Gamma object (function to interpolate)
+	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
+	softener_initialize(ep, (void*)even_powers_initialize, p/2-1);	// polynomial part of spline with degree < p-1 yields better accuracy
+
 /*
 	ell = L
-	I[ell+1] := 0
-	E := 0
+	I[ell+2] := 0
+	E[ell+1] := 0
 	relerr = tau + 1.0
 
 	do
@@ -1110,29 +1119,43 @@ void test_ss_qi_1d(void)
 	//	true_approx[ell](s) = approx[L](s) + approx[L-1](s) + ... + approx[ell](s)
 */
 
+	//	Create memory for all grid levels, indexed by 1 <= ell <= L
+	G = (double**) dynarr_d(L+1+1, pow(2,L-1)*nodes+1+2*(p+mu-1));			//	Grid points
+	E = (double**) dynarr_d(L+1+1, pow(2,L-1)*nodes+1+2*(p+mu-1));			//	Errors at grid points
+	I = (double**) dynarr_d(L+1+2, pow(2,L-1)*nodes+1+2*(p_2-1));			//	Interpolation coefficients at grid points
+
+	ell = L;
+	do
+	{
+		printf("level ell = %hd\n", ell);
+
+		//	not correct grid for ell+1
+		setup_interpolation_grid(p, mu, pow(2,L-ell)*nodes, G[ell], &Gmin, &Gmax);
+
+		//compute_ordinates_on_interpolation_grid(p, pow(2,L-ell)*nodes+1+2*(p+mu-1), G[ell], E[ell], ep);
+
+		ell--;
+	} while ((1) && (ell > 0));
+display_dynarr_d(G, L+1, pow(2,L-1)*nodes+1+2*(p+mu-1));
+
 /*
-//	COMPUTE DISCRETE FUNCTION VALUES
-	//	Create sequence of values, fx, for x in [min, max]
 	G = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
-	setup_interpolation_grid(p, mu, nodes, G, &Gmin, &Gmax);
-
-	//	Build polynomial of degree p-1, for which our interpolant *should* be exact
 	F = (double*) dynvec(nodes+1+2*(p+mu-1), sizeof(double));
+	I = (double*) dynvec(nodes+1+2*(p_2-1), sizeof(double));
 
-	//	Create Gamma object and/or polynomial object
-	ep = (EVEN_POWERS*) dynmem(sizeof(EVEN_POWERS));
-	softener_initialize(ep, (void*)even_powers_initialize, p/2-1);	// polynomial part of spline with degree < p-1 yields better accuracy
+	setup_interpolation_grid(p, mu, nodes, G, &Gmin, &Gmax);
 
 	compute_ordinates_on_interpolation_grid(p, nodes+1+2*(p+mu-1), G, F, ep);
 
-//	APPLY INTERPOLATION OPERATOR (i.e. anti-blur function values)
-	I = (double*) dynvec(nodes+1+2*(p_2-1), sizeof(double));
 	compute_interpolant(p, mu, nodes, omegap, F, I);
+
+	interpolate_over_domain(p, G[1]-G[0], Gmin, I, samples, X_BAR, F_BAR); // to get delta_bar
 
 //	INTERPOLATE AND CHECK ACCURACY
 	X_BAR = (double*) dynvec(samples+1, sizeof(double));
 	F_BAR = (double*) dynvec(samples+1, sizeof(double));
 	F_HAT = (double*) dynvec(samples+1, sizeof(double));
+	DF_HAT = (double*) dynvec(samples+1, sizeof(double));
 	DIFF = (double*) dynvec(samples+1, sizeof(double));
 	RDIFF = (double*) dynvec(samples+1, sizeof(double));
 
@@ -1144,7 +1167,6 @@ void test_ss_qi_1d(void)
 
 	interpolate_over_domain(p, G[1]-G[0], Gmin, I, samples, X_BAR, F_BAR);
 
-	DF_HAT = (double*) dynvec(samples+1, sizeof(double));
 	//	Compute target function
 	ep->cmn.soften(ep, samples+1, X_BAR, F_HAT, DF_HAT);
 
@@ -1168,7 +1190,7 @@ void test_ss_qi_1d(void)
 	printf("j=%ld, L1=%e, L2=%e, Loo=%e\n", j, l1, l2, loo);
 
 	//	Write output file to plot via gnuplot
-	strftime(fn, 64*sizeof(char), "1DInterp_%Y_%m_%d_%H_%M_%S.dat", localtime(&t));
+	strftime(fn, 64*sizeof(char), "SS1DInterp_%Y_%m_%d_%H_%M_%S.dat", localtime(&t));
 	if ((fp = fopen(fn, "w")) != NULL)
 	{
 		//	Write samples to file
@@ -1182,11 +1204,6 @@ void test_ss_qi_1d(void)
 		fclose(fp);
 		printf("Output file written!\n");
 	}
-*/
-	//	Free dynamically allocated memory
-	dynfree(G);
-	dynfree(F);
-	dynfree(I);
 
 	dynfree(X_BAR);
 	dynfree(F_BAR);
@@ -1194,6 +1211,14 @@ void test_ss_qi_1d(void)
 	dynfree(DF_HAT);
 	dynfree(DIFF);
 	dynfree(RDIFF);
+*/
+	//	Free dynamically allocated memory
+	dynfree(G[0]);
+	dynfree(G);
+	dynfree(E[0]);
+	dynfree(E);
+	dynfree(I[0]);
+	dynfree(I);
 
 	//	Destroy Gamma object
 	ep->cmn.uninitialize(ep);
